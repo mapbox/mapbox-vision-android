@@ -9,7 +9,7 @@ ext {
     build_tools_version = '28.0.3'
 
     vision_core = '0.1.0'
-    mapbox_core = '0.3.0-SNAPSHOT'
+    mapbox_core = '0.2.1'
     mapbox_telemetry = '3.2.0'
 
     retrofit_version = '2.4.0'
