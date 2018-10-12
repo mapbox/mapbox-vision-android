@@ -1,0 +1,20 @@
+ext {
+    gradle_plugin ='3.2.0'
+    kotlin_version = '1.2.71'
+    dokka_version = '0.9.17'
+
+    min_sdk_version = 23
+    target_sdk_version = 28
+    compile_sdk_version = 28
+    build_tools_version = '28.0.3'
+
+    vision_core = '0.1.0-SNAPSHOT'
+    mapbox_core = '0.3.0-SNAPSHOT'
+    mapbox_telemetry = '3.2.0'
+
+    retrofit_version = '2.4.0'
+
+    junit_version = '4.12'
+    test_runner_version = '1.0.2'
+    espresso_version = '3.0.2'
+}
