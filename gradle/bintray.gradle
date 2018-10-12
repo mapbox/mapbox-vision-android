@@ -2,6 +2,9 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 project.archivesBaseName = project.property('mapboxArtifactName')
+project.version = project.property('versionName')
+group = project.property('mapboxArtifactGroup')
+version = project.property('versionName')
 
 install {
     repositories.mavenInstaller {
@@ -66,7 +69,7 @@ bintray {
             released = new Date()
 
             gpg {
-                sign = true
+                sign = false
                 passphrase = project.hasProperty('gpgPassphrase') ? project.property('gpgPassphrase') : System.getenv('GPG_PASSPHRASE')
             }
 

@@ -8,7 +8,7 @@ ext {
     compile_sdk_version = 28
     build_tools_version = '28.0.3'
 
-    vision_core = '0.1.0-SNAPSHOT'
+    vision_core = '0.1.0'
     mapbox_core = '0.3.0-SNAPSHOT'
     mapbox_telemetry = '3.2.0'
 
