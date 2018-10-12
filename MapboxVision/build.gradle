@@ -1,0 +1,85 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+def envVarOrLocalProperty(String name) {
+    if (System.getenv(name) != null) {
+        return System.getenv(name).toBoolean()
+    }
+
+    Properties properties = new Properties()
+    def file = project.rootProject.file('local.properties')
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+        def isLocalDevelopment = properties.getProperty(name)
+        if (isLocalDevelopment != null) {
+            return isLocalDevelopment.toBoolean()
+        }
+    }
+    return false
+}
+
+if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
+    apply plugin: 'org.jetbrains.dokka-android'
+
+    dokka {
+        moduleName = 'mapbox-vision'
+        outputDirectory = "$buildDir/javadoc"
+        outputFormat = 'javadoc'
+    }
+}
+
+if (file("${rootDir}/gradle/versions.gradle").exists()) {
+    apply from: "${rootDir}/gradle/versions.gradle"
+}
+if (file("${rootDir}/gradle/maven-settings.gradle").exists()) {
+    apply from: "${rootDir}/gradle/maven-settings.gradle"
+}
+if (file("${rootDir}/gradle/bintray.gradle").exists()) {
+    apply from: "${rootDir}/gradle/bintray.gradle"
+}
+
+android {
+    compileSdkVersion compile_sdk_version
+
+    defaultConfig {
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
+        versionCode 1
+        versionName project.property('versionName')
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    // REST - Retrofit
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-scalars:$retrofit_version"
+
+    // Unit test
+    testImplementation "junit:junit:$junit_version"
+
+    // Android tests
+    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+
+    implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
+
+    // Mapbox telemetry
+    api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
+    api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
+}
+
+tasks.withType(Javadoc).all {
+    enabled = false
+}
