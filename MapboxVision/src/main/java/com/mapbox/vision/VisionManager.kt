@@ -13,10 +13,11 @@ import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
 import com.mapbox.vision.models.CameraParamsData
 import com.mapbox.vision.models.DeviceMotionData
+import com.mapbox.vision.models.FrameStatistics
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
-import com.mapbox.vision.performance.ModelPerformance
+import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
 import com.mapbox.vision.sensors.SensorsRequestsManager
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
@@ -90,7 +91,6 @@ object VisionManager : ARDataProvider {
     }
 
     private val visionManagerLocationEngineListener = object : LocationEngineListener {
-
         override fun onNewLocation(
                 latitude: Double,
                 longitude: Double,
@@ -324,17 +324,10 @@ object VisionManager : ARDataProvider {
     }
 
     /**
-     * Configure segmentation-related tasks performance.
+     * Configure performance of ML models.
      */
-    fun setSegmentationPerformance(modelPerformance: ModelPerformance) {
-        visionCore.setSegmentationPerformance(modelPerformance)
-    }
-
-    /**
-     * Configure detection-related tasks performance.
-     */
-    fun setDetectionPerformance(modelPerformance: ModelPerformance) {
-        visionCore.setDetectionPerformance(modelPerformance)
+    fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig) {
+        visionCore.setModelPerformanceConfig(modelPerformanceConfig)
     }
 
     fun getFrameSize(): FrameSize = FrameSize(visionCore.imageWidth, visionCore.imageHeight)
@@ -413,6 +406,11 @@ object VisionManager : ARDataProvider {
             visionCore.setVideoStreamListener(this.videoStreamListener)
         }
     }
+
+    /**
+     * Get frame statistics with FPS.
+     */
+    fun getFrameStatistics() = FrameStatistics(visionCore.getFrameStatistics())
 
     internal fun setVisualizationUpdateListener(visualizationUpdateListener: VisualizationUpdateListener) {
         this.visualizationUpdateListener = WeakReference(visualizationUpdateListener)

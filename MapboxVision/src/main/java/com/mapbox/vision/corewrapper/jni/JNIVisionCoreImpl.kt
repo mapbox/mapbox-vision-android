@@ -16,9 +16,10 @@ import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformance
+import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
-import com.mapbox.vision.performancemanager.PerformanceManagerFactory
+import com.mapbox.vision.performance.PerformanceManagerFactory
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
@@ -31,7 +32,7 @@ import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
 import java.lang.ref.WeakReference
 
 
-internal class JNICoreImpl constructor(
+internal class JNIVisionCoreImpl constructor(
         override val imageWidth: Int,
         override val imageHeight: Int,
         override val imageFormat: Image.Format,
@@ -44,7 +45,10 @@ internal class JNICoreImpl constructor(
     private val coreWrapper = CoreWrapper(application, mapDataSource, externalFileDir, mapboxTelemetryEventManager)
 
     private val jniCoreUpdateManager = JNICoreUpdateManager(coreWrapper, application, imageWidth, imageHeight)
-    private val jniCorePerformanceManager = PerformanceManagerFactory().also { it.supportSNPE(SystemInfoUtils.isSNPESupportedDevice()) }.getPerformanceManager(coreWrapper)
+    private val jniCorePerformanceManager = PerformanceManagerFactory(
+            isSnpeSupported = SystemInfoUtils.isSNPESupportedDevice()
+    )
+            .getPerformanceManager(coreWrapper)
 
     private var isSessionRecording = false
 
@@ -63,17 +67,20 @@ internal class JNICoreImpl constructor(
                 useCarDistanceMeasure = true,
                 useClassification = true,
                 useDetectionMapping = true,
-                useDetection = true,
                 useMapMatching = true,
                 useRoadConfidence = false,
-                useSegmentation = true,
                 useTracking = true,
                 useTrajectoryEstimator = true,
+                useDetection = true,
+                useSegmentation = true,
                 useMergeModel = true
         )
 
-        jniCorePerformanceManager.setDetectionPerformance(ModelPerformance(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH))
-        jniCorePerformanceManager.setSegmentationPerformance(ModelPerformance(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH))
+        jniCorePerformanceManager.setModelConfig(
+                ModelPerformanceConfig.Merged(
+                        performance = ModelPerformance.On(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH)
+                )
+        )
     }
 
     override fun setVisionEventListener(visionEventsListener: VisionEventsListener?) {
@@ -88,12 +95,14 @@ internal class JNICoreImpl constructor(
         jniCoreUpdateManager.setVideoSourceListener(videoStreamListener)
     }
 
-    override fun setDetectionPerformance(modelPerformance: ModelPerformance) {
-        jniCorePerformanceManager.setDetectionPerformance(modelPerformance)
-    }
-
-    override fun setSegmentationPerformance(modelPerformance: ModelPerformance) {
-        jniCorePerformanceManager.setSegmentationPerformance(modelPerformance)
+    override fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig) {
+        coreWrapper.setUseMergedModel(
+                useMergeModel = when (modelPerformanceConfig) {
+                    is ModelPerformanceConfig.Merged -> true
+                    is ModelPerformanceConfig.Separate -> false
+                }
+        )
+        jniCorePerformanceManager.setModelConfig(modelPerformanceConfig)
     }
 
     override fun setRGBABytes(rgbaByteArray: ByteArray, width: Int, height: Int) {

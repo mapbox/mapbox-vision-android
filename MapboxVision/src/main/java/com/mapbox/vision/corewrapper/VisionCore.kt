@@ -7,7 +7,7 @@ import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
-import com.mapbox.vision.performance.ModelPerformance
+import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.ScreenCoordinate
@@ -34,9 +34,7 @@ internal interface VisionCore {
 
     fun setVideoStreamListener(videoStreamListener: WeakReference<VideoStreamListener>?)
 
-    fun setSegmentationPerformance(modelPerformance: ModelPerformance)
-
-    fun setDetectionPerformance(modelPerformance: ModelPerformance)
+    fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig)
 
     fun setRGBABytes(rgbaByteArray: ByteArray, width: Int, height: Int)
 

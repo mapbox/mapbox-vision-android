@@ -22,12 +22,12 @@ class MainThreadHandler : ThreadHandler {
         uiHandler.post { task.invoke() }
     }
 
-    override fun postDelayed(task: () -> Unit, delay: Long) {
+    override fun postDelayed(task: () -> Unit, delayMillis: Long) {
         if(!started) {
             Log.e(TAG, "The thread was not started")
             return
         }
-        uiHandler.postDelayed({ task.invoke() }, delay)
+        uiHandler.postDelayed({ task.invoke() }, delayMillis)
     }
 
     override fun start() {
