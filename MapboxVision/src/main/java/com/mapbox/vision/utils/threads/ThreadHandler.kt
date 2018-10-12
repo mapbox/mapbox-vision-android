@@ -4,7 +4,7 @@ interface ThreadHandler {
 
     fun post(task: () -> Unit)
 
-    fun postDelayed(task: () -> Unit, delay: Long)
+    fun postDelayed(task: () -> Unit, delayMillis: Long)
 
     fun start()
 

@@ -19,12 +19,12 @@ internal class WorkThreadHandler(val handleThreadName: String = HANDLE_THREAD_NA
         workThreadHandler.post { task.invoke() }
     }
 
-    override fun postDelayed(task: () -> Unit, delay: Long) {
+    override fun postDelayed(task: () -> Unit, delayMillis: Long) {
         if (!started) {
             Log.e(TAG, "The thread was not started")
             return
         }
-        workThreadHandler.postDelayed({ task.invoke() }, delay)
+        workThreadHandler.postDelayed({ task.invoke() }, delayMillis)
     }
 
     override fun start() {
