@@ -40,7 +40,7 @@ You can look for an example of complete integration in the [Mapbox Vision SDK Te
 Add the following dependency to your project's `build.gradle`:
 
 ```
-implementation 'com.mapbox.vision:mapbox-android-vision:0.1.0-SNAPSHOT'
+implementation 'com.mapbox.vision:mapbox-android-vision:0.1.0'
 ```
 
 and to your top-level `build.gradle`:
