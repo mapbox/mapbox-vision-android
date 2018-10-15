@@ -39,6 +39,7 @@ if (file("${rootDir}/gradle/bintray.gradle").exists()) {
 }
 
 android {
+    buildToolsVersion build_tools_version
     compileSdkVersion compile_sdk_version
 
     defaultConfig {
@@ -62,20 +63,11 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    // REST - Retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-scalars:$retrofit_version"
 
-    // Unit test
-    testImplementation "junit:junit:$junit_version"
-
-    // Android tests
-    androidTestImplementation "com.android.support.test:runner:$test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
-
     implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
 
-    // Mapbox telemetry
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
     api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
 }
