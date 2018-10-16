@@ -1,6 +1,7 @@
 package com.mapbox.vision.visionevents.events.classification
 
 import android.graphics.Rect
+import android.util.Log
 import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
 import com.mapbox.vision.visionevents.events.Image
 import com.mapbox.vision.visionevents.events.ObjectType
@@ -14,6 +15,8 @@ import com.mapbox.vision.visionevents.events.detection.Detection
 data class SignClassification(val identifier: Long, val sourceImage: Image, val items: List<SignValue>) {
 
     companion object {
+
+        const val TAG = "SignClassification"
 
         @JvmStatic
         internal fun fromSignClassificationDataBuffer(signClassificationDataBuffer: SignClassificationDataBuffer): SignClassification {
@@ -31,7 +34,15 @@ data class SignClassification(val identifier: Long, val sourceImage: Image, val 
             var index = 0
             for (i in 0 until signValuesItemsSize) {
 
-                val signType = SignType.values()[signClassificationDataBuffer.signValueItems[index++].toInt()]
+                val signTypeIndex = signClassificationDataBuffer.signValueItems[index++].toInt()
+
+                val signType = if (signTypeIndex < 0 || signTypeIndex >= SignType.values().size) {
+                    Log.e(TAG, " Wrong type index $signTypeIndex")
+                    SignType.Unknown
+                } else {
+                    SignType.values()[signTypeIndex]
+                }
+
                 val typeConfidence = signClassificationDataBuffer.signValueItems[index++]
                 val number = signClassificationDataBuffer.signValueItems[index++]
                 val numberConfidence = signClassificationDataBuffer.signValueItems[index++]
