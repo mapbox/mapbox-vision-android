@@ -1,19 +1,21 @@
 package com.mapbox.vision.performance
 
 /**
- * Represents different ML models configurations and performance settings for them.
+ * Represents different ML models performance configurations.
  */
 sealed class ModelPerformanceConfig {
 
     /**
-     * Single merged segmentation and detection model.
-     * Works faster and more efficient than separate models.
+     * Single model performing both detections and segmentation.
+     * Works faster, has better quality than separate models running with equal performance.
+     * Used if both segmentation and detection need to work with same FPS.
      */
     class Merged(val performance: ModelPerformance) : ModelPerformanceConfig()
 
     /**
-     * Separate segmentation and detection models.
-     * Use it if you want to have different FPS (can save some power comparing with merged model)
+     * Separate models for segmentation and detection.
+     * Allows to run models with different performance hence is more power efficient in such configurations.
+     * Used if segmentation or detection can work with lower performance and power consumption is a concern.
      */
     class Separate(
             val segmentationPerformance: ModelPerformance,

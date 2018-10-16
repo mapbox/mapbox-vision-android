@@ -324,7 +324,7 @@ object VisionManager : ARDataProvider {
     }
 
     /**
-     * Configure performance of ML models.
+     * Configure performance of ML models used.
      */
     fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig) {
         visionCore.setModelPerformanceConfig(modelPerformanceConfig)
