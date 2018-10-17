@@ -2,6 +2,7 @@ package com.mapbox.vision.visionevents.events.classification
 
 import android.graphics.Rect
 import android.util.Log
+import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
 import com.mapbox.vision.visionevents.events.Image
 import com.mapbox.vision.visionevents.events.ObjectType
@@ -37,6 +38,9 @@ data class SignClassification(val identifier: Long, val sourceImage: Image, val 
                 val signTypeIndex = signClassificationDataBuffer.signValueItems[index++].toInt()
 
                 val signType = if (signTypeIndex < 0 || signTypeIndex >= SignType.values().size) {
+                    if(BuildConfig.DEBUG) {
+                        throw IllegalArgumentException(" Wrong type index $signTypeIndex")
+                    }
                     Log.e(TAG, " Wrong type index $signTypeIndex")
                     SignType.Unknown
                 } else {
