@@ -51,12 +51,12 @@ internal interface PerformanceManager {
             ) {
                 companion object {
                     fun fromBoardName(boardName: String): SnpeBoard = when (boardName) {
-                        SupportedSnapdragonBoards.SDM845.name -> SDM854
-                        SupportedSnapdragonBoards.MSM8998.name -> MSM8998
-                        SupportedSnapdragonBoards.MSM8996.name -> MSM8996
-                        SupportedSnapdragonBoards.SDM710.name -> SDM710
-                        SupportedSnapdragonBoards.SDM660.name -> SDM660
-                        else -> SDM660 // default other 6xx to low performance
+                        SupportedSnapdragonBoards.SDM845.name -> Snapdragon_845
+                        SupportedSnapdragonBoards.MSM8998.name -> Snapdragon_835
+                        SupportedSnapdragonBoards.MSM8996.name -> Snapdragon_821
+                        SupportedSnapdragonBoards.SDM710.name -> Snapdragon_710
+                        SupportedSnapdragonBoards.SDM660.name -> Snapdragon_660
+                        else -> Snapdragon_660 // default other 6xx to low performance
                     }
                 }
 
@@ -64,50 +64,58 @@ internal interface PerformanceManager {
 
                 fun getMinBackgroundFps(): ModelsFps = MINIMUM_SUPPORTED_BACKGROUND_FPS
 
-                fun getMaxFps(rate: ModelPerformanceRate): ModelsFps =
-                        when (rate) {
-                            ModelPerformanceRate.LOW -> MINIMUM_SUPPORTED_WORKING_FPS
-                            ModelPerformanceRate.MEDIUM -> average(MINIMUM_SUPPORTED_WORKING_FPS, maxSupportedFps)
-                            ModelPerformanceRate.HIGH -> maxSupportedFps
+                fun getMaxFps(model: ModelPerformance): ModelsFps =
+                        when (model) {
+                            ModelPerformance.Off -> {
+                                MINIMUM_SUPPORTED_BACKGROUND_FPS
+                            }
+                            is ModelPerformance.On -> {
+                                when (model.rate) {
+                                    ModelPerformanceRate.LOW -> MINIMUM_SUPPORTED_WORKING_FPS
+                                    ModelPerformanceRate.MEDIUM -> average(MINIMUM_SUPPORTED_WORKING_FPS, maxSupportedFps)
+                                    ModelPerformanceRate.HIGH -> maxSupportedFps
+                                }
+
+                            }
                         }
 
-                object SDM854 : SnpeBoard(
+                object Snapdragon_845 : SnpeBoard(
                         maxSupportedFps = ModelsFps(
-                                detectionFps = Fps(24f),
-                                segmentationFps = Fps(14f),
-                                mergedFpsRange = Fps(11f)
+                                detectionFps = Fps(30f),
+                                segmentationFps = Fps(18f),
+                                mergedFpsRange = Fps(14f)
                         )
                 )
 
-                object MSM8998 : SnpeBoard(
+                object Snapdragon_835 : SnpeBoard(
                         maxSupportedFps = ModelsFps(
-                                detectionFps = Fps(15f),
-                                segmentationFps = Fps(10f),
+                                detectionFps = Fps(20f),
+                                segmentationFps = Fps(13f),
+                                mergedFpsRange = Fps(9f)
+                        )
+                )
+
+                object Snapdragon_821 : SnpeBoard(
+                        maxSupportedFps = ModelsFps(
+                                detectionFps = Fps(13f),
+                                segmentationFps = Fps(6f),
+                                mergedFpsRange = Fps(4f)
+                        )
+                )
+
+                object Snapdragon_710 : SnpeBoard(
+                        maxSupportedFps = ModelsFps(
+                                detectionFps = Fps(20f),
+                                segmentationFps = Fps(9f),
                                 mergedFpsRange = Fps(7f)
                         )
                 )
 
-                object MSM8996 : SnpeBoard(
+                object Snapdragon_660 : SnpeBoard(
                         maxSupportedFps = ModelsFps(
-                                detectionFps = Fps(11f),
-                                segmentationFps = Fps(5f),
-                                mergedFpsRange = Fps(3f)
-                        )
-                )
-
-                object SDM710 : SnpeBoard(
-                        maxSupportedFps = ModelsFps(
-                                detectionFps = Fps(15f),
+                                detectionFps = Fps(13f),
                                 segmentationFps = Fps(6f),
-                                mergedFpsRange = Fps(5f)
-                        )
-                )
-
-                object SDM660 : SnpeBoard(
-                        maxSupportedFps = ModelsFps(
-                                detectionFps = Fps(12f),
-                                segmentationFps = Fps(4f),
-                                mergedFpsRange = Fps(3f)
+                                mergedFpsRange = Fps(4f)
                         )
                 )
             }
@@ -118,61 +126,82 @@ internal interface PerformanceManager {
         override fun setModelConfig(modelConfig: ModelPerformanceConfig) {
             when (modelConfig) {
                 is ModelPerformanceConfig.Merged -> {
-                    setDetectionPerformance(modelConfig.performance)
-                    setSegmentationPerformance(modelConfig.performance)
+                    setDetectionPerformance(
+                            modelConfig.performance,
+                            minFps = snpeChip.getMinWorkingFps().mergedFpsRange,
+                            maxFps = snpeChip.getMaxFps(modelConfig.performance).mergedFpsRange,
+                            backgroundFps = snpeChip.getMinBackgroundFps().mergedFpsRange
+                    )
+                    setSegmentationPerformance(
+                            modelConfig.performance,
+                            minFps = snpeChip.getMinWorkingFps().mergedFpsRange,
+                            maxFps = snpeChip.getMaxFps(modelConfig.performance).mergedFpsRange,
+                            backgroundFps = snpeChip.getMinBackgroundFps().mergedFpsRange
+                    )
                 }
                 is ModelPerformanceConfig.Separate -> {
-                    setDetectionPerformance(modelConfig.detectionPerformance)
-                    setSegmentationPerformance(modelConfig.segmentationPerformance)
+                    setDetectionPerformance(
+                            modelConfig.detectionPerformance,
+                            minFps = snpeChip.getMinWorkingFps().detectionFps,
+                            maxFps = snpeChip.getMaxFps(modelConfig.detectionPerformance).detectionFps,
+                            backgroundFps = snpeChip.getMinBackgroundFps().detectionFps
+                    )
+                    setSegmentationPerformance(
+                            modelConfig.segmentationPerformance,
+                            minFps = snpeChip.getMinWorkingFps().segmentationFps,
+                            maxFps = snpeChip.getMaxFps(modelConfig.segmentationPerformance).segmentationFps,
+                            backgroundFps = snpeChip.getMinBackgroundFps().segmentationFps
+                    )
                 }
             }
         }
 
-        private fun setDetectionPerformance(modelPerformance: ModelPerformance) {
+        private fun setDetectionPerformance(
+                modelPerformance: ModelPerformance,
+                minFps: Fps,
+                maxFps: Fps,
+                backgroundFps: Fps
+        ) {
             when (modelPerformance) {
                 is ModelPerformance.On -> {
                     when (modelPerformance.mode) {
                         ModelPerformanceMode.FIXED -> {
-                            coreWrapper.setDetectionFixedFps(
-                                    detectionFps = snpeChip.getMaxFps(modelPerformance.rate).detectionFps.value
-                            )
+                            coreWrapper.setDetectionFixedFps(maxFps.value)
                         }
                         ModelPerformanceMode.DYNAMIC -> {
-                            coreWrapper.setDetectionDynamicFps(
-                                    minFps = snpeChip.getMinWorkingFps().detectionFps.value,
-                                    maxFps = snpeChip.getMaxFps(modelPerformance.rate).detectionFps.value
-                            )
+                            coreWrapper.setDetectionDynamicFps(minFps.value, maxFps.value)
                         }
                     }
                 }
                 ModelPerformance.Off -> {
-                    coreWrapper.setDetectionFixedFps(snpeChip.getMinBackgroundFps().detectionFps.value)
+                    coreWrapper.setDetectionFixedFps(backgroundFps.value)
                 }
             }
         }
 
-        private fun setSegmentationPerformance(modelPerformance: ModelPerformance) {
+        private fun setSegmentationPerformance(
+                modelPerformance: ModelPerformance,
+                minFps: Fps,
+                maxFps: Fps,
+                backgroundFps: Fps
+        ) {
             when (modelPerformance) {
 
                 is ModelPerformance.On -> {
                     when (modelPerformance.mode) {
                         ModelPerformanceMode.FIXED -> {
-                            coreWrapper.setSegmentationFixedFps(
-                                    segmentationFps = snpeChip.getMaxFps(modelPerformance.rate).segmentationFps.value
-                            )
+                            coreWrapper.setSegmentationFixedFps(maxFps.value)
                         }
                         ModelPerformanceMode.DYNAMIC -> {
                             coreWrapper.setSegmentationDynamicFps(
-                                    minFps = snpeChip.getMinWorkingFps().segmentationFps.value,
-                                    maxFps = snpeChip.getMaxFps(modelPerformance.rate).segmentationFps.value
+                                    minFps = minFps.value,
+                                    maxFps = maxFps.value
                             )
                         }
                     }
                 }
                 ModelPerformance.Off -> {
-                    coreWrapper.setSegmentationFixedFps(
-                            segmentationFps = snpeChip.getMinBackgroundFps().segmentationFps.value
-                    )
+                    coreWrapper.setSegmentationFixedFps(backgroundFps.value)
                 }
             }
         }
