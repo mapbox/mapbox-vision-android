@@ -303,7 +303,8 @@ internal class CameraVideoSourceImpl(
                                     // Auto focus should be continuous for camera preview.
                                     previewRequestBuilder.set(
                                             CaptureRequest.CONTROL_AF_MODE,
-                                            CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                                            CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                                    )
 
                                     // Finally, we start displaying the camera preview.
                                     cameraCaptureSession.setRepeatingRequest(
