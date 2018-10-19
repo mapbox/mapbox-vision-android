@@ -60,7 +60,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
@@ -69,7 +69,7 @@ dependencies {
     implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
 
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
-    api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
+//    api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
 }
 
 tasks.withType(Javadoc).all {
