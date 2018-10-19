@@ -1,11 +1,8 @@
 package com.mapbox.vision.telemetry
 
-import com.mapbox.android.telemetry.Event
 import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.android.telemetry.VisionEvent
-import com.mapbox.android.telemetry.VisionEventFactory
+import com.mapbox.android.telemetry.VisionObjectDetectionEvent
 import com.mapbox.vision.core.events.EventManager
-import java.util.*
 
 internal class MapboxTelemetryEventManager(
         private val mapboxTelemetry: MapboxTelemetry
@@ -32,11 +29,23 @@ internal class MapboxTelemetryEventManager(
     }
 
     override fun pushEvent() {
-        val event = VisionEventFactory().createVisionEvent(Event.Type.VIS_GENERAL) as VisionEvent
-        event.contents = HashMap<String, Any>(paramsMap)
-        event.setName(name)
-        mapboxTelemetry.push(event)
-        paramsMap.clear()
-    }
+        mapboxTelemetry.push(
+                VisionObjectDetectionEvent(paramsMap["created"].toString()).apply {
+                    objectLatitude = paramsMap["object_lat"] as? Double ?: .0
+                    objectLongitude = paramsMap["object_lat"] as? Double ?: .0
 
+                    vehicleLatitude = paramsMap["vehicle_lat"] as? Double ?: .0
+                    vehicleLongitude = paramsMap["vehicle_lon"] as? Double ?: .0
+
+                    clazz = paramsMap["class"]?.toString() ?: ""
+                    signValue = paramsMap["sign_value"]?.toString() ?: ""
+
+                    objectSizeWidth = paramsMap["object_size_width"] as? Double  ?: .0
+                    objectSizeHeight = paramsMap["object_size_height"] as? Double ?: .0
+
+                    objectPositionHeight = paramsMap["object_pos_height"] as? Double ?: .0
+                    distanceFromCamera = paramsMap["distance_from_camera"] as? Double ?: .0
+                }
+        )
+    }
 }
