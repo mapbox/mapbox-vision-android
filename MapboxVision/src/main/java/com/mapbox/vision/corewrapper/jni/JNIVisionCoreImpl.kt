@@ -6,7 +6,6 @@ import android.util.Log
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
 import com.mapbox.vision.core.map.MapDataSource
-import com.mapbox.vision.core.utils.SystemInfoUtils
 import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.corewrapper.update.jni.JNICoreUpdateManager
@@ -45,10 +44,7 @@ internal class JNIVisionCoreImpl constructor(
     private val coreWrapper = CoreWrapper(application, mapDataSource, externalFileDir, mapboxTelemetryEventManager)
 
     private val jniCoreUpdateManager = JNICoreUpdateManager(coreWrapper, application, imageWidth, imageHeight)
-    private val jniCorePerformanceManager = PerformanceManagerFactory(
-            isSnpeSupported = SystemInfoUtils.isSNPESupportedDevice()
-    )
-            .getPerformanceManager(coreWrapper)
+    private val jniCorePerformanceManager = PerformanceManagerFactory.getPerformanceManager(coreWrapper)
 
     private var isSessionRecording = false
 

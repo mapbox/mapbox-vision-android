@@ -112,7 +112,7 @@ internal class JNICoreUpdateManager(
     fun requestUpdate() {
         coreWrapper.requestUpdate()
 
-        if (visionEventsListener == null && visualizationUpdateListener?.get() == null) {
+        if (visualizationUpdateListener?.get() == null) {
             return
         }
 
