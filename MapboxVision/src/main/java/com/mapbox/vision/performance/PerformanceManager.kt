@@ -1,6 +1,5 @@
 package com.mapbox.vision.performance
 
-import android.os.Build
 import com.mapbox.vision.core.CoreWrapper
 import com.mapbox.vision.core.utils.snapdragon.SupportedSnapdragonBoards
 
@@ -8,7 +7,10 @@ internal interface PerformanceManager {
 
     fun setModelConfig(modelConfig: ModelPerformanceConfig)
 
-    class SnapdragonImpl(private val coreWrapper: CoreWrapper) : PerformanceManager {
+    class SnapdragonImpl(
+            private val coreWrapper: CoreWrapper,
+            private val boardName: String
+    ) : PerformanceManager {
 
         companion object {
 
@@ -121,36 +123,36 @@ internal interface PerformanceManager {
             }
         }
 
-        private val snpeChip = SnpeBoard.fromBoardName(Build.BOARD.toUpperCase())
+        private val snpeBoard = SnpeBoard.fromBoardName(boardName.toUpperCase())
 
         override fun setModelConfig(modelConfig: ModelPerformanceConfig) {
             when (modelConfig) {
                 is ModelPerformanceConfig.Merged -> {
                     setDetectionPerformance(
                             modelConfig.performance,
-                            minFps = snpeChip.getMinWorkingFps().mergedFpsRange,
-                            maxFps = snpeChip.getMaxFps(modelConfig.performance).mergedFpsRange,
-                            backgroundFps = snpeChip.getMinBackgroundFps().mergedFpsRange
+                            minFps = snpeBoard.getMinWorkingFps().mergedFpsRange,
+                            maxFps = snpeBoard.getMaxFps(modelConfig.performance).mergedFpsRange,
+                            backgroundFps = snpeBoard.getMinBackgroundFps().mergedFpsRange
                     )
                     setSegmentationPerformance(
                             modelConfig.performance,
-                            minFps = snpeChip.getMinWorkingFps().mergedFpsRange,
-                            maxFps = snpeChip.getMaxFps(modelConfig.performance).mergedFpsRange,
-                            backgroundFps = snpeChip.getMinBackgroundFps().mergedFpsRange
+                            minFps = snpeBoard.getMinWorkingFps().mergedFpsRange,
+                            maxFps = snpeBoard.getMaxFps(modelConfig.performance).mergedFpsRange,
+                            backgroundFps = snpeBoard.getMinBackgroundFps().mergedFpsRange
                     )
                 }
                 is ModelPerformanceConfig.Separate -> {
                     setDetectionPerformance(
                             modelConfig.detectionPerformance,
-                            minFps = snpeChip.getMinWorkingFps().detectionFps,
-                            maxFps = snpeChip.getMaxFps(modelConfig.detectionPerformance).detectionFps,
-                            backgroundFps = snpeChip.getMinBackgroundFps().detectionFps
+                            minFps = snpeBoard.getMinWorkingFps().detectionFps,
+                            maxFps = snpeBoard.getMaxFps(modelConfig.detectionPerformance).detectionFps,
+                            backgroundFps = snpeBoard.getMinBackgroundFps().detectionFps
                     )
                     setSegmentationPerformance(
                             modelConfig.segmentationPerformance,
-                            minFps = snpeChip.getMinWorkingFps().segmentationFps,
-                            maxFps = snpeChip.getMaxFps(modelConfig.segmentationPerformance).segmentationFps,
-                            backgroundFps = snpeChip.getMinBackgroundFps().segmentationFps
+                            minFps = snpeBoard.getMinWorkingFps().segmentationFps,
+                            maxFps = snpeBoard.getMaxFps(modelConfig.segmentationPerformance).segmentationFps,
+                            backgroundFps = snpeBoard.getMinBackgroundFps().segmentationFps
                     )
                 }
             }
@@ -186,7 +188,6 @@ internal interface PerformanceManager {
                 backgroundFps: Fps
         ) {
             when (modelPerformance) {
-
                 is ModelPerformance.On -> {
                     when (modelPerformance.mode) {
                         ModelPerformanceMode.FIXED -> {
