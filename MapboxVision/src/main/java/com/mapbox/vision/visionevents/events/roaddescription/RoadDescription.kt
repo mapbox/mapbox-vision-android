@@ -1,7 +1,6 @@
 package com.mapbox.vision.visionevents.events.roaddescription
 
 import com.mapbox.vision.core.buffers.RoadDescriptionDataBuffer
-import com.mapbox.vision.visionevents.WorldCoordinate
 import java.util.*
 
 /**
@@ -25,70 +24,85 @@ data class RoadDescription(
             val egoOffset = roadDescriptionArray[0]
             val visibleLeftLanes = roadDescriptionArray[1].toInt()
             val visibleRightLanes = roadDescriptionArray[2].toInt()
-            val visibleRevLanes = roadDescriptionArray[3].toInt()
+            val visibleReverseLanes = roadDescriptionArray[3].toInt()
             val seeLeftBorder = roadDescriptionArray[4] > 0
             val seeRightBorder = roadDescriptionArray[5] > 0
             val isValid = roadDescriptionArray[6] > 0
+            val width = roadDescriptionArray[7]
 
-            val lines = ArrayList<Line>(visibleLeftLanes + 1 + visibleRightLanes)
+            // FIXME handle me
+//            if (!isValid) {
+//                return null OR RoodDescription.Invalid
+//            }
 
-            // Fill left lines
-            for (i in 0 until visibleLeftLanes) {
+            val sameDirectionVisibleLanes = visibleLeftLanes + 1 + visibleRightLanes
+            val allVisibleLanes = sameDirectionVisibleLanes + visibleReverseLanes
+            val lines = ArrayList<Line>(allVisibleLanes)
 
-                val isLeftBorder = (i == 0)
-
-                val leftMarkingType = if (isLeftBorder && seeLeftBorder) {
-                    MarkingType.CURB
-                } else {
-                    MarkingType.UNKNOWN
+            for (laneIndex in (0..visibleReverseLanes)) {
+                val leftMarkingType = when {
+                    laneIndex != 0 -> MarkingType.DASHES // not left border
+                    seeLeftBorder -> MarkingType.CURB
+                    else -> MarkingType.UNKNOWN
                 }
 
-                val leftLineWorldPoints = emptyList<WorldCoordinate>()
-                val leftMarking = Marking(leftMarkingType, leftLineWorldPoints)
-
-                val rightLineWorldPoints = emptyList<WorldCoordinate>()
-                val rightMarking = Marking(MarkingType.SOLID, rightLineWorldPoints)
-
-                val line = Line(0.0, Direction.BACKWARD, leftMarking, rightMarking)
-
-                lines.add(line)
-            }
-
-            val currentTrackLeftLineWorldPoints = emptyList<WorldCoordinate>()
-            val currentTrackLeftMarking = Marking(MarkingType.SOLID, currentTrackLeftLineWorldPoints)
-
-            val currentTrackRightLineWorldPoints = emptyList<WorldCoordinate>()
-            val currentTrackRightMarking = Marking(MarkingType.SOLID, currentTrackRightLineWorldPoints)
-
-            val currentLine = Line(0.0, Direction.FORWARD, currentTrackLeftMarking, currentTrackRightMarking)
-            lines.add(currentLine)
-
-
-            // Fill right lines
-            for (i in 0 until visibleRightLanes) {
-
-                val isRightBorder = (i == 0)
-
-                val leftMarkingType = if (isRightBorder && seeRightBorder) {
-                    MarkingType.CURB
-                } else {
-                    MarkingType.UNKNOWN
+                val rightMarkingType = when {
+                    laneIndex != visibleReverseLanes - 1 -> MarkingType.DASHES
+                    else -> MarkingType.SOLID
                 }
 
-                val leftLineWorldPoints = emptyList<WorldCoordinate>()
-                val leftMarking = Marking(leftMarkingType, leftLineWorldPoints)
-
-                val rightLineWorldPoints = emptyList<WorldCoordinate>()
-                val rightMarking = Marking(MarkingType.SOLID, rightLineWorldPoints)
-
-
-                val line = Line(0.0, Direction.FORWARD, leftMarking, rightMarking)
-
-                lines.add(line)
-
+                lines.add(
+                        Line(
+                                width = width,
+                                direction = Direction.BACKWARD,
+                                leftMarking = Marking(
+                                        leftMarkingType,
+                                        worldPoints = emptyList() // TODO fill lane points
+                                ),
+                                rightMarking = Marking(
+                                        rightMarkingType,
+                                        worldPoints = emptyList()// TODO fill lane points
+                                )
+                        )
+                )
             }
 
-            return RoadDescription(roadDescriptionDataBuffer.roadDescriptionIdentifier, lines, visibleLeftLanes, egoOffset)
+            for (laneIndex in (0..sameDirectionVisibleLanes)) {
+                val leftMarkingType = when {
+                    laneIndex != 0 -> MarkingType.DASHES
+                    visibleReverseLanes != 0 -> MarkingType.DOUBLE_SOLID
+                    seeLeftBorder -> MarkingType.CURB
+                    else -> MarkingType.UNKNOWN
+                }
+
+                val rightMarkingType = when {
+                    laneIndex != sameDirectionVisibleLanes - 1 -> MarkingType.DASHES
+                    seeRightBorder -> MarkingType.CURB
+                    else -> MarkingType.UNKNOWN
+                }
+
+                lines.add(
+                        Line(
+                                width = width,
+                                direction = Direction.FORWARD,
+                                leftMarking = Marking(
+                                        leftMarkingType,
+                                        worldPoints = emptyList()// TODO fill lane points
+                                ),
+                                rightMarking = Marking(
+                                        rightMarkingType,
+                                        worldPoints = emptyList()// TODO fill lane points
+                                )
+                        )
+                )
+            }
+
+            return RoadDescription(
+                    identifier = roadDescriptionDataBuffer.roadDescriptionIdentifier,
+                    lines = lines,
+                    currentLane = visibleLeftLanes,
+                    currentLaneRelativePosition = egoOffset
+            )
         }
     }
 }

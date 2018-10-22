@@ -2,10 +2,13 @@ package com.mapbox.vision.models
 
 import java.util.*
 
-data class DistanceToCar(val worldPosition: DoubleArray, val leftRelPosition: DoubleArray, val rightRelPosition: DoubleArray,
-                         val suggestedDeceleration: Float, val state: CollisionAlertState) {
-
-
+data class DistanceToCar(
+        val worldPosition: DoubleArray,
+        val leftRelPosition: DoubleArray,
+        val rightRelPosition: DoubleArray,
+        val suggestedDeceleration: Float,
+        val state: CollisionAlertState
+) {
     enum class CollisionAlertState {
         CollisionAlertStateNotTriggered,
         CollisionAlertStateWarning,
