@@ -1,6 +1,12 @@
 package com.mapbox.vision.utils.drawer.distance
 
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
 import com.mapbox.vision.models.DistanceToCar
 import kotlin.math.roundToInt
 
@@ -26,7 +32,6 @@ class DistanceDrawerImpl : DistanceDrawer {
         it.getFontMetrics(fontMetrics)
         it.color = mainColor
     }
-
 
     override fun draw(bitmap: Bitmap, distanceToCar: DistanceToCar) {
         val bitmapCanvas = Canvas(bitmap)
@@ -68,8 +73,6 @@ class DistanceDrawerImpl : DistanceDrawer {
         val textStartX = ((bitmap.width * 0.5) - (textSize / 2)).toFloat()
         val textStartY = (bitmap.height - textBoxMarginY - textOffset).toFloat()
 
-
         bitmapCanvas.drawText(distance, textStartX, textStartY, textPaint);
-
     }
 }

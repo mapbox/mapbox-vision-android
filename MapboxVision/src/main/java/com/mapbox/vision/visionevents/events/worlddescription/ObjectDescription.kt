@@ -6,7 +6,7 @@ import com.mapbox.vision.visionevents.events.ObjectType
 /**
  * Represents detected object.
  *
- * @property distance meters from us
+ * @property distance from the car in meters
  * @property worldCoordinate coordinate, relative to us
  * @property objectType type of object
  */
