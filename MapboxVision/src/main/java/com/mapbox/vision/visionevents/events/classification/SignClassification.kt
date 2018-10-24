@@ -22,12 +22,6 @@ data class SignClassification(val identifier: Long, val sourceImage: Image, val 
         @JvmStatic
         internal fun fromSignClassificationDataBuffer(signClassificationDataBuffer: SignClassificationDataBuffer): SignClassification {
 
-            // Set of items - 10. For each:
-            // SignType
-            // TypeConfidence
-            // Number
-            // NumberConfidence
-            // Detection: 4 coordinates + 1 confidence + 1 type
             val signValuesItemsSize = signClassificationDataBuffer.signValueItems.size / 10
 
             val signValuesItems = ArrayList<SignValue>()
