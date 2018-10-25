@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.ar.ARDataProvider
+import com.mapbox.vision.core.utils.SystemInfoUtils
 import com.mapbox.vision.corewrapper.JNIVisionCoreFactory
 import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
@@ -31,6 +32,7 @@ import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
 import com.mapbox.vision.view.VisualizationUpdateListener
+import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.FrameSize
 import com.mapbox.vision.visionevents.ScreenCoordinate
 import com.mapbox.vision.visionevents.WorldCoordinate
@@ -321,6 +323,16 @@ object VisionManager : ARDataProvider {
     fun getPosition(): Position {
         checkManagerRunningState()
         return visionCore.getPosition()
+    }
+
+    /**
+     * @return current [CalibrationProgress] estimated by SDK.
+     *
+     * @throws [IllegalStateException] if called before [create] and [start]
+     */
+    fun getCalibrationProgress(): CalibrationProgress {
+        checkManagerRunningState()
+        return visionCore.getCalibrationProgress()
     }
 
     /**

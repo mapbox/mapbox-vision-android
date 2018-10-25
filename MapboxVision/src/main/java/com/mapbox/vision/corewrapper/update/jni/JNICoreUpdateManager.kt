@@ -10,6 +10,7 @@ import android.support.annotation.WorkerThread
 import android.util.Log
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
+import com.mapbox.vision.core.buffers.CalibrationDataBuffer
 import com.mapbox.vision.core.buffers.DetectionDataBuffer
 import com.mapbox.vision.core.buffers.PositionDataBuffer
 import com.mapbox.vision.core.buffers.RoadDescriptionDataBuffer
@@ -21,6 +22,7 @@ import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.view.VisualizationMode
 import com.mapbox.vision.view.VisualizationUpdateListener
+import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.events.Image
 import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
@@ -63,6 +65,10 @@ internal class JNICoreUpdateManager(
     // Position Event
     private var positionDataBuffer: PositionDataBuffer? = null
     private var lastKnownPositionId = 0L
+
+    // Calibration Progress Event
+    private var calibrationDataBuffer: CalibrationDataBuffer? = null
+    private var lastKnownCalibrationId = 0L
 
     private var visionEventsListener: VisionEventsListener? = null
     private var visualizationUpdateListener: WeakReference<VisualizationUpdateListener>? = null
@@ -122,6 +128,7 @@ internal class JNICoreUpdateManager(
         updateRoadDescription()
         updateWorldDescription()
         updatePosition()
+        updateCalibrationProgress()
     }
 
     fun getCurrentRoadDescription(): RoadDescription {
@@ -148,6 +155,14 @@ internal class JNICoreUpdateManager(
         return Position.fromPositionBuffer(positionDataBuffer!!)
     }
 
+    fun getCalibrationProgress(): CalibrationProgress {
+        if (calibrationDataBuffer == null) {
+            initCalibrationBuffer()
+        }
+        coreWrapper.requestCalibration()
+        return CalibrationProgress.fromBuffer(calibrationDataBuffer!!)
+    }
+
     fun onPause() {
         visualizationUpdateThreadHandler.stop()
         mainThreadHandler.stop()
@@ -170,11 +185,6 @@ internal class JNICoreUpdateManager(
     private fun initDetectionBuffer() {
         detectionDataBuffer = DetectionDataBuffer()
         coreWrapper.setDetectionDataBuffer(detectionDataBuffer!!)
-    }
-
-    private fun removeDetectionBuffer() {
-        coreWrapper.removeDetectionDataBuffer()
-        detectionDataBuffer = null
     }
 
     private fun updateDetections() {
@@ -244,11 +254,6 @@ internal class JNICoreUpdateManager(
     private fun initSegmentationBuffer() {
         segmentationDataBuffer = SegmentationDataBuffer()
         coreWrapper.setSegmentationDataBuffer(segmentationDataBuffer!!)
-    }
-
-    private fun removeSegmentationBuffer() {
-        coreWrapper.removeSegmentationDataBuffer()
-        segmentationDataBuffer = null
     }
 
     private fun updateSegmentation() {
@@ -338,11 +343,6 @@ internal class JNICoreUpdateManager(
         coreWrapper.setSignClassificationDataBuffer(signClassificationDataBuffer!!)
     }
 
-    private fun removeSignClassificationBuffer() {
-        coreWrapper.removeSignClassificationDataBuffer()
-        signClassificationDataBuffer = null
-    }
-
     private fun updateSignClassification() {
         if (signClassificationDataBuffer == null) {
             initSignClassificationBuffer()
@@ -400,11 +400,6 @@ internal class JNICoreUpdateManager(
         coreWrapper.setRoadDescriptionDataBuffer(roadDescriptionDataBuffer!!)
     }
 
-    private fun removeRoadDescriptionBuffer() {
-        coreWrapper.removeRoadDescriptionDataBuffer()
-        roadDescriptionDataBuffer = null
-    }
-
     private fun updateRoadDescription() {
         if (roadDescriptionDataBuffer == null) {
             initRoadDescriptionBuffer()
@@ -430,11 +425,6 @@ internal class JNICoreUpdateManager(
         coreWrapper.setWorldDescriptionDataBuffer(worldDescriptionDataBuffer!!)
     }
 
-    private fun removeWorldDescriptionBuffer() {
-        coreWrapper.removeWorldDescriptionDataBuffer()
-        worldDescriptionDataBuffer = null
-    }
-
     private fun updateWorldDescription() {
         if (worldDescriptionDataBuffer == null) {
             initWorldDescriptionBuffer()
@@ -446,7 +436,9 @@ internal class JNICoreUpdateManager(
 
         if (visionEventsListener != null) {
             val worldDescription = WorldDescription.fromWorldDescriptionDataBuffer(localWorldDescriptionBuffer)
-            mainThreadHandler.post { visionEventsListener?.worldDescriptionUpdated(worldDescription) }
+            mainThreadHandler.post {
+                visionEventsListener?.worldDescriptionUpdated(worldDescription)
+            }
         }
 
         lastKnownWorldDescriptionId = localWorldDescriptionBuffer.worldDescriptionIdentifier
@@ -457,11 +449,6 @@ internal class JNICoreUpdateManager(
     private fun initPositionBuffer() {
         positionDataBuffer = PositionDataBuffer()
         coreWrapper.setPositionDataBuffer(positionDataBuffer!!)
-    }
-
-    private fun removePositionBuffer() {
-        coreWrapper.removePositionDataBuffer()
-        positionDataBuffer = null
     }
 
     private fun updatePosition() {
@@ -480,31 +467,66 @@ internal class JNICoreUpdateManager(
 
         lastKnownPositionId = localPositionBuffer.positionIdentifier
     }
-    // End position
+
+    // Calibration
+    private fun initCalibrationBuffer() {
+        calibrationDataBuffer = CalibrationDataBuffer()
+        coreWrapper.setCalibrationDataBuffer(calibrationDataBuffer!!)
+    }
+
+    private fun updateCalibrationProgress() {
+        if (calibrationDataBuffer == null) {
+            initCalibrationBuffer()
+        }
+        val localCalibrationBuffer = calibrationDataBuffer ?: return
+        if (lastKnownCalibrationId == localCalibrationBuffer.identifier) {
+            return
+        }
+
+        println("update calibration 2")
+        if (visionEventsListener != null) {
+            val calibrationProgress = CalibrationProgress.fromBuffer(localCalibrationBuffer)
+            mainThreadHandler.post {
+                visionEventsListener?.calibrationProgressUpdated(calibrationProgress)
+            }
+        }
+
+        lastKnownCalibrationId = localCalibrationBuffer.identifier
+    }
+    // End calibration
 
     private fun releaseAllBuffers() {
         if (detectionDataBuffer != null) {
-            removeDetectionBuffer()
+            coreWrapper.removeDetectionDataBuffer()
+            detectionDataBuffer = null
         }
         if (segmentationDataBuffer != null) {
-            removeSegmentationBuffer()
+            coreWrapper.removeSegmentationDataBuffer()
+            segmentationDataBuffer = null
         }
         if (signClassificationDataBuffer != null) {
-            removeSignClassificationBuffer()
+            coreWrapper.removeSignClassificationDataBuffer()
+            signClassificationDataBuffer = null
         }
         if (roadDescriptionDataBuffer != null) {
-            removeRoadDescriptionBuffer()
+            coreWrapper.removeRoadDescriptionDataBuffer()
+            roadDescriptionDataBuffer = null
         }
         if (worldDescriptionDataBuffer != null) {
-            removeWorldDescriptionBuffer()
+            coreWrapper.removeWorldDescriptionDataBuffer()
+            worldDescriptionDataBuffer = null
         }
         if (positionDataBuffer != null) {
-            removePositionBuffer()
+            coreWrapper.removePositionDataBuffer()
+            positionDataBuffer = null
+        }
+        if (calibrationDataBuffer != null) {
+            coreWrapper.removeCalibrationDataBuffer()
+            calibrationDataBuffer = null
         }
     }
 
     companion object {
-        private const val TAG = "EventsListenerManager"
+        private const val TAG = "JNICoreUpdateManager"
     }
-
 }
