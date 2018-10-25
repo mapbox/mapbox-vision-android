@@ -22,6 +22,7 @@ import com.mapbox.vision.performance.PerformanceManagerFactory
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
+import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.ScreenCoordinate
 import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.Image
@@ -185,12 +186,13 @@ internal class JNIVisionCoreImpl constructor(
         isSessionRecording = false
     }
 
-
     override fun getWorldDescription(): WorldDescription = jniCoreUpdateManager.getCurrentWorldDescription()
 
     override fun getRoadDescription(): RoadDescription = jniCoreUpdateManager.getCurrentRoadDescription()
 
     override fun getPosition(): Position = jniCoreUpdateManager.getCurrentPosition()
+
+    override fun getCalibrationProgress(): CalibrationProgress = jniCoreUpdateManager.getCalibrationProgress()
 
     override fun getAndResetClipsTimeList(): List<VideoProcessor.VideoPart> {
         val floatParts = coreWrapper.getAndResetClipsTimeList()

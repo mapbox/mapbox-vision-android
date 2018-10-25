@@ -1,5 +1,6 @@
 package com.mapbox.vision.corewrapper.update
 
+import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
 import com.mapbox.vision.visionevents.events.position.Position
@@ -41,4 +42,9 @@ interface VisionEventsListener {
      * Estimated position is updated.
      */
     fun estimatedPositionUpdated(position: Position)
+
+    /**
+     * Camera calibration progress is updated.
+     */
+    fun calibrationProgressUpdated(calibrationProgress: CalibrationProgress)
 }

@@ -10,6 +10,7 @@ import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
+import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.ScreenCoordinate
 import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.Image
@@ -60,6 +61,8 @@ internal interface VisionCore {
     fun getRoadDescription(): RoadDescription
 
     fun getPosition(): Position
+
+    fun getCalibrationProgress(): CalibrationProgress
     // end get core data methods
 
     fun getAndResetClipsTimeList(): List<VideoProcessor.VideoPart>
