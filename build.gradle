@@ -8,8 +8,8 @@ buildscript {
     }
 
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
 
     dependencies {
@@ -23,10 +23,8 @@ buildscript {
 
 allprojects {
     repositories {
-        mavenLocal()
         google()
         jcenter()
         maven { url "https://mapbox.bintray.com/mapbox" }
-        maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
     }
 }

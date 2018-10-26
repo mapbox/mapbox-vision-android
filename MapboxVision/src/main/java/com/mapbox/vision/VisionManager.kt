@@ -5,18 +5,13 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.ar.ARDataProvider
-import com.mapbox.vision.core.utils.SystemInfoUtils
 import com.mapbox.vision.corewrapper.JNIVisionCoreFactory
 import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.CameraParamsData
-import com.mapbox.vision.models.DeviceMotionData
-import com.mapbox.vision.models.FrameStatistics
-import com.mapbox.vision.models.GPSData
-import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.models.*
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
@@ -61,6 +56,9 @@ object VisionManager : ARDataProvider {
     // Video buffer length
     private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L // 5 min
 
+    private const val CORE_UPDATE_DELAY = 33L // 30 FPS
+    private var lastCoreUpdateStartTime = 0L
+
     private val coreUpdateThreadHandler = WorkThreadHandler()
     private val extractCoreDataThreadHandler = WorkThreadHandler()
     private val mainThreadHandler = MainThreadHandler()
@@ -87,33 +85,37 @@ object VisionManager : ARDataProvider {
 
     // Listeners
     private val visionManagerVideoProcessorListener = object : VideoProcessorListener {
-        override fun onVideoPartsReady(videoPartMap: HashMap<String, VideoProcessor.VideoPart>, dirPath: String, jsonFilePath: String) {
+        override fun onVideoPartsReady(
+            videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
+            dirPath: String,
+            jsonFilePath: String
+        ) {
             telemetryManager.syncDataDir(dirPath)
         }
     }
 
     private val visionManagerLocationEngineListener = object : LocationEngineListener {
         override fun onNewLocation(
-                latitude: Double,
-                longitude: Double,
-                speed: Float,
-                altitude: Double,
-                horizontalAccuracy: Float,
-                verticalAccuracy: Float,
-                bearing: Float,
-                timestamp: Long
+            latitude: Double,
+            longitude: Double,
+            speed: Float,
+            altitude: Double,
+            horizontalAccuracy: Float,
+            verticalAccuracy: Float,
+            bearing: Float,
+            timestamp: Long
         ) {
             visionCore.setGPSData(
-                    GPSData(
-                            latitude = latitude,
-                            longitude = longitude,
-                            speed = speed,
-                            altitude = altitude,
-                            horizontalAccuracy = horizontalAccuracy,
-                            verticalAccuracy = verticalAccuracy,
-                            bearing = bearing,
-                            timestamp = timestamp
-                    )
+                GPSData(
+                    latitude = latitude,
+                    longitude = longitude,
+                    speed = speed,
+                    altitude = altitude,
+                    horizontalAccuracy = horizontalAccuracy,
+                    verticalAccuracy = verticalAccuracy,
+                    bearing = bearing,
+                    timestamp = timestamp
+                )
             )
         }
     }
@@ -133,9 +135,6 @@ object VisionManager : ARDataProvider {
 
         override fun onNewFrame(rgbBytes: ByteArray) {
             visionCore.setRGBABytes(rgbBytes, videoSource.getSourceWidth(), videoSource.getSourceHeight())
-            if (coreUpdateThreadHandler.isStarted() && !isCoreUpdating) {
-                coreUpdateThreadHandler.post { requestCoreUpdate() }
-            }
         }
 
         override fun onNewBitmap(bitmap: Bitmap) {
@@ -148,10 +147,10 @@ object VisionManager : ARDataProvider {
 
         override fun onFileRecorded(recordedFilePath: String) {
             videoProcessor.splitVideoToParts(
-                    parts = clipTimes,
-                    fullVideoPath = recordedFilePath,
-                    saveDirPath = previousDataDirPath,
-                    startRecordCoreMillis = startRecordCoreMillis
+                parts = clipTimes,
+                fullVideoPath = recordedFilePath,
+                saveDirPath = previousDataDirPath,
+                startRecordCoreMillis = startRecordCoreMillis
             )
         }
     }
@@ -193,7 +192,7 @@ object VisionManager : ARDataProvider {
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_CLIENT_NAME)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
         visionCore = JNIVisionCoreFactory(application, MapboxTelemetryEventManager(mapboxTelemetry))
-                .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
+            .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
 
         videoSource = CameraVideoSourceImpl(application, FRAME_WIDTH, FRAME_HEIGHT)
         sensorsRequestsManager = SensorsRequestsManager(application)
@@ -239,6 +238,10 @@ object VisionManager : ARDataProvider {
 
         sensorsRequestsManager.startDataRequesting()
         locationEngine.attach(visionManagerLocationEngineListener)
+
+        if (coreUpdateThreadHandler.isStarted() && !isCoreUpdating) {
+            coreUpdateThreadHandler.post { requestCoreUpdate() }
+        }
 
         isStarted = true
     }
@@ -457,8 +460,16 @@ object VisionManager : ARDataProvider {
             return
         }
         isCoreUpdating = true
+        lastCoreUpdateStartTime = System.currentTimeMillis()
         visionCore.requestUpdate()
         isCoreUpdating = false
+        val coreUpdateRunDifference =  System.currentTimeMillis() - lastCoreUpdateStartTime
+        val delay = CORE_UPDATE_DELAY - coreUpdateRunDifference
+        if (delay >= 0) {
+            coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, delay)
+        } else {
+            coreUpdateThreadHandler.post { requestCoreUpdate() }
+        }
     }
 
     private fun startAllHandlers() {
