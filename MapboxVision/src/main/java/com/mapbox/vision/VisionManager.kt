@@ -56,7 +56,8 @@ object VisionManager : ARDataProvider {
     // Video buffer length
     private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L // 5 min
 
-    private const val CORE_UPDATE_DELAY = 33L // Desired update rate 30 FPS
+    // Desired update rate up to 30 FPS
+    private const val CORE_UPDATE_DELAY_MILLIS = 33L
 
     private val coreUpdateThreadHandler = WorkThreadHandler()
     private val extractCoreDataThreadHandler = WorkThreadHandler()
@@ -455,7 +456,7 @@ object VisionManager : ARDataProvider {
         val lastCoreUpdateStartTime = System.currentTimeMillis()
         visionCore.requestUpdate()
         val coreUpdateRunTime = System.currentTimeMillis() - lastCoreUpdateStartTime
-        coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, CORE_UPDATE_DELAY - coreUpdateRunTime)
+        coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, CORE_UPDATE_DELAY_MILLIS - coreUpdateRunTime)
     }
 
     private fun startAllHandlers() {
