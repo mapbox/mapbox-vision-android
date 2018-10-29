@@ -66,7 +66,6 @@ object VisionManager : ARDataProvider {
     private lateinit var mapboxToken: String
     private lateinit var mapboxTelemetry: MapboxTelemetry
     private lateinit var visionCore: VisionCore
-    private var isCoreUpdating = false
 
     private lateinit var videoSource: VideoSource
     private lateinit var sensorsRequestsManager: SensorsRequestsManager
@@ -238,9 +237,7 @@ object VisionManager : ARDataProvider {
         sensorsRequestsManager.startDataRequesting()
         locationEngine.attach(visionManagerLocationEngineListener)
 
-        if (coreUpdateThreadHandler.isStarted() && !isCoreUpdating) {
-            coreUpdateThreadHandler.post { requestCoreUpdate() }
-        }
+        coreUpdateThreadHandler.post { requestCoreUpdate() }
 
         isStarted = true
     }
@@ -455,20 +452,10 @@ object VisionManager : ARDataProvider {
     }
 
     private fun requestCoreUpdate() {
-        if (isCoreUpdating) {
-            return
-        }
-        isCoreUpdating = true
         val lastCoreUpdateStartTime = System.currentTimeMillis()
         visionCore.requestUpdate()
-        isCoreUpdating = false
-        val coreUpdateRunTime =  System.currentTimeMillis() - lastCoreUpdateStartTime
-        val delay = CORE_UPDATE_DELAY - coreUpdateRunTime
-        if (delay > 0) {
-            coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, delay)
-        } else {
-            coreUpdateThreadHandler.post { requestCoreUpdate() }
-        }
+        val coreUpdateRunTime = System.currentTimeMillis() - lastCoreUpdateStartTime
+        coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, CORE_UPDATE_DELAY - coreUpdateRunTime)
     }
 
     private fun startAllHandlers() {
