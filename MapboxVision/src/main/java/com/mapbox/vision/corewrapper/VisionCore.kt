@@ -58,7 +58,7 @@ internal interface VisionCore {
     // Get core data methods
     fun getWorldDescription(): WorldDescription
 
-    fun getRoadDescription(): RoadDescription
+    fun getRoadDescription(): RoadDescription?
 
     fun getPosition(): Position
 

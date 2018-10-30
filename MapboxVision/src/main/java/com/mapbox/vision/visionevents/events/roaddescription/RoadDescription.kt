@@ -1,7 +1,8 @@
 package com.mapbox.vision.visionevents.events.roaddescription
 
+import android.util.Log
 import com.mapbox.vision.core.buffers.RoadDescriptionDataBuffer
-import java.util.*
+import com.mapbox.vision.visionevents.WorldCoordinate
 
 /**
  * @property identifier unique identifier
@@ -10,15 +11,26 @@ import java.util.*
  * @property currentLaneRelativePosition relative position of car in current line. 0 means left line border, 1 - right line border.
  */
 data class RoadDescription(
-        val identifier: Long,
-        val lines: List<Line>,
-        val currentLane: Int,
-        val currentLaneRelativePosition: Double
+    val identifier: Long,
+    val lines: List<Line>,
+    val currentLane: Int,
+    val currentLaneRelativePosition: Double
 ) {
 
     companion object {
 
-        internal fun fromRoadDescriptionBuffer(roadDescriptionDataBuffer: RoadDescriptionDataBuffer): RoadDescription {
+        const val TAG = "RoadDescription"
+
+        internal fun fromRoadDescriptionBuffer(roadDescriptionDataBuffer: RoadDescriptionDataBuffer): RoadDescription? {
+
+            fun getWorldCoordinatesList(
+                linesGeometryList: List<List<WorldCoordinate>>,
+                index: Int
+            ): List<WorldCoordinate> = if (linesGeometryList.size > index) {
+                linesGeometryList[index]
+            } else {
+                emptyList()
+            }
 
             val roadDescriptionArray = roadDescriptionDataBuffer.roadDescriptionArray
             val egoOffset = roadDescriptionArray[0]
@@ -30,16 +42,36 @@ data class RoadDescription(
             val isValid = roadDescriptionArray[6] > 0
             val width = roadDescriptionArray[7]
 
-            // FIXME handle me
-//            if (!isValid) {
-//                return null OR RoodDescription.Invalid
-//            }
+            if (!isValid) {
+                Log.e(TAG, "Data is not valid ")
+                return null
+            }
+
+            val linesGeometryList = ArrayList<List<WorldCoordinate>>()
+
+            if (roadDescriptionDataBuffer.linesGeometryDataArray.isNotEmpty()) {
+                var index = 0
+                for (i in 0..roadDescriptionDataBuffer.linesGeometryDataArray.size / 12) {
+
+                    val lineGeometry = ArrayList<WorldCoordinate>()
+                    for (j in 0..3) {
+                        for (k in 0..2) {
+                            val x = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
+                            val y = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
+                            val z = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
+                            lineGeometry.add(WorldCoordinate(x, y, z))
+                        }
+                    }
+                    linesGeometryList.add(lineGeometry)
+                }
+            }
+
 
             val sameDirectionVisibleLanes = visibleLeftLanes + 1 + visibleRightLanes
             val allVisibleLanes = sameDirectionVisibleLanes + visibleReverseLanes
             val lines = ArrayList<Line>(allVisibleLanes)
 
-            for (laneIndex in (0..visibleReverseLanes)) {
+            for (laneIndex in (0 until visibleReverseLanes)) {
                 val leftMarkingType = when {
                     laneIndex != 0 -> MarkingType.DASHES // not left border
                     seeLeftBorder -> MarkingType.CURB
@@ -52,22 +84,28 @@ data class RoadDescription(
                 }
 
                 lines.add(
-                        Line(
-                                width = width,
-                                direction = Direction.BACKWARD,
-                                leftMarking = Marking(
-                                        leftMarkingType,
-                                        worldPoints = emptyList() // TODO fill lane points
-                                ),
-                                rightMarking = Marking(
-                                        rightMarkingType,
-                                        worldPoints = emptyList()// TODO fill lane points
-                                )
+                    Line(
+                        width = width,
+                        direction = Direction.BACKWARD,
+                        leftMarking = Marking(
+                            leftMarkingType,
+                            worldPoints = getWorldCoordinatesList(
+                                linesGeometryList,
+                                laneIndex
+                            )
+                        ),
+                        rightMarking = Marking(
+                            rightMarkingType,
+                            worldPoints = getWorldCoordinatesList(
+                                linesGeometryList,
+                                laneIndex + 1
+                            )
                         )
+                    )
                 )
             }
 
-            for (laneIndex in (0..sameDirectionVisibleLanes)) {
+            for (laneIndex in (0 until sameDirectionVisibleLanes)) {
                 val leftMarkingType = when {
                     laneIndex != 0 -> MarkingType.DASHES
                     visibleReverseLanes != 0 -> MarkingType.DOUBLE_SOLID
@@ -82,26 +120,32 @@ data class RoadDescription(
                 }
 
                 lines.add(
-                        Line(
-                                width = width,
-                                direction = Direction.FORWARD,
-                                leftMarking = Marking(
-                                        leftMarkingType,
-                                        worldPoints = emptyList()// TODO fill lane points
-                                ),
-                                rightMarking = Marking(
-                                        rightMarkingType,
-                                        worldPoints = emptyList()// TODO fill lane points
-                                )
+                    Line(
+                        width = width,
+                        direction = Direction.FORWARD,
+                        leftMarking = Marking(
+                            leftMarkingType,
+                            worldPoints = getWorldCoordinatesList(
+                                linesGeometryList,
+                                visibleReverseLanes + laneIndex
+                            )
+                        ),
+                        rightMarking = Marking(
+                            rightMarkingType,
+                            worldPoints = getWorldCoordinatesList(
+                                linesGeometryList,
+                                visibleReverseLanes + laneIndex + 1
+                            )
                         )
+                    )
                 )
             }
 
             return RoadDescription(
-                    identifier = roadDescriptionDataBuffer.roadDescriptionIdentifier,
-                    lines = lines,
-                    currentLane = visibleLeftLanes,
-                    currentLaneRelativePosition = egoOffset
+                identifier = roadDescriptionDataBuffer.roadDescriptionIdentifier,
+                lines = lines,
+                currentLane = visibleLeftLanes + visibleReverseLanes,
+                currentLaneRelativePosition = egoOffset
             )
         }
     }
