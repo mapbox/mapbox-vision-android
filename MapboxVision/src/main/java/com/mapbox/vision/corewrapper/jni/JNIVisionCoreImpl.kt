@@ -188,7 +188,7 @@ internal class JNIVisionCoreImpl constructor(
 
     override fun getWorldDescription(): WorldDescription = jniCoreUpdateManager.getCurrentWorldDescription()
 
-    override fun getRoadDescription(): RoadDescription = jniCoreUpdateManager.getCurrentRoadDescription()
+    override fun getRoadDescription(): RoadDescription? = jniCoreUpdateManager.getCurrentRoadDescription()
 
     override fun getPosition(): Position = jniCoreUpdateManager.getCurrentPosition()
 

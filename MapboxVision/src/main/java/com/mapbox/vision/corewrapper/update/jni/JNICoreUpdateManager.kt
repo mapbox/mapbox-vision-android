@@ -131,7 +131,7 @@ internal class JNICoreUpdateManager(
         updateCalibrationProgress()
     }
 
-    fun getCurrentRoadDescription(): RoadDescription {
+    fun getCurrentRoadDescription(): RoadDescription? {
         if (roadDescriptionDataBuffer == null) {
             initRoadDescriptionBuffer()
         }
@@ -411,7 +411,9 @@ internal class JNICoreUpdateManager(
 
         if (visionEventsListener != null) {
             val roadDescriptionEvent = RoadDescription.fromRoadDescriptionBuffer(localRoadDescriptionBuffer)
-            mainThreadHandler.post { visionEventsListener?.roadDescriptionUpdated(roadDescriptionEvent) }
+            if(roadDescriptionEvent != null) {
+                mainThreadHandler.post { visionEventsListener?.roadDescriptionUpdated(roadDescriptionEvent) }
+            }
         }
 
         lastKnownRoadDescriptionId = localRoadDescriptionBuffer.roadDescriptionIdentifier

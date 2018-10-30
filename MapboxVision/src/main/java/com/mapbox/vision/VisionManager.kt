@@ -296,11 +296,11 @@ object VisionManager : ARDataProvider {
     }
 
     /**
-     * @return current road situation.
+     * @return current road situation or NULL in case of data is not ready .
      *
      * @throws [IllegalStateException] if called before [create] and [start]
      */
-    fun getRoadDescription(): RoadDescription {
+    fun getRoadDescription(): RoadDescription? {
         checkManagerRunningState()
         return visionCore.getRoadDescription()
     }
