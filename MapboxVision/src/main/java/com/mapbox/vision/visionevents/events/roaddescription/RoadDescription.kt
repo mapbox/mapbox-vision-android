@@ -43,33 +43,34 @@ data class RoadDescription(
             val width = roadDescriptionArray[7]
 
             if (!isValid) {
-                Log.e(TAG, "Data is not valid ")
+                Log.e(TAG, "Road description is not valid")
                 return null
-            }
-
-            val linesGeometryList = ArrayList<List<WorldCoordinate>>()
-
-            if (roadDescriptionDataBuffer.linesGeometryDataArray.isNotEmpty()) {
-                var index = 0
-                for (i in 0..roadDescriptionDataBuffer.linesGeometryDataArray.size / 12) {
-
-                    val lineGeometry = ArrayList<WorldCoordinate>()
-                    for (j in 0..3) {
-                        for (k in 0..2) {
-                            val x = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
-                            val y = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
-                            val z = roadDescriptionDataBuffer.linesGeometryDataArray[index++]
-                            lineGeometry.add(WorldCoordinate(x, y, z))
-                        }
-                    }
-                    linesGeometryList.add(lineGeometry)
-                }
             }
 
 
             val sameDirectionVisibleLanes = visibleLeftLanes + 1 + visibleRightLanes
             val allVisibleLanes = sameDirectionVisibleLanes + visibleReverseLanes
             val lines = ArrayList<Line>(allVisibleLanes)
+
+            val lanesGeometryList = ArrayList<List<WorldCoordinate>>()
+
+            if (roadDescriptionDataBuffer.lanesGeometryDataArray.isNotEmpty()) {
+                var index = 0
+                val pointsPerLane = roadDescriptionDataBuffer.lanesGeometryDataArray.size / 3 / allVisibleLanes
+                for (i in 0 until allVisibleLanes) {
+
+                    val lineGeometry = ArrayList<WorldCoordinate>()
+                    for (j in 0 until pointsPerLane) {
+                        for (k in 0..2) {
+                            val x = roadDescriptionDataBuffer.lanesGeometryDataArray[index++]
+                            val y = roadDescriptionDataBuffer.lanesGeometryDataArray[index++]
+                            val z = roadDescriptionDataBuffer.lanesGeometryDataArray[index++]
+                            lineGeometry.add(WorldCoordinate(x, y, z))
+                        }
+                    }
+                    lanesGeometryList.add(lineGeometry)
+                }
+            }
 
             for (laneIndex in (0 until visibleReverseLanes)) {
                 val leftMarkingType = when {
@@ -90,14 +91,14 @@ data class RoadDescription(
                         leftMarking = Marking(
                             leftMarkingType,
                             worldPoints = getWorldCoordinatesList(
-                                linesGeometryList,
+                                lanesGeometryList,
                                 laneIndex
                             )
                         ),
                         rightMarking = Marking(
                             rightMarkingType,
                             worldPoints = getWorldCoordinatesList(
-                                linesGeometryList,
+                                lanesGeometryList,
                                 laneIndex + 1
                             )
                         )
@@ -126,14 +127,14 @@ data class RoadDescription(
                         leftMarking = Marking(
                             leftMarkingType,
                             worldPoints = getWorldCoordinatesList(
-                                linesGeometryList,
+                                lanesGeometryList,
                                 visibleReverseLanes + laneIndex
                             )
                         ),
                         rightMarking = Marking(
                             rightMarkingType,
                             worldPoints = getWorldCoordinatesList(
-                                linesGeometryList,
+                                lanesGeometryList,
                                 visibleReverseLanes + laneIndex + 1
                             )
                         )
