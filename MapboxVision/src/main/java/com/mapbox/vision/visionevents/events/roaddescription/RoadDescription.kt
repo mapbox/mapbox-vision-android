@@ -11,10 +11,10 @@ import com.mapbox.vision.visionevents.WorldCoordinate
  * @property currentLaneRelativePosition relative position of car in current line. 0 means left line border, 1 - right line border.
  */
 data class RoadDescription(
-    val identifier: Long,
-    val lines: List<Line>,
-    val currentLane: Int,
-    val currentLaneRelativePosition: Double
+        val identifier: Long,
+        val lines: List<Line>,
+        val currentLane: Int,
+        val currentLaneRelativePosition: Double
 ) {
 
     companion object {
@@ -24,8 +24,8 @@ data class RoadDescription(
         internal fun fromRoadDescriptionBuffer(roadDescriptionDataBuffer: RoadDescriptionDataBuffer): RoadDescription? {
 
             fun getWorldCoordinatesList(
-                linesGeometryList: List<List<WorldCoordinate>>,
-                index: Int
+                    linesGeometryList: List<List<WorldCoordinate>>,
+                    index: Int
             ): List<WorldCoordinate> = if (linesGeometryList.size > index) {
                 linesGeometryList[index]
             } else {
@@ -85,24 +85,24 @@ data class RoadDescription(
                 }
 
                 lines.add(
-                    Line(
-                        width = width,
-                        direction = Direction.BACKWARD,
-                        leftMarking = Marking(
-                            leftMarkingType,
-                            worldPoints = getWorldCoordinatesList(
-                                lanesGeometryList,
-                                laneIndex
-                            )
-                        ),
-                        rightMarking = Marking(
-                            rightMarkingType,
-                            worldPoints = getWorldCoordinatesList(
-                                lanesGeometryList,
-                                laneIndex + 1
-                            )
+                        Line(
+                                width = width,
+                                direction = Direction.BACKWARD,
+                                leftMarking = Marking(
+                                        leftMarkingType,
+                                        worldPoints = getWorldCoordinatesList(
+                                                lanesGeometryList,
+                                                laneIndex
+                                        )
+                                ),
+                                rightMarking = Marking(
+                                        rightMarkingType,
+                                        worldPoints = getWorldCoordinatesList(
+                                                lanesGeometryList,
+                                                laneIndex + 1
+                                        )
+                                )
                         )
-                    )
                 )
             }
 
@@ -121,32 +121,32 @@ data class RoadDescription(
                 }
 
                 lines.add(
-                    Line(
-                        width = width,
-                        direction = Direction.FORWARD,
-                        leftMarking = Marking(
-                            leftMarkingType,
-                            worldPoints = getWorldCoordinatesList(
-                                lanesGeometryList,
-                                visibleReverseLanes + laneIndex
-                            )
-                        ),
-                        rightMarking = Marking(
-                            rightMarkingType,
-                            worldPoints = getWorldCoordinatesList(
-                                lanesGeometryList,
-                                visibleReverseLanes + laneIndex + 1
-                            )
+                        Line(
+                                width = width,
+                                direction = Direction.FORWARD,
+                                leftMarking = Marking(
+                                        leftMarkingType,
+                                        worldPoints = getWorldCoordinatesList(
+                                                lanesGeometryList,
+                                                visibleReverseLanes + laneIndex
+                                        )
+                                ),
+                                rightMarking = Marking(
+                                        rightMarkingType,
+                                        worldPoints = getWorldCoordinatesList(
+                                                lanesGeometryList,
+                                                visibleReverseLanes + laneIndex + 1
+                                        )
+                                )
                         )
-                    )
                 )
             }
 
             return RoadDescription(
-                identifier = roadDescriptionDataBuffer.roadDescriptionIdentifier,
-                lines = lines,
-                currentLane = visibleLeftLanes + visibleReverseLanes,
-                currentLaneRelativePosition = egoOffset
+                    identifier = roadDescriptionDataBuffer.roadDescriptionIdentifier,
+                    lines = lines,
+                    currentLane = visibleLeftLanes + visibleReverseLanes,
+                    currentLaneRelativePosition = egoOffset
             )
         }
     }
