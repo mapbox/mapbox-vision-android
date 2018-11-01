@@ -11,7 +11,12 @@ import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.*
+import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.models.DeviceMotionData
+import com.mapbox.vision.models.FrameStatistics
+import com.mapbox.vision.models.GPSData
+import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.models.LaneDepartureState
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
@@ -85,9 +90,9 @@ object VisionManager : ARDataProvider {
     // Listeners
     private val visionManagerVideoProcessorListener = object : VideoProcessorListener {
         override fun onVideoPartsReady(
-            videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
-            dirPath: String,
-            jsonFilePath: String
+                videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
+                dirPath: String,
+                jsonFilePath: String
         ) {
             telemetryManager.syncDataDir(dirPath)
         }
@@ -95,26 +100,26 @@ object VisionManager : ARDataProvider {
 
     private val visionManagerLocationEngineListener = object : LocationEngineListener {
         override fun onNewLocation(
-            latitude: Double,
-            longitude: Double,
-            speed: Float,
-            altitude: Double,
-            horizontalAccuracy: Float,
-            verticalAccuracy: Float,
-            bearing: Float,
-            timestamp: Long
+                latitude: Double,
+                longitude: Double,
+                speed: Float,
+                altitude: Double,
+                horizontalAccuracy: Float,
+                verticalAccuracy: Float,
+                bearing: Float,
+                timestamp: Long
         ) {
             visionCore.setGPSData(
-                GPSData(
-                    latitude = latitude,
-                    longitude = longitude,
-                    speed = speed,
-                    altitude = altitude,
-                    horizontalAccuracy = horizontalAccuracy,
-                    verticalAccuracy = verticalAccuracy,
-                    bearing = bearing,
-                    timestamp = timestamp
-                )
+                    GPSData(
+                            latitude = latitude,
+                            longitude = longitude,
+                            speed = speed,
+                            altitude = altitude,
+                            horizontalAccuracy = horizontalAccuracy,
+                            verticalAccuracy = verticalAccuracy,
+                            bearing = bearing,
+                            timestamp = timestamp
+                    )
             )
         }
     }
@@ -146,10 +151,10 @@ object VisionManager : ARDataProvider {
 
         override fun onFileRecorded(recordedFilePath: String) {
             videoProcessor.splitVideoToParts(
-                parts = clipTimes,
-                fullVideoPath = recordedFilePath,
-                saveDirPath = previousDataDirPath,
-                startRecordCoreMillis = startRecordCoreMillis
+                    parts = clipTimes,
+                    fullVideoPath = recordedFilePath,
+                    saveDirPath = previousDataDirPath,
+                    startRecordCoreMillis = startRecordCoreMillis
             )
         }
     }
@@ -191,7 +196,7 @@ object VisionManager : ARDataProvider {
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_CLIENT_NAME)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
         visionCore = JNIVisionCoreFactory(application, MapboxTelemetryEventManager(mapboxTelemetry))
-            .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
+                .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
 
         videoSource = CameraVideoSourceImpl(application, FRAME_WIDTH, FRAME_HEIGHT)
         sensorsRequestsManager = SensorsRequestsManager(application)
@@ -333,6 +338,16 @@ object VisionManager : ARDataProvider {
     fun getCalibrationProgress(): CalibrationProgress {
         checkManagerRunningState()
         return visionCore.getCalibrationProgress()
+    }
+
+    /**
+     * @return current [LaneDepartureState] estimated by SDK.
+     *
+     * @throws [IllegalStateException] if called before [create] and [start]
+     */
+    fun getLaneDepartureState(): LaneDepartureState {
+        checkManagerRunningState()
+        return visionCore.getLaneDepartureState()
     }
 
     /**
