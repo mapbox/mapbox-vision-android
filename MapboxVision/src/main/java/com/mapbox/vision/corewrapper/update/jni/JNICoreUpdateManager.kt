@@ -18,7 +18,7 @@ import com.mapbox.vision.core.buffers.SegmentationDataBuffer
 import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
 import com.mapbox.vision.core.buffers.WorldDescriptionDataBuffer
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
-import com.mapbox.vision.models.LaneDepartureState
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.view.VisualizationMode

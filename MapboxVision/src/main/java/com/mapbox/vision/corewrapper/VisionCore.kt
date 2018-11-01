@@ -6,7 +6,7 @@ import com.mapbox.vision.models.CameraParamsData
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
-import com.mapbox.vision.models.LaneDepartureState
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
