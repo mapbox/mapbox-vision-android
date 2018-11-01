@@ -13,6 +13,7 @@ import com.mapbox.vision.models.CameraParamsData
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.models.LaneDepartureState
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
@@ -222,6 +223,8 @@ internal class JNIVisionCoreImpl constructor(
         }
         return data
     }
+
+    override fun getLaneDepartureState(): LaneDepartureState = jniCoreUpdateManager.getLaneDepartureState()
 
     override fun getFrameStatistics(): FloatArray = coreWrapper.getFrameStat()
 

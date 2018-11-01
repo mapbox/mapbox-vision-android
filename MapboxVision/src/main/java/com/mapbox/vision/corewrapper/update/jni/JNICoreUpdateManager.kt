@@ -18,6 +18,7 @@ import com.mapbox.vision.core.buffers.SegmentationDataBuffer
 import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
 import com.mapbox.vision.core.buffers.WorldDescriptionDataBuffer
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
+import com.mapbox.vision.models.LaneDepartureState
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.view.VisualizationMode
@@ -41,6 +42,8 @@ internal class JNICoreUpdateManager(
 
     private val mainThreadHandler = MainThreadHandler().also { it.start() }
     private val visualizationUpdateThreadHandler = WorkThreadHandler("VisualizationUpdateThread").also { it.start() }
+
+    private val eventsUpdateThreadHandler = WorkThreadHandler("EventsUpdateThreadHandler").also { it.start() }
 
     // Detection Event
     private var detectionDataBuffer: DetectionDataBuffer? = null
@@ -69,6 +72,9 @@ internal class JNICoreUpdateManager(
     // Calibration Progress Event
     private var calibrationDataBuffer: CalibrationDataBuffer? = null
     private var lastKnownCalibrationId = 0L
+
+    // LaneDepartureState event
+    var lastKnownLaneDepartureState = LaneDepartureState.Normal
 
     private var visionEventsListener: VisionEventsListener? = null
     private var visualizationUpdateListener: WeakReference<VisualizationUpdateListener>? = null
@@ -122,13 +128,17 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        updateDetections()
-        updateSegmentation()
-        updateSignClassification()
-        updateRoadDescription()
-        updateWorldDescription()
-        updatePosition()
-        updateCalibrationProgress()
+        eventsUpdateThreadHandler.post {
+            updateDetections()
+            updateSegmentation()
+            updateSignClassification()
+            updateRoadDescription()
+            updateWorldDescription()
+            updatePosition()
+            updateCalibrationProgress()
+            updateLaneDepartureState()
+        }
+
     }
 
     fun getCurrentRoadDescription(): RoadDescription? {
@@ -163,19 +173,31 @@ internal class JNICoreUpdateManager(
         return CalibrationProgress.fromBuffer(calibrationDataBuffer!!)
     }
 
+    fun getLaneDepartureState(): LaneDepartureState {
+        val index = coreWrapper.getLaneDepartureState()
+        if(index in 0 until LaneDepartureState.values().size) {
+            return LaneDepartureState.values()[index]
+        }
+        return LaneDepartureState.Alert
+    }
+
+
     fun onPause() {
         visualizationUpdateThreadHandler.stop()
+        eventsUpdateThreadHandler.stop()
         mainThreadHandler.stop()
     }
 
     fun onResume() {
         mainThreadHandler.start()
         visualizationUpdateThreadHandler.start()
+        eventsUpdateThreadHandler.start()
     }
 
     fun release() {
         releaseAllBuffers()
         visualizationUpdateThreadHandler.stop()
+        eventsUpdateThreadHandler.stop()
         mainThreadHandler.stop()
     }
 
@@ -411,7 +433,7 @@ internal class JNICoreUpdateManager(
 
         if (visionEventsListener != null) {
             val roadDescriptionEvent = RoadDescription.fromRoadDescriptionBuffer(localRoadDescriptionBuffer)
-            if(roadDescriptionEvent != null) {
+            if (roadDescriptionEvent != null) {
                 mainThreadHandler.post { visionEventsListener?.roadDescriptionUpdated(roadDescriptionEvent) }
             }
         }
@@ -485,7 +507,6 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        println("update calibration 2")
         if (visionEventsListener != null) {
             val calibrationProgress = CalibrationProgress.fromBuffer(localCalibrationBuffer)
             mainThreadHandler.post {
@@ -496,6 +517,21 @@ internal class JNICoreUpdateManager(
         lastKnownCalibrationId = localCalibrationBuffer.identifier
     }
     // End calibration
+
+    // Lane Departure State
+    private fun updateLaneDepartureState() {
+        if (visionEventsListener == null) {
+            return
+        }
+        val laneDepartureState = getLaneDepartureState()
+        if (lastKnownLaneDepartureState == laneDepartureState) {
+            return
+        }
+        mainThreadHandler.post {
+            visionEventsListener?.laneDepartureStateUpdated(laneDepartureState)
+        }
+
+    }
 
     private fun releaseAllBuffers() {
         if (detectionDataBuffer != null) {

@@ -1,5 +1,6 @@
 package com.mapbox.vision.corewrapper.update
 
+import com.mapbox.vision.models.LaneDepartureState
 import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
@@ -47,4 +48,9 @@ interface VisionEventsListener {
      * Camera calibration progress is updated.
      */
     fun calibrationProgressUpdated(calibrationProgress: CalibrationProgress)
+
+    /**
+     * Lane Departure State is updated.
+     */
+    fun laneDepartureStateUpdated(laneDepartureState: LaneDepartureState)
 }
