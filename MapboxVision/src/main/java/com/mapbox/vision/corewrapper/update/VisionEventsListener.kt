@@ -1,6 +1,6 @@
 package com.mapbox.vision.corewrapper.update
 
-import com.mapbox.vision.models.LaneDepartureState
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
