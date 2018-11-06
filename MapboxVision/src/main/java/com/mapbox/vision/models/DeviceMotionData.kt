@@ -2,9 +2,14 @@ package com.mapbox.vision.models
 
 import java.util.*
 
-data class DeviceMotionData(val rotations: FloatArray = FloatArray(3), val orientations: FloatArray = FloatArray(3),
-                            val screenOrientation: Int = 0, val gravity: FloatArray = FloatArray(3),
-                            val userAcceleration: FloatArray = FloatArray(3), val heading: Float = 0f) {
+data class DeviceMotionData(
+        val rotations: FloatArray = FloatArray(3),
+        val orientations: FloatArray = FloatArray(3),
+        val screenOrientation: Int = 0,
+        val gravity: FloatArray = FloatArray(3),
+        val userAcceleration: FloatArray = FloatArray(3),
+        val heading: Float = 0f
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
