@@ -29,7 +29,7 @@ internal interface TelemetrySyncManager {
         private val threadHandler = WorkThreadHandler()
         private val fileCompressor = ZipFileCompressorImpl()
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
-        private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
+        private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
         private val bytesTracker = TotalBytesSentCounter()
         private val uuidUtil = UuidUtil(context)
         @Suppress("DEPRECATION")
