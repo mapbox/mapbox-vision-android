@@ -5,6 +5,8 @@ import android.support.annotation.WorkerThread
 import android.util.Log
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
+import com.mapbox.vision.core.events.EventManager
+import com.mapbox.vision.core.events.ImageSaver
 import com.mapbox.vision.core.map.MapDataSource
 import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
@@ -13,17 +15,16 @@ import com.mapbox.vision.models.CameraParamsData
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
-import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.performance.PerformanceManagerFactory
-import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.visionevents.ScreenCoordinate
 import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.Image
@@ -40,10 +41,17 @@ internal class JNIVisionCoreImpl constructor(
         mapDataSource: MapDataSource,
         externalFileDir: String,
         application: Application,
-        mapboxTelemetryEventManager: MapboxTelemetryEventManager
+        mapboxTelemetryEventManager: EventManager,
+        imageSaver: ImageSaver
 ) : VisionCore {
 
-    private val coreWrapper = CoreWrapper(application, mapDataSource, externalFileDir, mapboxTelemetryEventManager)
+    private val coreWrapper = CoreWrapper(
+            application,
+            mapDataSource,
+            externalFileDir,
+            mapboxTelemetryEventManager,
+            imageSaver
+    )
 
     private val jniCoreUpdateManager = JNICoreUpdateManager(coreWrapper, application, imageWidth, imageHeight)
     private val jniCorePerformanceManager = PerformanceManagerFactory.getPerformanceManager(coreWrapper)

@@ -16,14 +16,13 @@ import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.FrameStatistics
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
-import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
 import com.mapbox.vision.sensors.SensorsRequestsManager
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
-import com.mapbox.vision.telemetry.TelemetrySyncManager
-import com.mapbox.vision.utils.FileUtils
+import com.mapbox.vision.telemetry.TelemetryImageSaver
+import com.mapbox.vision.telemetry.TelemetryManager
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
@@ -34,12 +33,12 @@ import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.FrameSize
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.visionevents.ScreenCoordinate
 import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
-import java.io.File
 import java.lang.ref.WeakReference
 import kotlin.properties.Delegates
 
@@ -78,12 +77,11 @@ object VisionManager : ARDataProvider {
     private lateinit var locationEngine: LocationEngine
     private lateinit var videoProcessor: VideoProcessor
 
-    private lateinit var telemetryManager: TelemetrySyncManager
+    private lateinit var telemetryManager: TelemetryManager
+    private val telemetryImageSaver = TelemetryImageSaver()
 
-    // Telemetry recording
-    private lateinit var telemetryDirPath: String
-    private var currentDataDirPath: String = ""
-    private var previousDataDirPath: String = ""
+    private var currentTelemetryDir: String = ""
+    private var previousTelemetryDir: String = ""
     private var startRecordCoreMillis = 0L
     private var clipTimes: List<VideoProcessor.VideoPart> = emptyList()
 
@@ -94,7 +92,7 @@ object VisionManager : ARDataProvider {
                 dirPath: String,
                 jsonFilePath: String
         ) {
-            telemetryManager.syncDataDir(dirPath)
+            telemetryManager.syncSessionDir(dirPath)
         }
     }
 
@@ -153,7 +151,7 @@ object VisionManager : ARDataProvider {
             videoProcessor.splitVideoToParts(
                     parts = clipTimes,
                     fullVideoPath = recordedFilePath,
-                    saveDirPath = previousDataDirPath,
+                    saveDirPath = previousTelemetryDir,
                     startRecordCoreMillis = startRecordCoreMillis
             )
         }
@@ -195,7 +193,11 @@ object VisionManager : ARDataProvider {
 
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_CLIENT_NAME)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-        visionCore = JNIVisionCoreFactory(application, MapboxTelemetryEventManager(mapboxTelemetry))
+        visionCore = JNIVisionCoreFactory(
+                application = application,
+                eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
+                imageSaver = telemetryImageSaver
+        )
                 .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
 
         videoSource = CameraVideoSourceImpl(application, FRAME_WIDTH, FRAME_HEIGHT)
@@ -204,8 +206,7 @@ object VisionManager : ARDataProvider {
         locationEngine = AndroidLocationEngineImpl(application)
         videoProcessor = VideoProcessor.Impl()
 
-        telemetryDirPath = FileUtils.getTelemetryDirPath(application)
-        telemetryManager = TelemetrySyncManager.Impl(mapboxTelemetry, application)
+        telemetryManager = TelemetryManager.Impl(mapboxTelemetry, application)
 
         isCreated = true
     }
@@ -503,48 +504,30 @@ object VisionManager : ARDataProvider {
     }
 
     private fun startSessionRecording() {
-        if (currentDataDirPath.isEmpty()) {
-            currentDataDirPath = getNextDirName()
-        }
-        visionCore.startDataSavingSession(currentDataDirPath)
+        currentTelemetryDir = telemetryManager.generateNextSessionDir()
+        telemetryImageSaver.setSessionDir(currentTelemetryDir)
+        visionCore.startDataSavingSession(currentTelemetryDir)
         startRecordCoreMillis = visionCore.getCoreMilliseconds()
         mainThreadHandler.postDelayed({
             stopSessionRecording()
             videoSource.stopVideoRecording()
             startSessionRecording()
             mainThreadHandler.post { videoSource.startVideoRecording() }
-
         }, RESTART_SESSION_RECORDING_DELAY_MILLIS)
     }
 
     private fun stopSessionRecording() {
         visionCore.stopDataSavingSession()
         clipTimes = visionCore.getAndResetClipsTimeList()
-        previousDataDirPath = currentDataDirPath
-        currentDataDirPath = ""
-    }
-
-    private fun getNextDirName(): String {
-        val file = File(telemetryDirPath, System.currentTimeMillis().toString())
-        if (!file.exists() && !file.mkdirs()) {
-            return ""
-        }
-
-        return "${file.absolutePath}/"
+        previousTelemetryDir = currentTelemetryDir
+        currentTelemetryDir = ""
     }
 
     private fun startTelemetry() {
-        if (!mapboxTelemetry.enable()) {
-            Log.e(TAG, "Can not enable telemetry")
-        } else {
+        if (mapboxTelemetry.enable()) {
             telemetryManager.reset()
-            File(telemetryDirPath).listFiles().forEach {
-                if (it.list().isEmpty()) {
-                    it.delete()
-                } else {
-                    telemetryManager.syncDataDir(it.absolutePath)
-                }
-            }
+        } else {
+            Log.e(TAG, "Can not enable telemetry")
         }
     }
 

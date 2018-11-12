@@ -18,12 +18,12 @@ import com.mapbox.vision.core.buffers.SegmentationDataBuffer
 import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
 import com.mapbox.vision.core.buffers.WorldDescriptionDataBuffer
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
-import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.view.VisualizationMode
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.visionevents.events.Image
 import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
@@ -175,7 +175,7 @@ internal class JNICoreUpdateManager(
 
     fun getLaneDepartureState(): LaneDepartureState {
         val index = coreWrapper.getLaneDepartureState()
-        if(index in 0 until LaneDepartureState.values().size) {
+        if (index in 0 until LaneDepartureState.values().size) {
             return LaneDepartureState.values()[index]
         }
         return LaneDepartureState.Alert
@@ -260,10 +260,13 @@ internal class JNICoreUpdateManager(
         if (visualizationListener?.getCurrentMode() == VisualizationMode.DETECTION) {
             visualizationUpdateThreadHandler.post {
                 visualizationListener.onDetectionsUpdated(detections.detections)
-                sourceImageOutputAllocation.copyFrom(coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier))
-                sourceImageOutputAllocation.copyTo(visualizationListener.getBitmapBuffer())
-                mainThreadHandler.post {
-                    visualizationListener.onByteArrayUpdated()
+                val array = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)
+                if (!array.isEmpty()) {
+                    sourceImageOutputAllocation.copyFrom(array)
+                    sourceImageOutputAllocation.copyTo(visualizationListener.getBitmapBuffer())
+                    mainThreadHandler.post {
+                        visualizationListener.onByteArrayUpdated()
+                    }
                 }
             }
         }
@@ -316,7 +319,6 @@ internal class JNICoreUpdateManager(
                 }
             }
             segmentationMask.sourceImage.setImageSource(sourceImageSource)
-
 
             val maskSource = object : Image.ImageSource {
                 override fun getImageBytes(): ByteArray? {
