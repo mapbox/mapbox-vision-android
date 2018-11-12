@@ -4,6 +4,7 @@ import android.content.Context
 import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
+import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.UuidUtil
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.threads.WorkThreadHandler
@@ -14,43 +15,54 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal interface TelemetrySyncManager {
+internal interface TelemetryManager {
 
-    fun syncDataDir(path: String)
+    fun syncSessionDir(path: String)
     fun reset()
+    fun generateNextSessionDir(): String
 
     class Impl(
             private val mapboxTelemetry: MapboxTelemetry,
-            private val context: Context
-    ) : TelemetrySyncManager, AttachmentListener {
+            context: Context
+    ) : TelemetryManager, AttachmentListener {
 
         private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
+        private val imageZipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
         private val videoQueue = ConcurrentLinkedQueue<AttachmentProperties>()
         private val threadHandler = WorkThreadHandler()
         private val fileCompressor = ZipFileCompressorImpl()
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
-        private val bytesTracker = TotalBytesSentCounter()
+        private val bytesTracker = TotalBytesCounter.Impl()
         private val uuidUtil = UuidUtil(context)
         @Suppress("DEPRECATION")
         private val locale = context.resources.configuration.locale.country.toUpperCase()
 
-        private val inProgress = AtomicBoolean(false)
+        private val uploadInProgress = AtomicBoolean(false)
+
+        private val rootTelemetryDir: String
 
         init {
             mapboxTelemetry.addAttachmentListener(this)
             threadHandler.start()
+            rootTelemetryDir = FileUtils.getTelemetryDirPath(context)
         }
 
-        override fun syncDataDir(path: String) {
+        override fun syncSessionDir(path: String) {
             val dirFile = File(path)
 
-            removeDirectoriesOutsideMaxSize(dirFile.parentFile)
+            removeTelemetryOverQuota(dirFile.parentFile)
 
-            (zipDataFiles(path) { file ->
+            zipDataFiles("telemetry", path) { file ->
                 file.name.endsWith("bin") || file.name.endsWith("json")
-            })?.let { zippedTelemetry ->
+            }?.let { zippedTelemetry ->
                 zipQueue.add(zippedTelemetry.toAttachmentProperties(FORMAT_ZIP, TYPE_ZIP, MEDIA_TYPE_ZIP))
+            }
+
+            zipDataFiles("images", path) { file ->
+                file.name.endsWith("png")
+            }?.let { zippedTelemetry ->
+                imageZipQueue.add(zippedTelemetry.toAttachmentProperties(FORMAT_ZIP, TYPE_ZIP, MEDIA_TYPE_ZIP))
             }
 
             dirFile.listFiles { file ->
@@ -69,7 +81,7 @@ internal interface TelemetrySyncManager {
             processQueues()
         }
 
-        private fun removeDirectoriesOutsideMaxSize(rootTelemetryDirectory: File) {
+        private fun removeTelemetryOverQuota(rootTelemetryDirectory: File) {
             val totalTelemetrySize = rootTelemetryDirectory.directorySizeRecursive()
             if (totalTelemetrySize > MAX_TELEMETRY_SIZE) {
                 var bytesToRemove = totalTelemetrySize - MAX_TELEMETRY_SIZE
@@ -83,6 +95,9 @@ internal interface TelemetrySyncManager {
                     zipQueue.removeAll {
                         it.absolutePath.contains(telemetryDir.path)
                     }
+                    imageZipQueue.removeAll {
+                        it.absolutePath.contains(telemetryDir.path)
+                    }
                     videoQueue.removeAll {
                         it.absolutePath.contains(telemetryDir.path)
                     }
@@ -93,7 +108,7 @@ internal interface TelemetrySyncManager {
             }
 
             threadHandler.removeAllTasks()
-            inProgress.set(false)
+            uploadInProgress.set(false)
         }
 
         private fun File.directorySizeRecursive(): Long = if (!isDirectory) {
@@ -117,19 +132,20 @@ internal interface TelemetrySyncManager {
             )
         }
 
-        private fun zipDataFiles(dirPath: String, filter: (File) -> Boolean): File? {
+        private fun zipDataFiles(fileName: String, dirPath: String, filter: (File) -> Boolean): File? {
             val dirFile = File(dirPath)
             if (!dirFile.exists() || !dirFile.isDirectory) {
                 return null
             }
 
-            val output = File(dirPath, "telemetry.$FORMAT_ZIP")
-            if (!output.exists()) {
-                output.createNewFile()
-            }
             val filesToZip = dirFile.listFiles(filter)
             if (filesToZip.isEmpty()) {
                 return null
+            }
+
+            val output = File(dirPath, "$fileName.$FORMAT_ZIP")
+            if (!output.exists()) {
+                output.createNewFile()
             }
 
             fileCompressor.compress(files = filesToZip, outFilePath = output.absolutePath)
@@ -141,21 +157,20 @@ internal interface TelemetrySyncManager {
         }
 
         private fun processQueues() {
-            if (inProgress.get()) return
-            inProgress.set(true)
+            if (uploadInProgress.get()) return
+            uploadInProgress.set(true)
 
-            val zip = zipQueue.peek()
-            val video = videoQueue.peek()
+            val attachment = zipQueue.peek() ?: imageZipQueue.peek() ?: videoQueue.peek()
             when {
-                zip != null -> sendAttachment(zip)
-                video != null -> sendAttachment(video)
-                else -> inProgress.set(false)
+                attachment != null -> {
+                    sendAttachment(attachment)
+                }
+                else -> uploadInProgress.set(false)
             }
         }
 
         private fun sendAttachment(attachmentProperties: AttachmentProperties) {
             val file = File(attachmentProperties.absolutePath)
-
             if (bytesTracker.trackSentBytes(file.length())) {
                 sendFile(file, attachmentProperties)
             } else {
@@ -184,79 +199,51 @@ internal interface TelemetrySyncManager {
 
         override fun reset() {
             zipQueue.clear()
+            imageZipQueue.clear()
             videoQueue.clear()
             threadHandler.removeAllTasks()
-            inProgress.set(false)
+
+            File(rootTelemetryDir).listFiles().forEach {
+                if (it.list().isEmpty()) {
+                    it.delete()
+                } else {
+                    syncSessionDir(it.absolutePath)
+                }
+            }
+
+            uploadInProgress.set(false)
         }
 
         override fun onAttachmentResponse(message: String?, code: Int, fileIds: MutableList<String>?) {
             fileIds?.forEach { zipFileId ->
-                if (!zipQueue.removeFileById(zipFileId)) {
-                    videoQueue.removeFileById(zipFileId)
-                }
+                if (zipQueue.removeByFileId(zipFileId)) return@forEach
+                if (imageZipQueue.removeByFileId(zipFileId)) return@forEach
+                videoQueue.removeByFileId(zipFileId)
             }
-            inProgress.set(false)
+            uploadInProgress.set(false)
             processQueues()
         }
 
-        private fun ConcurrentLinkedQueue<AttachmentProperties>.removeFileById(fileId: String): Boolean {
-            val zipFile = firstOrNull { it.metadata.fileId == fileId }
-            if (zipFile != null) {
-                File(zipFile.absolutePath).delete()
-            }
-            remove(zipFile)
-
-            return zipFile != null
-        }
+        private fun ConcurrentLinkedQueue<AttachmentProperties>.removeByFileId(fileId: String): Boolean =
+            this.firstOrNull { it.metadata.fileId == fileId }
+                    ?.also { attachment ->
+                        File(attachment.absolutePath).delete()
+                        remove(attachment)
+                    } != null
 
         override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
-            inProgress.set(false)
+            uploadInProgress.set(false)
             processQueues()
         }
 
-        companion object {
-            private const val MAX_TELEMETRY_SIZE = 300 * 1024 * 1024L // 300 MB
-        }
-    }
-
-    private class TotalBytesSentCounter {
-
-        companion object {
-            private const val SESSION_LENGTH_MILLIS = 60 * 60 * 1000L // one hour
-            private const val MAX_BYTES_PER_SESSION = 30 * 1024 * 1024L // 30 MB
-        }
-
-        private var timestampSessionStart: Long = 0
-        private var bytesSentSession: Long = 0
-
-        fun trackSentBytes(bytes: Long): Boolean {
-
-            val timestamp = System.currentTimeMillis()
-
-            return when {
-                timestampSessionStart + SESSION_LENGTH_MILLIS < timestamp -> {
-                    timestampSessionStart = timestamp
-                    bytesSentSession = bytes
-                    true
-                }
-                bytesSentSession + bytes < MAX_BYTES_PER_SESSION -> {
-                    bytesSentSession += bytes
-                    true
-                }
-                else -> {
-                    false
-                }
+        override fun generateNextSessionDir(): String {
+            val file = File(rootTelemetryDir, System.currentTimeMillis().toString())
+            if (!file.exists() && !file.mkdirs()) {
+                return ""
             }
-        }
 
-        fun millisToNextSession() = (timestampSessionStart + SESSION_LENGTH_MILLIS - System.currentTimeMillis()).let { sessionLength ->
-            when {
-                sessionLength < 0 -> 0
-                sessionLength > SESSION_LENGTH_MILLIS -> SESSION_LENGTH_MILLIS
-                else -> sessionLength
-            }
+            return "${file.absolutePath}/"
         }
-
     }
 
     private data class AttachmentProperties(
@@ -266,7 +253,7 @@ internal interface TelemetrySyncManager {
     )
 
     companion object {
-        private const val TAG = "TelemetrySyncManager"
+        private const val MAX_TELEMETRY_SIZE = 300 * 1024 * 1024L // 300 MB
 
         private val MEDIA_TYPE_ZIP: MediaType = MediaType.parse("application/zip")!!
         private val MEDIA_TYPE_MP4: MediaType = MediaType.parse("video/mp4")!!

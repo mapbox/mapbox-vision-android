@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 
-internal class WorkThreadHandler(val handleThreadName: String = HANDLE_THREAD_NAME) : ThreadHandler {
+internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_THREAD_NAME) : ThreadHandler {
 
     private lateinit var workThread: HandlerThread
     private lateinit var workThreadHandler: Handler
