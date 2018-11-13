@@ -6,7 +6,7 @@ import com.mapbox.vision.visionevents.events.worlddescription.ObjectDescription
  * Possible collision with other car.
  */
 data class Collision(
-        val car: ObjectDescription,
+        val objectDescription: ObjectDescription,
         val deceleration: Float,
         val timeToImpact: Float,
         val state: CollisionState

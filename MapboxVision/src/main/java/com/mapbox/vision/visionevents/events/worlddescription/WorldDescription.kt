@@ -13,15 +13,16 @@ import com.mapbox.vision.visionevents.events.detection.Detection
  * NOTE : Currently holds only info about car in front of ours.
  */
 data class WorldDescription(
-        val identifier: Long,
-        val objects: List<ObjectDescription>,
-        val collisions: List<Collision>
+    val identifier: Long,
+    val objects: List<ObjectDescription>,
+    val collisions: List<Collision>,
+    val carInFrontIndex: Int
 ) {
 
     companion object {
 
         internal fun fromWorldDescriptionDataBuffer(
-                worldDescriptionDataBuffer: WorldDescriptionDataBuffer
+            worldDescriptionDataBuffer: WorldDescriptionDataBuffer
         ): WorldDescription {
 
             val cars = worldDescriptionDataBuffer.cars.let { cars ->
@@ -30,25 +31,25 @@ data class WorldDescription(
 
                 (0 until size).map { it * 11 }.forEach { index ->
                     result.add(
-                            ObjectDescription(
-                                    distance = cars[index],
-                                    worldCoordinate = WorldCoordinate(
-                                            x = cars[index + 1],
-                                            y = cars[index + 2],
-                                            z = cars[index + 3]
-                                    ),
-                                    detection = Detection(
-                                            boundingBox = Rect(
-                                                    cars[index + 7].toInt(),
-                                                    cars[index + 8].toInt(),
-                                                    cars[index + 9].toInt(),
-                                                    cars[index + 10].toInt()
+                        ObjectDescription(
+                            distance = cars[index],
+                            worldCoordinate = WorldCoordinate(
+                                x = cars[index + 1],
+                                y = cars[index + 2],
+                                z = cars[index + 3]
+                            ),
+                            detection = Detection(
+                                boundingBox = Rect(
+                                    cars[index + 7].toInt(),
+                                    cars[index + 8].toInt(),
+                                    cars[index + 9].toInt(),
+                                    cars[index + 10].toInt()
 
-                                            ),
-                                            objectType = ObjectType.values()[cars[index + 4].toInt()],
-                                            confidence = cars[index + 5]
-                                    )
+                                ),
+                                objectType = ObjectType.values()[cars[index + 4].toInt()],
+                                confidence = cars[index + 5]
                             )
+                        )
                     )
                 }
 
@@ -61,12 +62,12 @@ data class WorldDescription(
 
                 (0 until size).map { it * 4 }.forEach { index ->
                     result.add(
-                            Collision(
-                                    car = cars[collisions[index].toInt()],
-                                    deceleration = collisions[index + 1],
-                                    state = Collision.CollisionState.values()[collisions[index + 2].toInt()],
-                                    timeToImpact = collisions[index + 3]
-                            )
+                        Collision(
+                            objectDescription = cars[collisions[index].toInt()],
+                            deceleration = collisions[index + 1],
+                            state = Collision.CollisionState.values()[collisions[index + 2].toInt()],
+                            timeToImpact = collisions[index + 3]
+                        )
                     )
                 }
 
@@ -75,9 +76,10 @@ data class WorldDescription(
 
 
             return WorldDescription(
-                    identifier = worldDescriptionDataBuffer.worldDescriptionIdentifier,
-                    objects = cars,
-                    collisions = collisions
+                identifier = worldDescriptionDataBuffer.worldDescriptionIdentifier,
+                objects = cars,
+                collisions = collisions,
+                carInFrontIndex = worldDescriptionDataBuffer.carInFrontIndex
             )
         }
     }
