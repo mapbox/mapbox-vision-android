@@ -25,29 +25,29 @@ data class WorldDescription(
             worldDescriptionDataBuffer: WorldDescriptionDataBuffer
         ): WorldDescription {
 
-            val cars = worldDescriptionDataBuffer.cars.let { cars ->
-                val size = cars.size / 11;
+            val objects = worldDescriptionDataBuffer.objects.let { objects ->
+                val size = objects.size / 11;
                 val result = mutableListOf<ObjectDescription>()
 
                 (0 until size).map { it * 11 }.forEach { index ->
                     result.add(
                         ObjectDescription(
-                            distance = cars[index],
+                            distance = objects[index],
                             worldCoordinate = WorldCoordinate(
-                                x = cars[index + 1],
-                                y = cars[index + 2],
-                                z = cars[index + 3]
+                                x = objects[index + 1],
+                                y = objects[index + 2],
+                                z = objects[index + 3]
                             ),
                             detection = Detection(
                                 boundingBox = Rect(
-                                    cars[index + 7].toInt(),
-                                    cars[index + 8].toInt(),
-                                    cars[index + 9].toInt(),
-                                    cars[index + 10].toInt()
+                                    objects[index + 7].toInt(),
+                                    objects[index + 8].toInt(),
+                                    objects[index + 9].toInt(),
+                                    objects[index + 10].toInt()
 
                                 ),
-                                objectType = ObjectType.values()[cars[index + 4].toInt()],
-                                confidence = cars[index + 5]
+                                objectType = ObjectType.values()[objects[index + 4].toInt()],
+                                confidence = objects[index + 5]
                             )
                         )
                     )
@@ -63,7 +63,7 @@ data class WorldDescription(
                 (0 until size).map { it * 4 }.forEach { index ->
                     result.add(
                         Collision(
-                            objectDescription = cars[collisions[index].toInt()],
+                            objectDescription = objects[collisions[index].toInt()],
                             deceleration = collisions[index + 1],
                             state = Collision.CollisionState.values()[collisions[index + 2].toInt()],
                             timeToImpact = collisions[index + 3]
@@ -77,7 +77,7 @@ data class WorldDescription(
 
             return WorldDescription(
                 identifier = worldDescriptionDataBuffer.worldDescriptionIdentifier,
-                objects = cars,
+                objects = objects,
                 collisions = collisions,
                 carInFrontIndex = worldDescriptionDataBuffer.carInFrontIndex
             )
