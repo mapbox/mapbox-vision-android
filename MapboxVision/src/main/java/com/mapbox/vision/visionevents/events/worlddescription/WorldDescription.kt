@@ -10,7 +10,8 @@ import com.mapbox.vision.visionevents.events.detection.Detection
 /**
  * List of detected [objects], possible [collisions].
  *
- * NOTE : Currently holds only info about car in front of ours.
+ * @property identifier Uniq for the session ID for each world description object
+ * @property carInFrontIndex Index of car in front of the vehicle. Could be -1 in case of absence of the car in front
  */
 data class WorldDescription(
     val identifier: Long,

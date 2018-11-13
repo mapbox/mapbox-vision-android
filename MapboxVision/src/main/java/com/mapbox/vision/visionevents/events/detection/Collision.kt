@@ -3,7 +3,7 @@ package com.mapbox.vision.visionevents.events.detection
 import com.mapbox.vision.visionevents.events.worlddescription.ObjectDescription
 
 /**
- * Possible collision with other car.
+ * Possible collision with other objects.
  */
 data class Collision(
         val objectDescription: ObjectDescription,
