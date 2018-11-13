@@ -53,11 +53,12 @@ internal interface TelemetryManager {
 
             removeTelemetryOverQuota(dirFile.parentFile)
 
-            zipDataFiles("telemetry", path) { file ->
-                file.name.endsWith("bin") || file.name.endsWith("json")
-            }?.let { zippedTelemetry ->
-                zipQueue.add(zippedTelemetry.toAttachmentProperties(FORMAT_ZIP, TYPE_ZIP, MEDIA_TYPE_ZIP))
-            }
+            // Switch off telemetry sending
+//            zipDataFiles("telemetry", path) { file ->
+//                file.name.endsWith("bin") || file.name.endsWith("json")
+//            }?.let { zippedTelemetry ->
+//                zipQueue.add(zippedTelemetry.toAttachmentProperties(FORMAT_ZIP, TYPE_ZIP, MEDIA_TYPE_ZIP))
+//            }
 
             zipDataFiles("images", path) { file ->
                 file.name.endsWith("png")
