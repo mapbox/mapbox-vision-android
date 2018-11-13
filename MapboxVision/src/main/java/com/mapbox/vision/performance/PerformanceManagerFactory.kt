@@ -11,7 +11,7 @@ internal object PerformanceManagerFactory {
         if (supportedSnpeBoard.isNotBlank()) {
             return PerformanceManager.SnapdragonImpl(coreWrapper, supportedSnpeBoard)
         } else {
-            TODO("Device does not support SNPE! Vision SDK does not work with this device yet.")
+            return StubPerformanceManagerImp(coreWrapper)
         }
     }
 }
