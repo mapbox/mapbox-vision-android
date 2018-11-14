@@ -178,7 +178,7 @@ internal class JNICoreUpdateManager(
         if (index in 0 until LaneDepartureState.values().size) {
             return LaneDepartureState.values()[index]
         }
-        return LaneDepartureState.Alert
+        return LaneDepartureState.Normal
     }
 
 
