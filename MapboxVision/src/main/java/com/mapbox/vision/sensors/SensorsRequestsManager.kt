@@ -19,21 +19,22 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
     private var lastAccuracy = 0
 
     private val sensorManager: SensorManager = application.getSystemService(Activity.SENSOR_SERVICE) as SensorManager
-    private val screenOrientation = (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+    private val screenOrientation =
+        (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
 
     private val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-    private val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val gameRotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+    private val gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
     private val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
 
     private val gravity = FloatArray(3)
     private val geomagnetic = FloatArray(3)
 
     private val rotations = FloatArray(3)
-    private val orientation = FloatArray(3)
+    private val orientations = FloatArray(3)
 
-    private val userAcceleration = FloatArray(9)
+    private val userAccelerationWithGravity = FloatArray(3)
 
     private val rotationMatrix = FloatArray(9)
 
@@ -46,17 +47,17 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
     }
 
     fun startDataRequesting() {
-        if (accelerometerSensor == null || magneticSensor == null || rotationSensor == null) {
+        if (accelerometerSensor == null || magneticSensor == null) {
             return
         }
         sensorManager.registerListener(this, accelerometerSensor, SENSOR_DELAY_MICROS)
         sensorManager.registerListener(this, magneticSensor, SENSOR_DELAY_MICROS)
-        sensorManager.registerListener(this, rotationSensor, SENSOR_DELAY_MICROS)
         sensorManager.registerListener(this, gameRotationSensor, SENSOR_DELAY_MICROS)
         sensorManager.registerListener(this, gravitySensor, SENSOR_DELAY_MICROS)
+        sensorManager.registerListener(this, gyroscopeSensor, SENSOR_DELAY_MICROS)
 
         if (sensorDataListener != null) {
-            listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY)
+            listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
         }
     }
 
@@ -79,28 +80,26 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
             lastTimestamp = event.timestamp / 1000000
             when (event.sensor.type) {
                 TYPE_ACCELEROMETER -> {
-
-                    userAcceleration[0] = event.values[0]
-                    userAcceleration[1] = event.values[1]
-                    userAcceleration[2] = event.values[2]
+                    userAccelerationWithGravity[0] = event.values[0]
+                    userAccelerationWithGravity[1] = event.values[1]
+                    userAccelerationWithGravity[2] = event.values[2]
                 }
                 TYPE_MAGNETIC_FIELD -> {
-                    // mGeomagnetic = event.values;
                     geomagnetic[0] = event.values[0]
                     geomagnetic[1] = event.values[1]
                     geomagnetic[2] = event.values[2]
                 }
-                TYPE_ROTATION_VECTOR -> {
+                TYPE_GYROSCOPE -> {
                     System.arraycopy(event.values, 0, rotations, 0, rotations.size)
                 }
                 TYPE_GAME_ROTATION_VECTOR -> {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                    SensorManager.getOrientation(rotationMatrix, orientation)
+                    SensorManager.getOrientation(rotationMatrix, orientations)
 
                     // Hack for current core impl
-                    orientation[0] = orientation[0] * -1
-                    orientation[2] = orientation[2] * -1
-
+                    // TODO what the huck?
+                    orientations[0] = orientations[0] * -1
+                    orientations[2] = orientations[2] * -1
                 }
                 TYPE_GRAVITY -> {
                     gravity[0] = event.values[0]
@@ -120,23 +119,35 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
 
         synchronized(this) {
 
-            var heading = Math.toDegrees(orientation[0].toDouble())
+            var heading = Math.toDegrees(orientations[0].toDouble())
             if (heading < 0) {
                 heading += 360
             }
 
-            listener.onDeviceMotionDataReady(DeviceMotionData(rotations, orientation, screenOrientation,
-                    gravity, userAcceleration, heading.toFloat()))
+            listener.onDeviceMotionDataReady(
+                DeviceMotionData(
+                    rotations = rotations,
+                    orientations = orientations,
+                    screenOrientation = screenOrientation,
+                    gravity = gravity,
+                    userAcceleration = userAccelerationWithGravity
+                        .mapIndexed { index, value ->
+                            value - gravity[index]
+                        }
+                        .toFloatArray(),
+                    heading = heading.toFloat()
+                )
+            )
 
             listener.onHeadingDataReady(HeadingData(heading.toFloat(), geomagnetic, lastTimestamp))
         }
-        listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY)
+        listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
 
     }
 
     companion object {
-        private const val SENSOR_DELAY_MICROS = 20 * 1000 // 16ms
-        private const val LISTENER_UPDATE_DELAY = 30L // 30milliseconds
+        private const val SENSOR_DELAY_MICROS = 20 * 1000
+        private const val LISTENER_UPDATE_DELAY_MILLIS = 30L
     }
 
 }
