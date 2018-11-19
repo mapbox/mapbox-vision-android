@@ -9,6 +9,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
+import android.view.Surface
 import android.view.WindowManager
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.HeadingData
@@ -96,10 +97,15 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientations)
 
-                    // Hack for current core impl
-                    // TODO what the huck?
-                    orientations[0] = orientations[0] * -1
-                    orientations[2] = orientations[2] * -1
+                    // Hack for core implementation, expecting iOS-like rotation values,
+                    // which remaps and reverses axises depending on orientation.
+                    // Since in Android sensor values does not depend on screen orientation we need to 'emulate' that.
+                    orientations[0] = -orientations[0]
+                    if (screenOrientation == Surface.ROTATION_90) {
+                        orientations[2] = -orientations[2]
+                    } else if (screenOrientation == Surface.ROTATION_270) {
+                        orientations[1] = -orientations[1]
+                    }
                 }
                 TYPE_GRAVITY -> {
                     gravity[0] = event.values[0]
