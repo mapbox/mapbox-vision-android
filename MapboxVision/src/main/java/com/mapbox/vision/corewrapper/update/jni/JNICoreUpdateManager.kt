@@ -10,13 +10,7 @@ import android.support.annotation.WorkerThread
 import android.util.Log
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
-import com.mapbox.vision.core.buffers.CalibrationDataBuffer
-import com.mapbox.vision.core.buffers.DetectionDataBuffer
-import com.mapbox.vision.core.buffers.PositionDataBuffer
-import com.mapbox.vision.core.buffers.RoadDescriptionDataBuffer
-import com.mapbox.vision.core.buffers.SegmentationDataBuffer
-import com.mapbox.vision.core.buffers.SignClassificationDataBuffer
-import com.mapbox.vision.core.buffers.WorldDescriptionDataBuffer
+import com.mapbox.vision.core.buffers.*
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
@@ -42,8 +36,6 @@ internal class JNICoreUpdateManager(
 
     private val mainThreadHandler = MainThreadHandler().also { it.start() }
     private val visualizationUpdateThreadHandler = WorkThreadHandler("VisualizationUpdateThread").also { it.start() }
-
-    private val eventsUpdateThreadHandler = WorkThreadHandler("EventsUpdateThreadHandler").also { it.start() }
 
     // Detection Event
     private var detectionDataBuffer: DetectionDataBuffer? = null
@@ -128,16 +120,14 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        eventsUpdateThreadHandler.post {
-            updateDetections()
-            updateSegmentation()
-            updateSignClassification()
-            updateRoadDescription()
-            updateWorldDescription()
-            updatePosition()
-            updateCalibrationProgress()
-            updateLaneDepartureState()
-        }
+        updateDetections()
+        updateSegmentation()
+        updateSignClassification()
+        updateRoadDescription()
+        updateWorldDescription()
+        updatePosition()
+        updateCalibrationProgress()
+        updateLaneDepartureState()
 
     }
 
@@ -184,20 +174,17 @@ internal class JNICoreUpdateManager(
 
     fun onPause() {
         visualizationUpdateThreadHandler.stop()
-        eventsUpdateThreadHandler.stop()
         mainThreadHandler.stop()
     }
 
     fun onResume() {
         mainThreadHandler.start()
         visualizationUpdateThreadHandler.start()
-        eventsUpdateThreadHandler.start()
     }
 
     fun release() {
         releaseAllBuffers()
         visualizationUpdateThreadHandler.stop()
-        eventsUpdateThreadHandler.stop()
         mainThreadHandler.stop()
     }
 
