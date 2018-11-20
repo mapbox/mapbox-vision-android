@@ -5,7 +5,7 @@ import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.utils.FileUtils
-import com.mapbox.vision.utils.UuidUtil
+import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import okhttp3.MediaType
@@ -17,8 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal interface TelemetryManager {
 
+    fun start()
+    fun stop()
     fun syncSessionDir(path: String)
-    fun reset()
     fun generateNextSessionDir(): String
 
     class Impl(
@@ -34,7 +35,7 @@ internal interface TelemetryManager {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
         private val bytesTracker = TotalBytesCounter.Impl()
-        private val uuidUtil = UuidUtil(context)
+        private val uuidUtil = UuidHolder.Impl(context)
         @Suppress("DEPRECATION")
         private val locale = context.resources.configuration.locale.country.toUpperCase()
 
@@ -46,6 +47,29 @@ internal interface TelemetryManager {
             mapboxTelemetry.addAttachmentListener(this)
             threadHandler.start()
             rootTelemetryDir = FileUtils.getTelemetryDirPath(context)
+        }
+
+        override fun start() {
+            zipQueue.clear()
+            imageZipQueue.clear()
+            videoQueue.clear()
+            threadHandler.removeAllTasks()
+
+            File(rootTelemetryDir).listFiles().forEach {
+                if (it.list().isEmpty()) {
+                    it.delete()
+                } else {
+                    syncSessionDir(it.absolutePath)
+                }
+            }
+
+            uuidUtil.start()
+            uploadInProgress.set(false)
+        }
+
+        override fun stop() {
+            // TODO stop processing queues?
+            uuidUtil.stop()
         }
 
         override fun syncSessionDir(path: String) {
@@ -198,23 +222,6 @@ internal interface TelemetryManager {
                 )
                 pushEvent()
             }
-        }
-
-        override fun reset() {
-            zipQueue.clear()
-            imageZipQueue.clear()
-            videoQueue.clear()
-            threadHandler.removeAllTasks()
-
-            File(rootTelemetryDir).listFiles().forEach {
-                if (it.list().isEmpty()) {
-                    it.delete()
-                } else {
-                    syncSessionDir(it.absolutePath)
-                }
-            }
-
-            uploadInProgress.set(false)
         }
 
         override fun onAttachmentResponse(message: String?, code: Int, fileIds: MutableList<String>?) {
