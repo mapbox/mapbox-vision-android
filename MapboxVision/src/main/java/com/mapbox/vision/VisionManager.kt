@@ -13,7 +13,11 @@ import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.*
+import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.models.DeviceMotionData
+import com.mapbox.vision.models.FrameStatistics
+import com.mapbox.vision.models.GPSData
+import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
@@ -29,7 +33,11 @@ import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
 import com.mapbox.vision.view.VisualizationUpdateListener
-import com.mapbox.vision.visionevents.*
+import com.mapbox.vision.visionevents.CalibrationProgress
+import com.mapbox.vision.visionevents.FrameSize
+import com.mapbox.vision.visionevents.LaneDepartureState
+import com.mapbox.vision.visionevents.ScreenCoordinate
+import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
@@ -540,14 +548,16 @@ object VisionManager : ARDataProvider {
 
     private fun startTelemetry() {
         if (mapboxTelemetry.enable()) {
-            telemetryManager.reset()
+            telemetryManager.start()
         } else {
             Log.e(TAG, "Can not enable telemetry")
         }
     }
 
     private fun stopTelemetry() {
-        if (!mapboxTelemetry.disable()) {
+        if (mapboxTelemetry.disable()) {
+            telemetryManager.stop()
+        } else {
             Log.e(TAG, "Can not disable telemetry")
         }
     }
