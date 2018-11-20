@@ -11,11 +11,7 @@ import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.CameraParamsData
-import com.mapbox.vision.models.DeviceMotionData
-import com.mapbox.vision.models.FrameStatistics
-import com.mapbox.vision.models.GPSData
-import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.models.*
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
@@ -31,11 +27,7 @@ import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
 import com.mapbox.vision.view.VisualizationUpdateListener
-import com.mapbox.vision.visionevents.CalibrationProgress
-import com.mapbox.vision.visionevents.FrameSize
-import com.mapbox.vision.visionevents.LaneDepartureState
-import com.mapbox.vision.visionevents.ScreenCoordinate
-import com.mapbox.vision.visionevents.WorldCoordinate
+import com.mapbox.vision.visionevents.*
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
@@ -88,9 +80,9 @@ object VisionManager : ARDataProvider {
     // Listeners
     private val visionManagerVideoProcessorListener = object : VideoProcessorListener {
         override fun onVideoPartsReady(
-                videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
-                dirPath: String,
-                jsonFilePath: String
+            videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
+            dirPath: String,
+            jsonFilePath: String
         ) {
             telemetryManager.syncSessionDir(dirPath)
         }
@@ -98,26 +90,26 @@ object VisionManager : ARDataProvider {
 
     private val visionManagerLocationEngineListener = object : LocationEngineListener {
         override fun onNewLocation(
-                latitude: Double,
-                longitude: Double,
-                speed: Float,
-                altitude: Double,
-                horizontalAccuracy: Float,
-                verticalAccuracy: Float,
-                bearing: Float,
-                timestamp: Long
+            latitude: Double,
+            longitude: Double,
+            speed: Float,
+            altitude: Double,
+            horizontalAccuracy: Float,
+            verticalAccuracy: Float,
+            bearing: Float,
+            timestamp: Long
         ) {
             visionCore.setGPSData(
-                    GPSData(
-                            latitude = latitude,
-                            longitude = longitude,
-                            speed = speed,
-                            altitude = altitude,
-                            horizontalAccuracy = horizontalAccuracy,
-                            verticalAccuracy = verticalAccuracy,
-                            bearing = bearing,
-                            timestamp = timestamp
-                    )
+                GPSData(
+                    latitude = latitude,
+                    longitude = longitude,
+                    speed = speed,
+                    altitude = altitude,
+                    horizontalAccuracy = horizontalAccuracy,
+                    verticalAccuracy = verticalAccuracy,
+                    bearing = bearing,
+                    timestamp = timestamp
+                )
             )
         }
     }
@@ -149,10 +141,10 @@ object VisionManager : ARDataProvider {
 
         override fun onFileRecorded(recordedFilePath: String) {
             videoProcessor.splitVideoToParts(
-                    parts = clipTimes,
-                    fullVideoPath = recordedFilePath,
-                    saveDirPath = previousTelemetryDir,
-                    startRecordCoreMillis = startRecordCoreMillis
+                parts = clipTimes,
+                fullVideoPath = recordedFilePath,
+                saveDirPath = previousTelemetryDir,
+                startRecordCoreMillis = startRecordCoreMillis
             )
         }
     }
@@ -194,11 +186,11 @@ object VisionManager : ARDataProvider {
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_CLIENT_NAME)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
         visionCore = JNIVisionCoreFactory(
-                application = application,
-                eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
-                imageSaver = telemetryImageSaver
+            application = application,
+            eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
+            imageSaver = telemetryImageSaver
         )
-                .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
+            .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
 
         videoSource = CameraVideoSourceImpl(application, FRAME_WIDTH, FRAME_HEIGHT)
         sensorsRequestsManager = SensorsRequestsManager(application)
@@ -525,14 +517,16 @@ object VisionManager : ARDataProvider {
 
     private fun startTelemetry() {
         if (mapboxTelemetry.enable()) {
-            telemetryManager.reset()
+            telemetryManager.start()
         } else {
             Log.e(TAG, "Can not enable telemetry")
         }
     }
 
     private fun stopTelemetry() {
-        if (!mapboxTelemetry.disable()) {
+        if (mapboxTelemetry.disable()) {
+            telemetryManager.stop()
+        } else {
             Log.e(TAG, "Can not disable telemetry")
         }
     }
