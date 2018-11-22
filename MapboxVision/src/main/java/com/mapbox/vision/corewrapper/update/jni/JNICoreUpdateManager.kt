@@ -12,6 +12,7 @@ import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
 import com.mapbox.vision.core.buffers.*
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
+import com.mapbox.vision.visionevents.LaneDepartureState
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.view.VisualizationMode

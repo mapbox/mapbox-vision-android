@@ -2,6 +2,7 @@ package com.mapbox.vision.visionevents
 
 import com.mapbox.vision.core.buffers.CalibrationDataBuffer
 
+
 /**
  * Calibration [progress] in percents [0, 100] is [completed].
  */
