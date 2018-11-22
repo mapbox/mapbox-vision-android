@@ -7,7 +7,7 @@ data class DeviceMotionData(
         val orientations: FloatArray = FloatArray(3),
         val screenOrientation: Int = 0,
         val gravity: FloatArray = FloatArray(3),
-        val userAcceleration: FloatArray = FloatArray(3),
+        val userAccelerationRelativeToGravity: FloatArray = FloatArray(3),
         val heading: Float = 0f
 ) {
     override fun equals(other: Any?): Boolean {
@@ -20,7 +20,7 @@ data class DeviceMotionData(
         if (!Arrays.equals(orientations, other.orientations)) return false
         if (screenOrientation != other.screenOrientation) return false
         if (!Arrays.equals(gravity, other.gravity)) return false
-        if (!Arrays.equals(userAcceleration, other.userAcceleration)) return false
+        if (!Arrays.equals(userAccelerationRelativeToGravity, other.userAccelerationRelativeToGravity)) return false
         if (heading != other.heading) return false
 
         return true
@@ -31,7 +31,7 @@ data class DeviceMotionData(
         result = 31 * result + Arrays.hashCode(orientations)
         result = 31 * result + screenOrientation
         result = 31 * result + Arrays.hashCode(gravity)
-        result = 31 * result + Arrays.hashCode(userAcceleration)
+        result = 31 * result + Arrays.hashCode(userAccelerationRelativeToGravity)
         result = 31 * result + heading.hashCode()
         return result
     }
