@@ -20,7 +20,7 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
 
     private val sensorManager: SensorManager = application.getSystemService(Activity.SENSOR_SERVICE) as SensorManager
     private val screenOrientation =
-        (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+            (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
 
     private val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
@@ -125,18 +125,18 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
             }
 
             listener.onDeviceMotionDataReady(
-                DeviceMotionData(
-                    rotations = rotations,
-                    orientations = orientations,
-                    screenOrientation = screenOrientation,
-                    gravity = gravity,
-                    userAcceleration = userAccelerationWithGravity
-                        .mapIndexed { index, value ->
-                            value - gravity[index]
-                        }
-                        .toFloatArray(),
-                    heading = heading.toFloat()
-                )
+                    DeviceMotionData(
+                            rotations = rotations,
+                            orientations = orientations,
+                            screenOrientation = screenOrientation,
+                            gravity = gravity,
+                            userAccelerationRelativeToGravity = userAccelerationWithGravity
+                                    .mapIndexed { index, value ->
+                                        (value - gravity[index]) / SensorManager.GRAVITY_EARTH
+                                    }
+                                    .toFloatArray(),
+                            heading = heading.toFloat()
+                    )
             )
 
             listener.onHeadingDataReady(HeadingData(heading.toFloat(), geomagnetic, lastTimestamp))
@@ -147,7 +147,7 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
 
     companion object {
         private const val SENSOR_DELAY_MICROS = 20 * 1000
-        private const val LISTENER_UPDATE_DELAY_MILLIS = 30L
+        private const val LISTENER_UPDATE_DELAY_MILLIS = 33L
     }
 
 }

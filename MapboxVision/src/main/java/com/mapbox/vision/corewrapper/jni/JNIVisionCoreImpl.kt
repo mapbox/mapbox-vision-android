@@ -134,7 +134,7 @@ internal class JNIVisionCoreImpl constructor(
                 orientations = deviceMotionData.orientations,
                 screenOrientation = deviceMotionData.screenOrientation,
                 gravity = deviceMotionData.gravity,
-                userAcceleration = deviceMotionData.userAcceleration,
+                userAccelerationRelativeToGravity = deviceMotionData.userAccelerationRelativeToGravity,
                 heading = deviceMotionData.heading
         )
     }

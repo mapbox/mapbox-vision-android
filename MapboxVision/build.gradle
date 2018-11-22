@@ -68,7 +68,7 @@ dependencies {
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
         implementation project(path: ':VisionCore')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
+        implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_sdk"
     }
 
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
