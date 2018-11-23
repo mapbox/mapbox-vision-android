@@ -8,6 +8,7 @@ import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
+import java.util.*
 
 internal interface VideoProcessor {
 
@@ -41,14 +42,15 @@ internal interface VideoProcessor {
             workThreadHandler.post {
                 val partsMap = HashMap<String, VideoProcessor.VideoPart>()
                 for (part in parts) {
-                    val relativeStart = part.start - startRecordCoreMillis
-                    val relativeEnd = part.end - startRecordCoreMillis
-                    if (relativeStart < 0 || relativeEnd < 0) {
-                        Log.w(TAG, "Video clip bounds does not belong to current video, ignoring : $relativeStart - $relativeEnd")
+                    val relativeStartMillis = part.start - startRecordCoreMillis
+                    val relativeEndMillis = part.end - startRecordCoreMillis
+                    if (relativeStartMillis < 0 || relativeEndMillis < 0) {
+                        Log.w(TAG, "Video clip bounds does not belong to current video, ignoring : $relativeStartMillis - $relativeEndMillis")
                         continue
                     }
-                    val outputClipPath = "$saveDirPath${relativeStart}_$relativeEnd.mp4"
-                    val finalPart = VideoUtils.genVideoUsingMuxer(fullVideoPath, outputClipPath, relativeStart, relativeEnd)
+                    val timespan = "${"%.2f".format(Locale.ENGLISH, relativeStartMillis / 1000f)}_${"%.2f".format(Locale.ENGLISH, relativeEndMillis / 1000f)}"
+                    val outputClipPath = "$saveDirPath/$timespan.mp4"
+                    val finalPart = VideoUtils.genVideoUsingMuxer(fullVideoPath, outputClipPath, relativeStartMillis, relativeEndMillis)
                     partsMap[outputClipPath] = finalPart
                 }
                 videoProcessorListener?.onVideoPartsReady(
