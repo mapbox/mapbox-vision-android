@@ -71,9 +71,11 @@ internal interface TelemetryManager {
                 videoQueue.add(
                         videoFile.toAttachmentProperties(FORMAT_MP4, TYPE_VIDEO, MEDIA_TYPE_MP4).also {
                             val parentTimestamp = videoFile.parentFile.name.toLong()
-                            val interval = videoFile.name.substringBefore(".").split("_")
-                            it.metadata.startTime = isoDateFormat.format(Date(parentTimestamp + interval[0].toLong()))
-                            it.metadata.endTime = isoDateFormat.format(Date(parentTimestamp + interval[1].toLong()))
+                            val interval = videoFile.name.substringBeforeLast(".").split("_")
+                            val startMillis = (interval[0].toFloat() * 1000).toLong()
+                            val endMillis = (interval[1].toFloat() * 1000).toLong()
+                            it.metadata.startTime = isoDateFormat.format(Date(parentTimestamp + startMillis))
+                            it.metadata.endTime = isoDateFormat.format(Date(parentTimestamp + endMillis))
                         }
                 )
             }
@@ -108,7 +110,6 @@ internal interface TelemetryManager {
             }
 
             threadHandler.removeAllTasks()
-            uploadInProgress.set(false)
         }
 
         private fun File.directorySizeRecursive(): Long = if (!isDirectory) {
@@ -225,11 +226,11 @@ internal interface TelemetryManager {
         }
 
         private fun ConcurrentLinkedQueue<AttachmentProperties>.removeByFileId(fileId: String): Boolean =
-            this.firstOrNull { it.metadata.fileId == fileId }
-                    ?.also { attachment ->
+                this.firstOrNull { it.metadata.fileId == fileId }
+                        ?.also { attachment ->
                         File(attachment.absolutePath).delete()
-                        remove(attachment)
-                    } != null
+                            remove(attachment)
+                        } != null
 
         override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
             uploadInProgress.set(false)
