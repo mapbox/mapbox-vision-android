@@ -287,20 +287,20 @@ object VisionManager : ARDataProvider {
     /**
      * Set listener to listen SDK events.
      */
-    fun setVisionEventListener(visionEventsListener: WeakReference<VisionEventsListener>) {
-        this.visionEventsListener = visionEventsListener
+    fun setVisionEventListener(visionEventsListener: VisionEventsListener) {
+        this.visionEventsListener = WeakReference(visionEventsListener)
         if (isCreated) {
-            visionCore.setVisionEventListener(visionEventsListener)
+            visionCore.setVisionEventListener(this.visionEventsListener)
         }
     }
 
     /**
      * Set listener to listen speed limit events.
      */
-    fun setRoadRestrictionsListener(roadRestrictionsListener: WeakReference<RoadRestrictionsListener>) {
-        this.roadRestrictionsListener = roadRestrictionsListener
+    fun setRoadRestrictionsListener(roadRestrictionsListener: RoadRestrictionsListener) {
+        this.roadRestrictionsListener = WeakReference(roadRestrictionsListener)
         if (isCreated) {
-            visionCore.setRoadRestrictionsListener(roadRestrictionsListener)
+            visionCore.setRoadRestrictionsListener(this.roadRestrictionsListener)
         }
     }
 
