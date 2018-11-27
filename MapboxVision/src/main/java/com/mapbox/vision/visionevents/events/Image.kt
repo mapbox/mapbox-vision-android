@@ -16,31 +16,27 @@ data class Image(
         val identifier: Long
 ) {
 
-    private var imageSource: ImageSource? = null
-
-    internal fun setImageSource(imageSource: ImageSource) {
-        this.imageSource = imageSource
-    }
+    internal var imageSource: ImageSource? = null
 
     /**
      * Get bytes of image.
      *
      * @return null if image was invalidated
      */
-    fun getImageBytes(): ByteArray? = imageSource?.getImageBytes()
+    fun getImageBytes(): ByteArray? = imageSource?.getImageBytes(this)
 
     /**
      * Get bitmap of image.
      *
      * @return null if image was invalidated or Bitmap can not be created from byte array (eg., segmentationMaskImage)
      */
-    fun getImageBitmap(): Bitmap? = imageSource?.getImageBitmap()
+    fun getImageBitmap(): Bitmap? = imageSource?.getImageBitmap(this)
 
     internal interface ImageSource {
 
-        fun getImageBytes(): ByteArray?
+        fun getImageBytes(sourceImage: Image): ByteArray?
 
-        fun getImageBitmap(): Bitmap?
+        fun getImageBitmap(sourceImage: Image): Bitmap?
     }
 
     enum class Format(val channelsNum: Int) {

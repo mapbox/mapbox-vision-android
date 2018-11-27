@@ -13,36 +13,29 @@ import com.mapbox.vision.visionevents.events.ObjectType
  */
 data class Detections(val identifier: Long, val detections: List<Detection>, val sourceImage: Image) {
 
-    companion object {
+    internal constructor(detectionDataBuffer: DetectionDataBuffer) : this(
+            identifier = detectionDataBuffer.detectionsIdentifier,
+            detections = mutableListOf<Detection>().also { detectionsObjectsList ->
+                var index = 0
+                val detectionsObjectsSize = detectionDataBuffer.detections.size / 6
+                for (i in 0 until detectionsObjectsSize) {
+                    val type = ObjectType.values()[detectionDataBuffer.detections[index++].toInt()]
+                    val confidence = detectionDataBuffer.detections[index++]
 
-        @JvmStatic
-        internal fun fromDetectionDataBuffer(detectionDataBuffer: DetectionDataBuffer): Detections {
+                    val startX = detectionDataBuffer.detections[index++].toInt()
+                    val startY = detectionDataBuffer.detections[index++].toInt()
+                    val endX = detectionDataBuffer.detections[index++].toInt()
+                    val endY = detectionDataBuffer.detections[index++].toInt()
 
-            val width = detectionDataBuffer.sourceImageDescriptionArray[0]
-            val height = detectionDataBuffer.sourceImageDescriptionArray[1]
-            val imageFormat = Image.Format.values()[detectionDataBuffer.sourceImageDescriptionArray[2]]
-
-            val detectionSourceImage = Image(imageFormat, width, height, detectionDataBuffer.sourceImageIdentifier)
-
-            val detectionsObjectsSize = detectionDataBuffer.detections.size / 6
-            val detectionsObjectsList = ArrayList<Detection>()
-
-            var index = 0
-            for (i in 0 until detectionsObjectsSize) {
-
-                val type = ObjectType.values()[detectionDataBuffer.detections[index++].toInt()]
-                val confidence = detectionDataBuffer.detections[index++]
-
-                val startX = detectionDataBuffer.detections[index++].toInt()
-                val startY = detectionDataBuffer.detections[index++].toInt()
-                val endX = detectionDataBuffer.detections[index++].toInt()
-                val endY = detectionDataBuffer.detections[index++].toInt()
-
-                val detection = Detection(Rect(startX, startY, endX, endY), type, confidence)
-                detectionsObjectsList.add(detection)
-            }
-
-            return Detections(detectionDataBuffer.detectionsIdentifier, detectionsObjectsList, detectionSourceImage)
-        }
-    }
+                    val detection = Detection(Rect(startX, startY, endX, endY), type, confidence)
+                    detectionsObjectsList.add(detection)
+                }
+            },
+            sourceImage = Image(
+                    format = Image.Format.values()[detectionDataBuffer.sourceImageDescriptionArray[2]],
+                    width = detectionDataBuffer.sourceImageDescriptionArray[0],
+                    height = detectionDataBuffer.sourceImageDescriptionArray[1],
+                    identifier = detectionDataBuffer.sourceImageIdentifier
+            )
+    )
 }
