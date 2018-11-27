@@ -14,24 +14,19 @@ import com.mapbox.vision.visionevents.events.Image
  */
 data class SegmentationMask(val identifier: Long, val sourceImage: Image, val segmentationMaskImage: Image) {
 
-    companion object {
-
-        @JvmStatic
-        internal fun fromSegmentationDataBuffer(segmentationDataBuffer: SegmentationDataBuffer): SegmentationMask {
-
-            val sourceWidth = segmentationDataBuffer.sourceImageDescriptionArray[0]
-            val sourceHeight = segmentationDataBuffer.sourceImageDescriptionArray[1]
-            val sourceImageFormat = Image.Format.values()[segmentationDataBuffer.sourceImageDescriptionArray[2]]
-
-            val segmentationSourceImage = Image(sourceImageFormat,
-                    sourceWidth, sourceHeight, segmentationDataBuffer.sourceImageIdentifier)
-
-            val maskWidth = segmentationDataBuffer.maskImageDescriptionArray[0]
-            val maskHeight = segmentationDataBuffer.maskImageDescriptionArray[1]
-            val maskImageFormat = Image.Format.values()[segmentationDataBuffer.maskImageDescriptionArray[2]]
-            val segmentationMaskImage = Image(maskImageFormat, maskWidth, maskHeight, segmentationDataBuffer.maskImageIdentifier)
-
-            return SegmentationMask(segmentationDataBuffer.maskImageIdentifier, segmentationSourceImage, segmentationMaskImage)
-        }
-    }
+    internal constructor(segmentationDataBuffer: SegmentationDataBuffer) : this(
+            identifier = segmentationDataBuffer.maskImageIdentifier,
+            sourceImage = Image(
+                    format = Image.Format.values()[segmentationDataBuffer.sourceImageDescriptionArray[2]],
+                    width = segmentationDataBuffer.sourceImageDescriptionArray[0],
+                    height = segmentationDataBuffer.sourceImageDescriptionArray[1],
+                    identifier = segmentationDataBuffer.sourceImageIdentifier
+            ),
+            segmentationMaskImage = Image(
+                    format = Image.Format.values()[segmentationDataBuffer.maskImageDescriptionArray[2]],
+                    width = segmentationDataBuffer.maskImageDescriptionArray[0],
+                    height = segmentationDataBuffer.maskImageDescriptionArray[1],
+                    identifier = segmentationDataBuffer.maskImageIdentifier
+            )
+    )
 }

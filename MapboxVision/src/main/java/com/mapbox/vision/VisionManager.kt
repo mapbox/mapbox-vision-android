@@ -7,15 +7,12 @@ import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.ar.ARDataProvider
 import com.mapbox.vision.corewrapper.JNIVisionCoreFactory
 import com.mapbox.vision.corewrapper.VisionCore
+import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.CameraParamsData
-import com.mapbox.vision.models.DeviceMotionData
-import com.mapbox.vision.models.FrameStatistics
-import com.mapbox.vision.models.GPSData
-import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.models.*
 import com.mapbox.vision.models.route.NavigationRoute
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.sensors.SensorDataListener
@@ -31,16 +28,11 @@ import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
 import com.mapbox.vision.view.VisualizationUpdateListener
-import com.mapbox.vision.visionevents.CalibrationProgress
-import com.mapbox.vision.visionevents.FrameSize
-import com.mapbox.vision.visionevents.LaneDepartureState
-import com.mapbox.vision.visionevents.ScreenCoordinate
-import com.mapbox.vision.visionevents.WorldCoordinate
+import com.mapbox.vision.visionevents.*
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
 import java.lang.ref.WeakReference
-import kotlin.properties.Delegates
 
 /**
  * The main object for registering for events from the library,
@@ -158,11 +150,8 @@ object VisionManager : ARDataProvider {
     }
 
     // Event Listeners
-    private var visionEventsListener: VisionEventsListener? by Delegates.observable<VisionEventsListener?>(null) { _, _, new ->
-        if (::visionCore.isInitialized) {
-            visionCore.setVisionEventListener(new)
-        }
-    }
+    private var visionEventsListener: WeakReference<VisionEventsListener>? = null
+    private var roadRestrictionsListener: WeakReference<RoadRestrictionsListener>? = null
     private var visualizationUpdateListener: WeakReference<VisualizationUpdateListener>? = null
     private var videoStreamListener: WeakReference<VideoStreamListener>? = null
 
@@ -228,6 +217,7 @@ object VisionManager : ARDataProvider {
         }
 
         visionCore.setVisionEventListener(visionEventsListener)
+        visionCore.setRoadRestrictionsListener(roadRestrictionsListener)
         visionCore.setVisualizationUpdateListener(visualizationUpdateListener)
         visionCore.setVideoStreamListener(videoStreamListener)
         visionCore.onResume()
@@ -297,8 +287,21 @@ object VisionManager : ARDataProvider {
     /**
      * Set listener to listen SDK events.
      */
-    fun setVisionEventListener(visionEventsListener: VisionEventsListener) {
+    fun setVisionEventListener(visionEventsListener: WeakReference<VisionEventsListener>) {
         this.visionEventsListener = visionEventsListener
+        if (isCreated) {
+            visionCore.setVisionEventListener(visionEventsListener)
+        }
+    }
+
+    /**
+     * Set listener to listen speed limit events.
+     */
+    fun setRoadRestrictionsListener(roadRestrictionsListener: WeakReference<RoadRestrictionsListener>) {
+        this.roadRestrictionsListener = roadRestrictionsListener
+        if (isCreated) {
+            visionCore.setRoadRestrictionsListener(roadRestrictionsListener)
+        }
     }
 
     /**
@@ -425,9 +428,6 @@ object VisionManager : ARDataProvider {
         return visionCore.getARRouteData()
     }
 
-    /**
-     * Set listener
-     */
     fun setVideoStreamListener(videoStreamListener: VideoStreamListener) {
         this.videoStreamListener = WeakReference(videoStreamListener)
         if (isCreated) {
@@ -442,6 +442,9 @@ object VisionManager : ARDataProvider {
 
     internal fun setVisualizationUpdateListener(visualizationUpdateListener: VisualizationUpdateListener) {
         this.visualizationUpdateListener = WeakReference(visualizationUpdateListener)
+        if (isCreated) {
+            visionCore.setVisualizationUpdateListener(this.visualizationUpdateListener)
+        }
     }
 
     private fun checkManagerRunningState() {

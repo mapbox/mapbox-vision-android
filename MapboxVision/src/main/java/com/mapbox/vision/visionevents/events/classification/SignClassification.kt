@@ -15,57 +15,52 @@ import com.mapbox.vision.visionevents.events.detection.Detection
  */
 data class SignClassification(val identifier: Long, val sourceImage: Image, val items: List<SignValue>) {
 
-    companion object {
+    internal constructor(signClassificationDataBuffer: SignClassificationDataBuffer) : this(
+            identifier = signClassificationDataBuffer.signClassificationIdentifier,
+            sourceImage = Image(
+                    format = Image.Format.values()[signClassificationDataBuffer.sourceImageDescriptionArray[2]],
+                    width = signClassificationDataBuffer.sourceImageDescriptionArray[0],
+                    height = signClassificationDataBuffer.sourceImageDescriptionArray[1],
+                    identifier = signClassificationDataBuffer.sourceImageIdentifier
+            ),
+            items = ArrayList<SignValue>().also { signValueItems ->
+                var index = 0
+                val signValuesItemsSize = signClassificationDataBuffer.signValueItems.size / 10
 
-        const val TAG = "SignClassification"
+                for (i in 0 until signValuesItemsSize) {
 
-        @JvmStatic
-        internal fun fromSignClassificationDataBuffer(signClassificationDataBuffer: SignClassificationDataBuffer): SignClassification {
+                    val signTypeIndex = signClassificationDataBuffer.signValueItems[index++].toInt()
 
-            val signValuesItemsSize = signClassificationDataBuffer.signValueItems.size / 10
-
-            val signValuesItems = ArrayList<SignValue>()
-
-            var index = 0
-            for (i in 0 until signValuesItemsSize) {
-
-                val signTypeIndex = signClassificationDataBuffer.signValueItems[index++].toInt()
-
-                val signType = if (signTypeIndex < 0 || signTypeIndex >= SignType.values().size) {
-                    if(BuildConfig.DEBUG) {
-                        throw IllegalArgumentException(" Wrong type index $signTypeIndex")
+                    val signType = if (signTypeIndex < 0 || signTypeIndex >= SignType.values().size) {
+                        if (BuildConfig.DEBUG) {
+                            throw IllegalArgumentException("Wrong sign type index $signTypeIndex")
+                        }
+                        Log.e(TAG, "Wrong sign type index $signTypeIndex")
+                        SignType.Unknown
+                    } else {
+                        SignType.values()[signTypeIndex]
                     }
-                    Log.e(TAG, " Wrong type index $signTypeIndex")
-                    SignType.Unknown
-                } else {
-                    SignType.values()[signTypeIndex]
+
+                    val typeConfidence = signClassificationDataBuffer.signValueItems[index++]
+                    val number = signClassificationDataBuffer.signValueItems[index++]
+                    val numberConfidence = signClassificationDataBuffer.signValueItems[index++]
+
+                    val type = ObjectType.values()[signClassificationDataBuffer.signValueItems[index++].toInt()]
+                    val confidence = signClassificationDataBuffer.signValueItems[index++]
+
+                    val startX = signClassificationDataBuffer.signValueItems[index++].toInt()
+                    val startY = signClassificationDataBuffer.signValueItems[index++].toInt()
+                    val endX = signClassificationDataBuffer.signValueItems[index++].toInt()
+                    val endY = signClassificationDataBuffer.signValueItems[index++].toInt()
+
+                    val detection = Detection(Rect(startX, startY, endX, endY), type, confidence)
+
+                    signValueItems.add(SignValue(signType, typeConfidence, number, numberConfidence, detection))
                 }
-
-                val typeConfidence = signClassificationDataBuffer.signValueItems[index++]
-                val number = signClassificationDataBuffer.signValueItems[index++]
-                val numberConfidence = signClassificationDataBuffer.signValueItems[index++]
-
-                val type = ObjectType.values()[signClassificationDataBuffer.signValueItems[index++].toInt()]
-                val confidence = signClassificationDataBuffer.signValueItems[index++]
-
-                val startX = signClassificationDataBuffer.signValueItems[index++].toInt()
-                val startY = signClassificationDataBuffer.signValueItems[index++].toInt()
-                val endX = signClassificationDataBuffer.signValueItems[index++].toInt()
-                val endY = signClassificationDataBuffer.signValueItems[index++].toInt()
-
-                val detection = Detection(Rect(startX, startY, endX, endY), type, confidence)
-
-                signValuesItems.add(SignValue(signType, typeConfidence, number, numberConfidence, detection))
             }
+    )
 
-            val width = signClassificationDataBuffer.sourceImageDescriptionArray[0]
-            val height = signClassificationDataBuffer.sourceImageDescriptionArray[1]
-            val imageFormat = Image.Format.values()[signClassificationDataBuffer.sourceImageDescriptionArray[2]]
-
-            val sourceImage = Image(imageFormat, width, height, signClassificationDataBuffer.sourceImageIdentifier)
-
-            return SignClassification(signClassificationDataBuffer.signClassificationIdentifier, sourceImage, signValuesItems)
-
-        }
+    companion object {
+        const val TAG = "SignClassification"
     }
 }

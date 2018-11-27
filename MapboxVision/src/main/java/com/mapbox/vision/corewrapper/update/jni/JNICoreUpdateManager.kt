@@ -7,10 +7,10 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.Type
 import android.support.annotation.WorkerThread
-import android.util.Log
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
 import com.mapbox.vision.core.buffers.*
+import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
@@ -23,6 +23,7 @@ import com.mapbox.vision.visionevents.events.classification.SignClassification
 import com.mapbox.vision.visionevents.events.detection.Detections
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
+import com.mapbox.vision.visionevents.events.roadrestrictions.SpeedLimit
 import com.mapbox.vision.visionevents.events.segmentation.SegmentationMask
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
 import java.lang.ref.WeakReference
@@ -37,38 +38,34 @@ internal class JNICoreUpdateManager(
     private val mainThreadHandler = MainThreadHandler().also { it.start() }
     private val visualizationUpdateThreadHandler = WorkThreadHandler("VisualizationUpdateThread").also { it.start() }
 
-    // Detection Event
     private var detectionDataBuffer: DetectionDataBuffer? = null
     private var lastKnownDetectionId = 0L
 
-    // Segmentation Event
     private var segmentationDataBuffer: SegmentationDataBuffer? = null
     private var lastKnownSegmentationMaskId = 0L
 
-    // Sign Classification Event
     private var signClassificationDataBuffer: SignClassificationDataBuffer? = null
     private var lastKnownClassificationId = 0L
 
-    // Road Description Event
     private var roadDescriptionDataBuffer: RoadDescriptionDataBuffer? = null
     private var lastKnownRoadDescriptionId = 0L
 
-    // World Description Event
     private var worldDescriptionDataBuffer: WorldDescriptionDataBuffer? = null
     private var lastKnownWorldDescriptionId = 0L
 
-    // Position Event
     private var positionDataBuffer: PositionDataBuffer? = null
     private var lastKnownPositionId = 0L
 
-    // Calibration Progress Event
     private var calibrationDataBuffer: CalibrationDataBuffer? = null
     private var lastKnownCalibrationId = 0L
 
-    // LaneDepartureState event
-    var lastKnownLaneDepartureState = LaneDepartureState.Normal
+    private var roadRestrictionsDataBuffer: RoadRestrictionsDataBuffer? = null
+    private var lastKnownRoadRestrictionsId = 0L
 
-    private var visionEventsListener: VisionEventsListener? = null
+    private var lastKnownLaneDepartureState = LaneDepartureState.Normal
+
+    private var visionEventsListener: WeakReference<VisionEventsListener>? = null
+    private var roadRestrictionsListener: WeakReference<RoadRestrictionsListener>? = null
     private var visualizationUpdateListener: WeakReference<VisualizationUpdateListener>? = null
     private var videoStreamListener: WeakReference<VideoStreamListener>? = null
 
@@ -77,20 +74,22 @@ internal class JNICoreUpdateManager(
         val rgbTypeBuilder = Type.Builder(renderScript, Element.RGBA_8888(renderScript))
         rgbTypeBuilder.setX(imageWidth)
         rgbTypeBuilder.setY(imageHeight)
-        Allocation.createTyped(renderScript, rgbTypeBuilder.create(),
-                Allocation.USAGE_SHARED)
+        Allocation.createTyped(renderScript, rgbTypeBuilder.create(), Allocation.USAGE_SHARED)
+    }
+
+    private fun Allocation.visualize(from: ByteArray, listener: VisualizationUpdateListener) {
+        copyFrom(from)
+        copyTo(listener.getBitmapBuffer())
+        mainThreadHandler.post { listener.onByteArrayUpdated() }
     }
 
     fun setRGBABytes(rgbaByteArray: ByteArray, width: Int, height: Int) {
         coreWrapper.setImageByteData(rgbaByteArray, width, height)
 
         val visualizationListener = visualizationUpdateListener?.get()
-
         if (visualizationListener?.getCurrentMode() == VisualizationMode.CLEAR) {
             visualizationUpdateThreadHandler.post {
-                sourceImageOutputAllocation.copyFrom(rgbaByteArray)
-                sourceImageOutputAllocation.copyTo(visualizationListener.getBitmapBuffer())
-                mainThreadHandler.post { visualizationListener.onByteArrayUpdated() }
+                sourceImageOutputAllocation.visualize(rgbaByteArray, visualizationListener)
             }
         }
 
@@ -100,7 +99,7 @@ internal class JNICoreUpdateManager(
         }
     }
 
-    fun setVisionEventListener(visionEventsListener: VisionEventsListener?) {
+    fun setVisionEventListener(visionEventsListener: WeakReference<VisionEventsListener>?) {
         this.visionEventsListener = visionEventsListener
     }
 
@@ -110,6 +109,10 @@ internal class JNICoreUpdateManager(
 
     fun setVideoSourceListener(videoStreamListener: WeakReference<VideoStreamListener>?) {
         this.videoStreamListener = videoStreamListener
+    }
+
+    fun setRoadRestrictionsListener(roadRestrictionsListener: WeakReference<RoadRestrictionsListener>?) {
+        this.roadRestrictionsListener = roadRestrictionsListener
     }
 
     @WorkerThread
@@ -128,7 +131,7 @@ internal class JNICoreUpdateManager(
         updatePosition()
         updateCalibrationProgress()
         updateLaneDepartureState()
-
+        updateRoadRestrictions()
     }
 
     fun getCurrentRoadDescription(): RoadDescription? {
@@ -152,7 +155,7 @@ internal class JNICoreUpdateManager(
             initPositionBuffer()
         }
         coreWrapper.requestPosition()
-        return Position.fromPositionBuffer(positionDataBuffer!!)
+        return Position(positionDataBuffer!!)
     }
 
     fun getCalibrationProgress(): CalibrationProgress {
@@ -160,17 +163,14 @@ internal class JNICoreUpdateManager(
             initCalibrationBuffer()
         }
         coreWrapper.requestCalibration()
-        return CalibrationProgress.fromBuffer(calibrationDataBuffer!!)
+        return CalibrationProgress(calibrationDataBuffer!!)
     }
 
     fun getLaneDepartureState(): LaneDepartureState {
-        val index = coreWrapper.getLaneDepartureState()
-        if (index in 0 until LaneDepartureState.values().size) {
-            return LaneDepartureState.values()[index]
+        return LaneDepartureState.values().getOrElse(coreWrapper.getLaneDepartureState()) {
+            LaneDepartureState.Normal
         }
-        return LaneDepartureState.Normal
     }
-
 
     fun onPause() {
         visualizationUpdateThreadHandler.stop()
@@ -188,12 +188,51 @@ internal class JNICoreUpdateManager(
         mainThreadHandler.stop()
     }
 
-    // Private methods
-
-    // Detections
     private fun initDetectionBuffer() {
         detectionDataBuffer = DetectionDataBuffer()
         coreWrapper.setDetectionDataBuffer(detectionDataBuffer!!)
+    }
+
+    private val detectionsSource = object : Image.ImageSource {
+
+        override fun getImageBytes(sourceImage: Image) = coreWrapper
+                .getDetectionsSourceImageDataArray(sourceImage.identifier)
+                .nullIfEmpty()
+
+        override fun getImageBitmap(sourceImage: Image) = coreWrapper
+                .getDetectionsSourceImageDataArray(sourceImage.identifier)
+                .toBitmap(sourceImage)
+    }
+
+    private val signClassificationSource = object : Image.ImageSource {
+
+        override fun getImageBytes(sourceImage: Image) = coreWrapper
+                .getSignClassificationSourceImageDataArray(sourceImage.identifier)
+                .nullIfEmpty()
+
+        override fun getImageBitmap(sourceImage: Image) = coreWrapper
+                .getSignClassificationSourceImageDataArray(sourceImage.identifier)
+                .toBitmap(sourceImage)
+    }
+
+    private val segmentationSource = object : Image.ImageSource {
+
+        override fun getImageBytes(sourceImage: Image) = coreWrapper
+                .getSegmentationSourceImageDataArray(sourceImage.identifier)
+                .nullIfEmpty()
+
+        override fun getImageBitmap(sourceImage: Image) = coreWrapper
+                .getSegmentationSourceImageDataArray(sourceImage.identifier)
+                .toBitmap(sourceImage)
+    }
+
+    private val segmentationMaskSource = object : Image.ImageSource {
+
+        override fun getImageBytes(sourceImage: Image) = coreWrapper
+                .getSegmentationMaskImageDataArray(sourceImage.identifier)
+                .nullIfEmpty()
+
+        override fun getImageBitmap(sourceImage: Image) = null
     }
 
     private fun updateDetections() {
@@ -205,64 +244,30 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        val detections = Detections.fromDetectionDataBuffer(localDetectionDataBuffer)
+        val detections = Detections(localDetectionDataBuffer)
 
-        if (visionEventsListener != null) {
-            val imageSource = object : Image.ImageSource {
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        detections.sourceImage.imageSource = detectionsSource
 
-                override fun getImageBytes(): ByteArray? {
-                    val byteArray = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        return byteArray
-                    }
-                }
-
-                override fun getImageBitmap(): Bitmap? {
-
-                    val byteArray = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        val bitmap = Bitmap.createBitmap(detections.sourceImage.width,
-                                detections.sourceImage.height, Bitmap.Config.ARGB_8888)
-
-                        sourceImageOutputAllocation.copyFrom(byteArray)
-                        sourceImageOutputAllocation.copyTo(bitmap)
-                        return bitmap
-                    }
-                }
-            }
-
-            detections.sourceImage.setImageSource(imageSource)
-
-            mainThreadHandler.post {
-                visionEventsListener?.detectionsUpdated(detections)
-            }
+        mainThreadHandler.post {
+            visionEventsListenerRef.detectionsUpdated(detections)
         }
 
-        val visualizationListener = visualizationUpdateListener?.get()
+        val visualizationListener = visualizationUpdateListener?.get() ?: return
 
-        if (visualizationListener?.getCurrentMode() == VisualizationMode.DETECTION) {
+        if (visualizationListener.getCurrentMode() == VisualizationMode.DETECTION) {
             visualizationUpdateThreadHandler.post {
                 visualizationListener.onDetectionsUpdated(detections.detections)
                 val array = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)
                 if (!array.isEmpty()) {
-                    sourceImageOutputAllocation.copyFrom(array)
-                    sourceImageOutputAllocation.copyTo(visualizationListener.getBitmapBuffer())
-                    mainThreadHandler.post {
-                        visualizationListener.onByteArrayUpdated()
-                    }
+                    sourceImageOutputAllocation.visualize(array, visualizationListener)
                 }
             }
         }
 
         lastKnownDetectionId = localDetectionDataBuffer.detectionsIdentifier
     }
-    // End detections
 
-    // Segmentation
     private fun initSegmentationBuffer() {
         segmentationDataBuffer = SegmentationDataBuffer()
         coreWrapper.setSegmentationDataBuffer(segmentationDataBuffer!!)
@@ -277,58 +282,14 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        val segmentationMask = SegmentationMask.fromSegmentationDataBuffer(localSegmentationBuffer)
+        val segmentationMask = SegmentationMask(localSegmentationBuffer)
+        segmentationMask.sourceImage.imageSource = segmentationSource
+        segmentationMask.segmentationMaskImage.imageSource = segmentationMaskSource
 
-        if (visionEventsListener != null) {
-            val sourceImageSource = object : Image.ImageSource {
-                override fun getImageBytes(): ByteArray? {
-                    val byteArray = coreWrapper.getSegmentationSourceImageDataArray(segmentationMask.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        return byteArray
-                    }
-                }
-
-                override fun getImageBitmap(): Bitmap? {
-
-                    val byteArray = coreWrapper.getSegmentationSourceImageDataArray(segmentationMask.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        val bitmap = Bitmap.createBitmap(segmentationMask.sourceImage.width,
-                                segmentationMask.sourceImage.height, Bitmap.Config.ARGB_8888)
-
-                        sourceImageOutputAllocation?.copyFrom(byteArray)
-                        sourceImageOutputAllocation?.copyTo(bitmap)
-                        return bitmap
-                    }
-                }
-            }
-            segmentationMask.sourceImage.setImageSource(sourceImageSource)
-
-            val maskSource = object : Image.ImageSource {
-                override fun getImageBytes(): ByteArray? {
-                    val byteArray = coreWrapper.getSegmentationMaskImageDataArray(segmentationMask.segmentationMaskImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        return byteArray
-                    }
-                }
-
-                override fun getImageBitmap(): Bitmap? {
-
-                    Log.e(TAG, "getImageBitmap method is not supported for Mask Image")
-
-                    return Bitmap.createBitmap(segmentationMask.segmentationMaskImage.width,
-                            segmentationMask.segmentationMaskImage.height, Bitmap.Config.ARGB_8888)
-                }
-            }
-            segmentationMask.segmentationMaskImage.setImageSource(maskSource)
-
+        val visionEventsListenerRef = visionEventsListener?.get()
+        if (visionEventsListenerRef != null) {
             mainThreadHandler.post {
-                visionEventsListener?.segmentationUpdated(segmentationMask)
+                visionEventsListenerRef.segmentationUpdated(segmentationMask)
             }
         }
 
@@ -336,19 +297,16 @@ internal class JNICoreUpdateManager(
 
         if (visualizationListener?.getCurrentMode() == VisualizationMode.SEGMENTATION) {
             visualizationUpdateThreadHandler.post {
-                sourceImageOutputAllocation?.copyFrom(coreWrapper.getBlendedSegmentationMaskImageDataArray(segmentationMask.segmentationMaskImage.identifier))
-                sourceImageOutputAllocation?.copyTo(visualizationListener.getBitmapBuffer())
-                mainThreadHandler.post {
-                    visualizationListener.onByteArrayUpdated()
-                }
+                sourceImageOutputAllocation.visualize(
+                        from = coreWrapper.getBlendedSegmentationMaskImageDataArray(segmentationMask.segmentationMaskImage.identifier),
+                        listener = visualizationListener
+                )
             }
         }
 
         lastKnownSegmentationMaskId = localSegmentationBuffer.maskImageIdentifier
     }
-    // End segmentation
 
-    // Sign Classification
     private fun initSignClassificationBuffer() {
         signClassificationDataBuffer = SignClassificationDataBuffer()
         coreWrapper.setSignClassificationDataBuffer(signClassificationDataBuffer!!)
@@ -364,48 +322,18 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        val signClassificationEvent = SignClassification.fromSignClassificationDataBuffer(localSignClassificationDataBuffer)
+        val signClassificationEvent = SignClassification(localSignClassificationDataBuffer)
 
-        if (visionEventsListener != null) {
-            val sourceImage = object : Image.ImageSource {
-                override fun getImageBytes(): ByteArray? {
-                    val byteArray = coreWrapper.getSignClassificationSourceImageDataArray(signClassificationEvent.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        return byteArray
-                    }
-                }
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        signClassificationEvent.sourceImage.imageSource = signClassificationSource
 
-                override fun getImageBitmap(): Bitmap? {
-
-                    val byteArray = coreWrapper.getSignClassificationSourceImageDataArray(signClassificationEvent.sourceImage.identifier)
-                    if (byteArray.isEmpty()) {
-                        return null
-                    } else {
-                        val bitmap = Bitmap.createBitmap(signClassificationEvent.sourceImage.width,
-                                signClassificationEvent.sourceImage.height, Bitmap.Config.ARGB_8888)
-
-                        sourceImageOutputAllocation?.copyFrom(byteArray)
-                        sourceImageOutputAllocation?.copyTo(bitmap)
-                        return bitmap
-                    }
-
-                }
-            }
-
-            signClassificationEvent.sourceImage.setImageSource(sourceImage)
-
-
-            mainThreadHandler.post { visionEventsListener?.signClassificationUpdated(signClassificationEvent) }
+        mainThreadHandler.post {
+            visionEventsListenerRef.signClassificationUpdated(signClassificationEvent)
         }
 
         lastKnownClassificationId = localSignClassificationDataBuffer.signClassificationIdentifier
     }
 
-    // End sign classification
-
-    // Road description
     private fun initRoadDescriptionBuffer() {
         roadDescriptionDataBuffer = RoadDescriptionDataBuffer()
         coreWrapper.setRoadDescriptionDataBuffer(roadDescriptionDataBuffer!!)
@@ -420,19 +348,15 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        if (visionEventsListener != null) {
-            val roadDescriptionEvent = RoadDescription.fromRoadDescriptionBuffer(localRoadDescriptionBuffer)
-            if (roadDescriptionEvent != null) {
-                mainThreadHandler.post { visionEventsListener?.roadDescriptionUpdated(roadDescriptionEvent) }
-            }
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        val roadDescriptionEvent = RoadDescription.fromRoadDescriptionBuffer(localRoadDescriptionBuffer) ?: return
+        mainThreadHandler.post {
+            visionEventsListenerRef.roadDescriptionUpdated(roadDescriptionEvent)
         }
 
         lastKnownRoadDescriptionId = localRoadDescriptionBuffer.roadDescriptionIdentifier
     }
 
-    // Road description
-
-    // World description
     private fun initWorldDescriptionBuffer() {
         worldDescriptionDataBuffer = WorldDescriptionDataBuffer()
         coreWrapper.setWorldDescriptionDataBuffer(worldDescriptionDataBuffer!!)
@@ -447,18 +371,15 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        if (visionEventsListener != null) {
-            val worldDescription = WorldDescription.fromWorldDescriptionDataBuffer(localWorldDescriptionBuffer)
-            mainThreadHandler.post {
-                visionEventsListener?.worldDescriptionUpdated(worldDescription)
-            }
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        val worldDescription = WorldDescription.fromWorldDescriptionDataBuffer(localWorldDescriptionBuffer)
+        mainThreadHandler.post {
+            visionEventsListenerRef.worldDescriptionUpdated(worldDescription)
         }
 
         lastKnownWorldDescriptionId = localWorldDescriptionBuffer.worldDescriptionIdentifier
     }
-    // End world description
 
-    // Position
     private fun initPositionBuffer() {
         positionDataBuffer = PositionDataBuffer()
         coreWrapper.setPositionDataBuffer(positionDataBuffer!!)
@@ -473,15 +394,14 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        if (visionEventsListener != null) {
-            val position = Position.fromPositionBuffer(localPositionBuffer)
-            mainThreadHandler.post { visionEventsListener?.estimatedPositionUpdated(position) }
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        mainThreadHandler.post {
+            visionEventsListenerRef.estimatedPositionUpdated(Position(localPositionBuffer))
         }
 
         lastKnownPositionId = localPositionBuffer.positionIdentifier
     }
 
-    // Calibration
     private fun initCalibrationBuffer() {
         calibrationDataBuffer = CalibrationDataBuffer()
         coreWrapper.setCalibrationDataBuffer(calibrationDataBuffer!!)
@@ -496,30 +416,69 @@ internal class JNICoreUpdateManager(
             return
         }
 
-        if (visionEventsListener != null) {
-            val calibrationProgress = CalibrationProgress.fromBuffer(localCalibrationBuffer)
-            mainThreadHandler.post {
-                visionEventsListener?.calibrationProgressUpdated(calibrationProgress)
-            }
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
+        val calibrationProgress = CalibrationProgress(localCalibrationBuffer)
+        mainThreadHandler.post {
+            visionEventsListenerRef.calibrationProgressUpdated(calibrationProgress)
         }
 
         lastKnownCalibrationId = localCalibrationBuffer.identifier
     }
-    // End calibration
 
-    // Lane Departure State
     private fun updateLaneDepartureState() {
-        if (visionEventsListener == null) {
-            return
-        }
         val laneDepartureState = getLaneDepartureState()
         if (lastKnownLaneDepartureState == laneDepartureState) {
             return
         }
+
+        val visionEventsListenerRef = visionEventsListener?.get() ?: return
         mainThreadHandler.post {
-            visionEventsListener?.laneDepartureStateUpdated(laneDepartureState)
+            visionEventsListenerRef.laneDepartureStateUpdated(laneDepartureState)
+        }
+    }
+
+    private fun initRoadRestrictionsDataBuffer() {
+        roadRestrictionsDataBuffer = RoadRestrictionsDataBuffer()
+        coreWrapper.setRoadRestrictionsDataBuffer(roadRestrictionsDataBuffer!!)
+    }
+
+    private fun getSpeedLimit(): SpeedLimit {
+        if (roadRestrictionsDataBuffer == null) {
+            initRoadRestrictionsDataBuffer()
+        }
+        coreWrapper.requestCalibration()
+        return SpeedLimit(roadRestrictionsDataBuffer!!)
+    }
+
+    private fun updateRoadRestrictions() {
+        if (calibrationDataBuffer == null) {
+            initCalibrationBuffer()
         }
 
+        val roadRestrictionsListenerRef = roadRestrictionsListener?.get() ?: return
+
+        val speedLimit = getSpeedLimit()
+        if (lastKnownRoadRestrictionsId == speedLimit.identifier) {
+            return
+        }
+
+        mainThreadHandler.post {
+            roadRestrictionsListenerRef.speedLimitUpdated(speedLimit)
+        }
+
+        lastKnownRoadRestrictionsId = speedLimit.identifier
+    }
+
+    private fun ByteArray.nullIfEmpty() = if (isEmpty()) null else this
+
+    private fun ByteArray.toBitmap(sourceImage: Image): Bitmap? = if (isEmpty()) {
+        null
+    } else {
+        val bitmap = Bitmap.createBitmap(sourceImage.width, sourceImage.height, Bitmap.Config.ARGB_8888)
+
+        sourceImageOutputAllocation.copyFrom(this)
+        sourceImageOutputAllocation.copyTo(bitmap)
+        bitmap
     }
 
     private fun releaseAllBuffers() {
@@ -551,9 +510,9 @@ internal class JNICoreUpdateManager(
             coreWrapper.removeCalibrationDataBuffer()
             calibrationDataBuffer = null
         }
-    }
-
-    companion object {
-        private const val TAG = "JNICoreUpdateManager"
+        if (roadRestrictionsDataBuffer != null) {
+            coreWrapper.removeRoadRestrictionsDataBuffer()
+            roadRestrictionsDataBuffer = null
+        }
     }
 }
