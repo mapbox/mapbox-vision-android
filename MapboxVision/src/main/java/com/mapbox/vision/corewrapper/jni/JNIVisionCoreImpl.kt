@@ -70,7 +70,6 @@ internal class JNIVisionCoreImpl constructor(
                 useCarDistanceMeasure = true,
                 useClassification = true,
                 useDetectionMapping = true,
-                useMapMatching = true,
                 useRoadConfidence = false,
                 useTracking = true,
                 useTrajectoryEstimator = true,
