@@ -9,6 +9,7 @@ import com.mapbox.vision.core.events.EventManager
 import com.mapbox.vision.core.events.ImageSaver
 import com.mapbox.vision.core.map.MapDataSource
 import com.mapbox.vision.corewrapper.VisionCore
+import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.corewrapper.update.jni.JNICoreUpdateManager
 import com.mapbox.vision.models.CameraParamsData
@@ -16,11 +17,7 @@ import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
-import com.mapbox.vision.performance.ModelPerformance
-import com.mapbox.vision.performance.ModelPerformanceConfig
-import com.mapbox.vision.performance.ModelPerformanceMode
-import com.mapbox.vision.performance.ModelPerformanceRate
-import com.mapbox.vision.performance.PerformanceManagerFactory
+import com.mapbox.vision.performance.*
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
@@ -89,8 +86,12 @@ internal class JNIVisionCoreImpl constructor(
         )
     }
 
-    override fun setVisionEventListener(visionEventsListener: VisionEventsListener?) {
-        this.jniCoreUpdateManager.setVisionEventListener(visionEventsListener)
+    override fun setVisionEventListener(visionEventsListener: WeakReference<VisionEventsListener>?) {
+        jniCoreUpdateManager.setVisionEventListener(visionEventsListener)
+    }
+
+    override fun setRoadRestrictionsListener(roadRestrictionsListener: WeakReference<RoadRestrictionsListener>?) {
+        jniCoreUpdateManager.setRoadRestrictionsListener(roadRestrictionsListener)
     }
 
     override fun setVisualizationUpdateListener(visualizationUpdateListener: WeakReference<VisualizationUpdateListener>?) {
