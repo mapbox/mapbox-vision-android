@@ -2,7 +2,7 @@ package com.mapbox.vision.utils.threads
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.mapbox.vision.utils.VisionLogger
 
 class MainThreadHandler : ThreadHandler {
 
@@ -15,16 +15,16 @@ class MainThreadHandler : ThreadHandler {
     private val uiHandler = Handler(Looper.getMainLooper())
 
     override fun post(task: () -> Unit) {
-        if(!started) {
-            Log.e(TAG, "The thread was not started")
+        if (!started) {
+            VisionLogger.d(TAG, "The thread was not started")
             return
         }
         uiHandler.post { task.invoke() }
     }
 
     override fun postDelayed(task: () -> Unit, delayMillis: Long) {
-        if(!started) {
-            Log.e(TAG, "The thread was not started")
+        if (!started) {
+            VisionLogger.d(TAG, "The thread was not started")
             return
         }
         uiHandler.postDelayed({ task.invoke() }, delayMillis)
@@ -36,8 +36,8 @@ class MainThreadHandler : ThreadHandler {
     }
 
     override fun stop() {
-        if(!started) {
-            Log.e(TAG, "The thread was not started")
+        if (!started) {
+            VisionLogger.d(TAG, "The thread was not started")
             return
         }
         uiHandler.removeCallbacksAndMessages(null)

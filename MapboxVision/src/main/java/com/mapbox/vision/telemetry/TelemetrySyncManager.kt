@@ -4,7 +4,6 @@ import android.content.Context
 import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.threads.WorkThreadHandler
@@ -15,17 +14,17 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal interface TelemetryManager {
+internal interface TelemetrySyncManager {
 
     fun start()
     fun stop()
     fun syncSessionDir(path: String)
-    fun generateNextSessionDir(): String
 
     class Impl(
             private val mapboxTelemetry: MapboxTelemetry,
-            context: Context
-    ) : TelemetryManager, AttachmentListener {
+            context: Context,
+            private val rootTelemetryDir: String
+    ) : TelemetrySyncManager, AttachmentListener {
 
         private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
         private val imageZipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
@@ -41,12 +40,9 @@ internal interface TelemetryManager {
 
         private val uploadInProgress = AtomicBoolean(false)
 
-        private val rootTelemetryDir: String
-
         init {
             mapboxTelemetry.addAttachmentListener(this)
             threadHandler.start()
-            rootTelemetryDir = FileUtils.getTelemetryDirPath(context)
         }
 
         override fun start() {
@@ -243,15 +239,6 @@ internal interface TelemetryManager {
         override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
             uploadInProgress.set(false)
             processQueues()
-        }
-
-        override fun generateNextSessionDir(): String {
-            val file = File(rootTelemetryDir, System.currentTimeMillis().toString())
-            if (!file.exists() && !file.mkdirs()) {
-                return ""
-            }
-
-            return "${file.absolutePath}/"
         }
     }
 

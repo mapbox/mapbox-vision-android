@@ -1,22 +1,17 @@
 package com.mapbox.vision.video.videosource
 
-internal interface VideoSource {
-
+interface VideoSource {
     fun getSourceWidth(): Int
 
     fun getSourceHeight(): Int
-
-    fun isAttached(): Boolean
 
     fun attach(videoSourceListener: VideoSourceListener)
 
     fun detach()
 
-    fun release()
+    interface WithProgress {
+        fun setProgress(timestampMillis: Long)
 
-    fun stopVideoRecording()
-
-    fun startVideoRecording()
-
-    fun useBitmap(useBitmap: Boolean)
+        fun getProgress(): Long
+    }
 }
