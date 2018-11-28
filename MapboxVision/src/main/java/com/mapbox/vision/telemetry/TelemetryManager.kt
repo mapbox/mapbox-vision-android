@@ -123,11 +123,13 @@ internal interface TelemetryManager {
         }
 
         private fun File.toAttachmentProperties(format: String, type: String, mediaType: MediaType): AttachmentProperties {
+            val fileId = dateFormat.format(Date(parentFile.name.toLong()))
+
             return AttachmentProperties(
                     absolutePath,
                     AttachmentMetadata(
-                            name, hashCode().toString(), format, type,
-                            "${dateFormat.format(Date(parentFile.name.toLong()))}_${locale}_${uuidUtil.uniqueId}_Android"
+                            name, "$fileId/$name", format, type,
+                            "${fileId}_${locale}_${uuidUtil.uniqueId}_Android"
                     ),
                     mediaType
             )
@@ -226,11 +228,11 @@ internal interface TelemetryManager {
         }
 
         private fun ConcurrentLinkedQueue<AttachmentProperties>.removeByFileId(fileId: String): Boolean =
-                this.firstOrNull { it.metadata.fileId == fileId }
-                        ?.also { attachment ->
+            this.firstOrNull { it.metadata.fileId == fileId }
+                    ?.also { attachment ->
                         File(attachment.absolutePath).delete()
-                            remove(attachment)
-                        } != null
+                        remove(attachment)
+                    } != null
 
         override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
             uploadInProgress.set(false)
