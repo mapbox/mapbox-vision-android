@@ -50,7 +50,7 @@ import kotlin.properties.Delegates
  */
 object VisionManager : ARDataProvider {
 
-    private const val MAPBOX_TELEMETRY_CLIENT_NAME = "MapboxEventsAndroid/Vision"
+    private const val MAPBOX_TELEMETRY_USER_AGENT = "MapboxVision/${BuildConfig.VERSION_NAME}"
     private const val TAG = "VisionManager"
 
     // Work resolution
@@ -191,7 +191,7 @@ object VisionManager : ARDataProvider {
             return
         }
 
-        mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_CLIENT_NAME)
+        mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
         visionCore = JNIVisionCoreFactory(
                 application = application,
