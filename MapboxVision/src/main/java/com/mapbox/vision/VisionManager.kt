@@ -1,7 +1,6 @@
 package com.mapbox.vision
 
 import android.app.Application
-import android.graphics.Bitmap
 import android.util.Log
 import com.mapbox.android.telemetry.AppUserTurnstile
 import com.mapbox.android.telemetry.MapboxTelemetry
@@ -55,10 +54,6 @@ object VisionManager : ARDataProvider {
     private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
     private const val TAG = "VisionManager"
 
-    // Work resolution
-    private const val FRAME_WIDTH = 1280
-    private const val FRAME_HEIGHT = 720
-
     // Video buffer length
     private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L // 5 min
 
@@ -88,7 +83,7 @@ object VisionManager : ARDataProvider {
     private var clipTimes: List<VideoProcessor.VideoPart> = emptyList()
 
     // Listeners
-    private val visionManagerVideoProcessorListener = object : VideoProcessorListener {
+    private val videoProcessorListener = object : VideoProcessorListener {
         override fun onVideoPartsReady(
                 videoPartMap: HashMap<String, VideoProcessor.VideoPart>,
                 dirPath: String,
@@ -98,7 +93,7 @@ object VisionManager : ARDataProvider {
         }
     }
 
-    private val visionManagerLocationEngineListener = object : LocationEngineListener {
+    private val locationEngineListener = object : LocationEngineListener {
         override fun onNewLocation(
                 latitude: Double,
                 longitude: Double,
@@ -124,7 +119,7 @@ object VisionManager : ARDataProvider {
         }
     }
 
-    private val visionManagerSensorDataListener = object : SensorDataListener {
+    private val sensorDataListener = object : SensorDataListener {
 
         override fun onDeviceMotionDataReady(deviceMotionData: DeviceMotionData) {
             visionCore.setDeviceMotionData(deviceMotionData)
@@ -135,14 +130,9 @@ object VisionManager : ARDataProvider {
         }
     }
 
-    private val visionManagerVideoSourceListener = object : VideoSourceListener {
-
+    private val videoSourceListener = object : VideoSourceListener {
         override fun onNewFrame(rgbBytes: ByteArray) {
             visionCore.setRGBABytes(rgbBytes, videoSource.getSourceWidth(), videoSource.getSourceHeight())
-        }
-
-        override fun onNewBitmap(bitmap: Bitmap) {
-            // Do nothing
         }
 
         override fun onNewCameraParams(cameraParamsData: CameraParamsData) {
@@ -184,7 +174,7 @@ object VisionManager : ARDataProvider {
      * You should [destroy] when Vision SDK is no longer needed to release all resources.
      * No-op if called while SDK is created already.
      */
-    fun create() {
+    fun create(videoSource: VideoSource = CameraVideoSourceImpl(application)) {
         checkManagerInit()
         if (isCreated) {
             Log.w(TAG, "VisionManager was already created!")
@@ -194,24 +184,26 @@ object VisionManager : ARDataProvider {
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
 
-        if(!isTurnstileEventSent) {
-            val turnstileEvent = AppUserTurnstile(MAPBOX_VISION_IDENTIFIER,
-                    BuildConfig.VERSION_NAME)
-            mapboxTelemetry.push(turnstileEvent)
+        if (!isTurnstileEventSent) {
+            mapboxTelemetry.push(
+                    AppUserTurnstile(MAPBOX_VISION_IDENTIFIER, BuildConfig.VERSION_NAME)
+            )
             isTurnstileEventSent = true
         }
 
-
+        this.videoSource = videoSource
         visionCore = JNIVisionCoreFactory(
                 application = application,
                 eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
                 imageSaver = telemetryImageSaver
         )
-                .createVisionCore(FRAME_WIDTH, FRAME_HEIGHT)
+                .createVisionCore(
+                        width = videoSource.getSourceWidth(),
+                        height = videoSource.getSourceHeight()
+                )
 
-        videoSource = CameraVideoSourceImpl(application, FRAME_WIDTH, FRAME_HEIGHT)
         sensorsRequestsManager = SensorsRequestsManager(application)
-        sensorsRequestsManager.setSensorDataListener(visionManagerSensorDataListener)
+        sensorsRequestsManager.setSensorDataListener(sensorDataListener)
         locationEngine = AndroidLocationEngineImpl(application)
         videoProcessor = VideoProcessor.Impl()
 
@@ -242,17 +234,16 @@ object VisionManager : ARDataProvider {
         visionCore.setVideoStreamListener(videoStreamListener)
         visionCore.onResume()
 
-        videoProcessor.setVideoProcessorListener(visionManagerVideoProcessorListener)
+        videoProcessor.setVideoProcessorListener(videoProcessorListener)
 
         startTelemetry()
         startAllHandlers()
 
-        videoSource.useBitmap(false)
-        videoSource.attach(visionManagerVideoSourceListener)
+        videoSource.attach(videoSourceListener)
         startSessionRecording()
 
         sensorsRequestsManager.startDataRequesting()
-        locationEngine.attach(visionManagerLocationEngineListener)
+        locationEngine.attach(locationEngineListener)
 
         coreUpdateThreadHandler.post { requestCoreUpdate() }
 
@@ -297,7 +288,6 @@ object VisionManager : ARDataProvider {
             return
         }
 
-        videoSource.release()
         visionCore.release()
         videoProcessor.stop()
 
