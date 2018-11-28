@@ -25,6 +25,19 @@ if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
         moduleName = 'mapbox-vision'
         outputDirectory = "$buildDir/javadoc"
         outputFormat = 'javadoc'
+        kotlinTasks {
+            defaultKotlinTasks() + [':sdk:compileReleaseKotlin']
+        }
+
+        packageOptions {
+            prefix = "com.mapbox.vision.mobile"
+            suppress = true
+        }
+        packageOptions {
+            prefix = "com.mapbox.vision.mobile.models"
+            suppress = false
+        }
+        // TODO finish dokka settings for other sdk core packages
     }
 }
 
@@ -62,11 +75,8 @@ android {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-scalars:$retrofit_version"
-
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        api project(path: ':VisionCore')
+        api project(path: ':CoreSdk')
     } else {
         implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
     }

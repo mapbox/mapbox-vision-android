@@ -4,20 +4,16 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context.WINDOW_SERVICE
 import android.hardware.Sensor
-import android.hardware.Sensor.TYPE_ACCELEROMETER
-import android.hardware.Sensor.TYPE_GAME_ROTATION_VECTOR
-import android.hardware.Sensor.TYPE_GRAVITY
-import android.hardware.Sensor.TYPE_GYROSCOPE
-import android.hardware.Sensor.TYPE_MAGNETIC_FIELD
+import android.hardware.Sensor.*
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
 import android.view.WindowManager
-import com.mapbox.vision.models.DeviceMotionData
-import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.mobile.models.DeviceMotionData
+import com.mapbox.vision.mobile.models.HeadingData
 
-internal class SensorsRequestsManager(application: Application) : SensorEventListener {
+internal class SensorsManager(application: Application) : SensorEventListener {
 
     private var sensorDataListener: SensorDataListener? = null
     private var lastAccuracy = 0
@@ -50,7 +46,7 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
         this.sensorDataListener = sensorDataListener
     }
 
-    fun startDataRequesting() {
+    fun start() {
         if (accelerometerSensor == null || magneticSensor == null) {
             return
         }
@@ -65,7 +61,7 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
         }
     }
 
-    fun stopDataRequesting() {
+    fun stop() {
         sensorManager.unregisterListener(this)
         listenerUpdateHandler.removeCallbacksAndMessages(null)
     }
@@ -117,27 +113,34 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
 
         synchronized(this) {
 
+            // TODO is it common in HeadingData and DeviceMotionData?
             var heading = Math.toDegrees(orientations[0].toDouble())
             if (heading < 0) {
                 heading += 360
             }
 
-            listener.onDeviceMotionDataReady(
-                    DeviceMotionData(
-                            rotations = rotations,
-                            orientations = orientations,
-                            screenOrientation = screenOrientation,
-                            gravity = gravity,
-                            userAccelerationRelativeToGravity = userAccelerationWithGravity
-                                    .mapIndexed { index, value ->
-                                        (value - gravity[index]) / SensorManager.GRAVITY_EARTH
-                                    }
-                                    .toFloatArray(),
-                            heading = heading.toFloat()
-                    )
+            listener.onDeviceMotionData(
+                DeviceMotionData(
+                    rotations = rotations,
+                    orientations = orientations,
+                    screenOrientation = screenOrientation,
+                    gravity = gravity,
+                    userAccelerationRelativeToGravity = userAccelerationWithGravity
+                        .mapIndexed { index, value ->
+                            (value - gravity[index]) / SensorManager.GRAVITY_EARTH
+                        }
+                        .toFloatArray(),
+                    heading = heading.toFloat()
+                )
             )
 
-            listener.onHeadingDataReady(HeadingData(heading.toFloat(), geomagnetic, lastTimestamp))
+            listener.onHeadingData(
+                HeadingData(
+                    heading.toFloat(),
+                    geomagnetic,
+                    lastTimestamp
+                )
+            )
         }
         listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
 

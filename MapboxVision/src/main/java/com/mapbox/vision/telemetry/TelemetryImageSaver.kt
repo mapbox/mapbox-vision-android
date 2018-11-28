@@ -1,13 +1,13 @@
 package com.mapbox.vision.telemetry
 
 import android.graphics.Bitmap
-import com.mapbox.vision.core.events.ImageSaver
+import com.mapbox.vision.mobile.telemetry.TelemetryImageSaver
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
 
-internal class TelemetryImageSaver : ImageSaver {
+internal class TelemetryImageSaver : TelemetryImageSaver {
 
     private val threadHandler = WorkThreadHandler().apply { start() }
 

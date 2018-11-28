@@ -2,7 +2,7 @@ package com.mapbox.vision.utils.threads
 
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
+import com.mapbox.vision.utils.VisionLogger
 
 internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_THREAD_NAME) : ThreadHandler {
 
@@ -13,7 +13,7 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
 
     override fun post(task: () -> Unit) {
         if (!started) {
-            Log.e(TAG, "The thread was not started")
+            VisionLogger.d(TAG, "The thread was not started")
             return
         }
         workThreadHandler.post { task.invoke() }
@@ -21,7 +21,7 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
 
     override fun postDelayed(task: () -> Unit, delayMillis: Long) {
         if (!started) {
-            Log.e(TAG, "The thread was not started")
+            VisionLogger.d(TAG, "The thread was not started")
             return
         }
         workThreadHandler.postDelayed({ task.invoke() }, delayMillis)
@@ -41,7 +41,7 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
         try {
             workThread.join()
         } catch (e: InterruptedException) {
-            Log.e(TAG, " InterruptedException " + e.localizedMessage);
+            e.printStackTrace()
         }
     }
 

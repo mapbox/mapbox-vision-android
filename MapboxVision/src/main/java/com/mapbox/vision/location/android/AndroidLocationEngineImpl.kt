@@ -8,19 +8,19 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import com.mapbox.vision.location.LocationEngine
-import com.mapbox.vision.location.LocationEngineListener
+import com.mapbox.vision.mobile.interfaces.LocationEngineListener
+import com.mapbox.vision.utils.VisionLogger
 
 internal class AndroidLocationEngineImpl(context: Context) : LocationEngine, LocationListener {
 
     private val locationManager: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private val currentProvider: String = LocationManager.GPS_PROVIDER
 
-    private lateinit var locationEngineListener: LocationEngineListener
+    private var locationEngineListener: LocationEngineListener? = null
 
-    // Bearing returned can be invalid - it'l contain 0.0f then. We cache last valid bearing to return it to subscribers.
-    private var lastValidBearing : Float = 0f
+    // Bearing returned can be invalid - it'll contain 0.0f then. We cache last valid bearing to return it to subscribers.
+    private var lastValidBearing: Float = 0f
 
     private var attached = false
 
@@ -38,41 +38,41 @@ internal class AndroidLocationEngineImpl(context: Context) : LocationEngine, Loc
         locationManager.removeUpdates(this)
     }
 
-    override fun isAttached(): Boolean = attached
-
-    // Location Engine listener
     override fun onLocationChanged(location: Location) {
-        if (!::locationEngineListener.isInitialized) {
-            return
-        }
+        locationEngineListener?.let { listener ->
+            if (location.bearing != 0.0f) {
+                lastValidBearing = location.bearing
+            }
 
-        if (location.bearing != 0.0f) {
-            lastValidBearing = location.bearing
-        }
-
-        locationEngineListener.onNewLocation(
+            listener.setLocation(
                 latitude = location.latitude,
                 longitude = location.longitude,
                 speed = location.speed,
-                altitude = location.altitude,
+                altitude = location.altitude.toFloat(),
                 horizontalAccuracy = location.accuracy,
                 verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) location.verticalAccuracyMeters else 0.0F,
                 bearing = lastValidBearing,
                 timestamp = location.time
-        )
+            )
+        }
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-        Log.v(TAG, String.format("Provider %s status changed to %d (current provider is %s).",
-                provider, status, currentProvider))
+        VisionLogger.v(
+            TAG,
+            String.format(
+                "Provider %s status changed to %d (current provider is %s).",
+                provider, status, currentProvider
+            )
+        )
     }
 
     override fun onProviderEnabled(provider: String?) {
-        Log.v(TAG, String.format("Provider %s was enabled (current provider is %s).", provider, currentProvider))
+        VisionLogger.v(TAG, String.format("Provider %s was enabled (current provider is %s).", provider, currentProvider))
     }
 
     override fun onProviderDisabled(provider: String?) {
-        Log.v(TAG, String.format("Provider %s was disabled (current provider is %s).", provider, currentProvider))
+        VisionLogger.v(TAG, String.format("Provider %s was disabled (current provider is %s).", provider, currentProvider))
     }
 
     companion object {
