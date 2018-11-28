@@ -43,10 +43,6 @@ internal interface VisionCore {
 
     fun setRGBABytes(rgbaByteArray: ByteArray, width: Int, height: Int)
 
-    fun playTelemetry(telemetryPath: String)
-
-    fun setTelemetryTimestamp(timestamp: Long)
-
     fun requestUpdate()
 
     fun setGPSData(gpsData: GPSData)

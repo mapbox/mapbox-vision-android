@@ -2,7 +2,6 @@ package com.mapbox.vision.utils
 
 import android.content.Context
 import android.util.Log
-import com.mapbox.vision.BuildConfig
 import java.io.File
 
 internal object FileUtils {
@@ -24,11 +23,11 @@ internal object FileUtils {
     }
 
     private fun getPath(context: Context, dirName: String): String {
-        val dir = if (BuildConfig.DEBUG) {
+        val dir = //if (BuildConfig.DEBUG) {
             File(context.getExternalFilesDir(null), dirName)
-        } else {
-            File(context.filesDir, dirName)
-        }
+//        } else {
+//            File(context.filesDir, dirName)
+//        }
 
         if (!dir.exists() && !dir.mkdirs()) {
             Log.e(TAG, "Can not create dir in path: ${dir.absolutePath}")

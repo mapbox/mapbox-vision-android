@@ -96,7 +96,7 @@ object VisionManager : ARDataProvider {
                 dirPath: String,
                 jsonFilePath: String
         ) {
-            telemetryManager.syncSessionDir(dirPath)
+//            telemetryManager.syncSessionDir(dirPath)
         }
     }
 
@@ -305,9 +305,6 @@ object VisionManager : ARDataProvider {
 
         coreUpdateThreadHandler.post {
             setTelemetry = File(RECORDED_TELEMETRY_PATH).exists()
-            if (setTelemetry) {
-                visionCore.playTelemetry(RECORDED_TELEMETRY_PATH)
-            }
             requestCoreUpdate()
         }
         isStarted = true
@@ -548,9 +545,6 @@ object VisionManager : ARDataProvider {
                 CORE_UPDATE_DELAY_MILLIS
         )
         visionCore.requestUpdate()
-        if (setTelemetry) {
-            visionCore.setTelemetryTimestamp((videoSource as FileVideoSource).getProgress())
-        }
     }
 
     private fun startAllHandlers() {

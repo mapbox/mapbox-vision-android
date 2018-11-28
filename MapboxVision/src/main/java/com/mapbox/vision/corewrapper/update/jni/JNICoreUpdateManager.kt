@@ -94,11 +94,11 @@ internal class JNICoreUpdateManager(
         coreWrapper.setImageByteData(rgbaByteArray, width, height)
 
         val visualizationListener = visualizationUpdateListener?.get()
-        if (visualizationListener?.getCurrentMode() == VisualizationMode.CLEAR) {
-            visualizationUpdateThreadHandler.post {
-                sourceImageOutputAllocation.visualize(rgbaByteArray, visualizationListener)
-            }
-        }
+//        if (visualizationListener?.getCurrentMode() == VisualizationMode.CLEAR) {
+//            visualizationUpdateThreadHandler.post {
+//                sourceImageOutputAllocation.visualize(rgbaByteArray, visualizationListener)
+//            }
+//        }
 
         val localArVideoSourceListener = videoStreamListener?.get() ?: return
         mainThreadHandler.post {
@@ -125,10 +125,6 @@ internal class JNICoreUpdateManager(
     @WorkerThread
     fun requestUpdate() {
         coreWrapper.requestUpdate()
-
-        if (visualizationUpdateListener?.get() == null) {
-            return
-        }
 
         updateDetections()
         updateSegmentation()
@@ -264,7 +260,7 @@ internal class JNICoreUpdateManager(
 
         val visualizationListener = visualizationUpdateListener?.get()
 
-        if (visualizationListener?.getCurrentMode() == VisualizationMode.DETECTION) {
+        if (visualizationListener?.getCurrentMode() == VisualizationMode.CLEAR) {
             visualizationUpdateThreadHandler.post {
                 visualizationListener.onDetectionsUpdated(detections.detections)
                 val array = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)

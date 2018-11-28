@@ -48,7 +48,7 @@ bintray {
 
     dryRun = false // Whether to run this as dry-run, without deploying
     publish = false // Whether version should be auto published after an upload
-    override = true // Whether to override version artifacts already published
+    override = false // Whether to override version artifacts already published
 
     pkg {
         userOrg = project.property('mapboxArtifactUserOrg')

@@ -118,14 +118,6 @@ internal class JNIVisionCoreImpl constructor(
         jniCoreUpdateManager.setRGBABytes(rgbaByteArray, width, height)
     }
 
-    override fun playTelemetry(telemetryPath: String) {
-        coreWrapper.playTelemetry(telemetryPath)
-    }
-
-    override fun setTelemetryTimestamp(timestamp: Long) {
-        coreWrapper.setTelemetryTimestamp(timestamp)
-    }
-
     override fun setGPSData(gpsData: GPSData) {
 //        coreWrapper.setGPSData(
 //                latitude = gpsData.latitude,
