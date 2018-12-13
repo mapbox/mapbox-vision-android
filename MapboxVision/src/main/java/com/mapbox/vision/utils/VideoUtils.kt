@@ -122,11 +122,16 @@ internal object VideoUtils {
             muxer.stop()
 
         } catch (e: IllegalStateException) {
-            // Swallow the exception due to malformed source.
             Log.w(TAG, "The source video file is malformed")
             return VideoProcessor.VideoPart(0, 0)
         } finally {
-            muxer.release()
+            try {
+                muxer.release()
+            } catch (e: IllegalStateException) {
+                e.printStackTrace()
+                Log.w(TAG, "Cannot release MediaMuxer. Exception : ${e.message}")
+                return VideoProcessor.VideoPart(0, 0)
+            }
         }
         return VideoProcessor.VideoPart(realStart, realEnd)
     }
