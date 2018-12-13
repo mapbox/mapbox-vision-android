@@ -127,65 +127,65 @@ internal class JNIVisionCoreImpl constructor(
     }
 
     override fun setGPSData(gpsData: GPSData) {
-        coreWrapper.setGPSData(
-                latitude = gpsData.latitude,
-                longitude = gpsData.longitude,
-                speed = gpsData.speed,
-                altitude = gpsData.altitude,
-                horizontalAccuracy = gpsData.horizontalAccuracy,
-                verticalAccuracy = gpsData.verticalAccuracy,
-                bearing = gpsData.bearing,
-                timestamp = gpsData.timestamp
-        )
+//        coreWrapper.setGPSData(
+//                latitude = gpsData.latitude,
+//                longitude = gpsData.longitude,
+//                speed = gpsData.speed,
+//                altitude = gpsData.altitude,
+//                horizontalAccuracy = gpsData.horizontalAccuracy,
+//                verticalAccuracy = gpsData.verticalAccuracy,
+//                bearing = gpsData.bearing,
+//                timestamp = gpsData.timestamp
+//        )
     }
 
     override fun setDeviceMotionData(deviceMotionData: DeviceMotionData) {
-        coreWrapper.setDeviceMotionData(
-                rotations = deviceMotionData.rotations,
-                orientations = deviceMotionData.orientations,
-                screenOrientation = deviceMotionData.screenOrientation,
-                gravity = deviceMotionData.gravity,
-                userAccelerationRelativeToGravity = deviceMotionData.userAccelerationRelativeToGravity,
-                heading = deviceMotionData.heading
-        )
+//        coreWrapper.setDeviceMotionData(
+//                rotations = deviceMotionData.rotations,
+//                orientations = deviceMotionData.orientations,
+//                screenOrientation = deviceMotionData.screenOrientation,
+//                gravity = deviceMotionData.gravity,
+//                userAccelerationRelativeToGravity = deviceMotionData.userAccelerationRelativeToGravity,
+//                heading = deviceMotionData.heading
+//        )
     }
 
     override fun setHeadingData(headingData: HeadingData) {
-        coreWrapper.setHeadingData(
-                heading = headingData.heading,
-                geomagnetism = headingData.geomagnetism,
-                timestamp = headingData.timestamp
-        )
+//        coreWrapper.setHeadingData(
+//                heading = headingData.heading,
+//                geomagnetism = headingData.geomagnetism,
+//                timestamp = headingData.timestamp
+//        )
     }
 
     override fun setCameraParams(cameraParams: CameraParams) {
-        coreWrapper.setCameraParams(
-                weight = cameraParams.width,
-                height = cameraParams.height,
-                focalLength = cameraParams.focalLength,
-                focalXPixels = cameraParams.focalInPixelsX,
-                focalYPixels = cameraParams.focalInPixelsY
-        )
+//        coreWrapper.setCameraParams(
+//                weight = cameraParams.width,
+//                height = cameraParams.height,
+//                focalLength = cameraParams.focalLength,
+//                focalXPixels = cameraParams.focalInPixelsX,
+//                focalYPixels = cameraParams.focalInPixelsY
+//        )
     }
 
     override fun setRouteData(navigationRoute: NavigationRoute?) {
-        if (navigationRoute == null) {
-            coreWrapper.setRoute(emptyArray())
-            return
-        }
-        val routePointsArray = Array(navigationRoute.routePoints.size) { DoubleArray(3) }
-        var i = 0
-        navigationRoute.routePoints.forEach {
-            routePointsArray[i][0] = it.latitude
-            routePointsArray[i][1] = it.longitude
-            routePointsArray[i][2] = if (it.isManeuver) {
-                1.0
-            } else {
-                0.0
-            }
-            i++
-        }
-        coreWrapper.setRoute(routePointsArray)
+//        if (navigationRoute == null) {
+//            coreWrapper.setRoute(emptyArray())
+//            return
+//        }
+//        val routePointsArray = Array(navigationRoute.routePoints.size) { DoubleArray(3) }
+//        var i = 0
+//        navigationRoute.routePoints.forEach {
+//            routePointsArray[i][0] = it.latitude
+//            routePointsArray[i][1] = it.longitude
+//            routePointsArray[i][2] = if (it.isManeuver) {
+//                1.0
+//            } else {
+//                0.0
+//            }
+//            i++
+//        }
+//        coreWrapper.setRoute(routePointsArray)
     }
 
     override fun startDataSavingSession(dataDirPath: String) {

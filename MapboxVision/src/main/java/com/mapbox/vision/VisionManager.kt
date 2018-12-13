@@ -541,7 +541,7 @@ object VisionManager : ARDataProvider {
     }
 
     private fun startSessionRecording() {
-        videoRecorder.startRecording()
+//        videoRecorder.startRecording()
         currentTelemetryDir = telemetryManager.generateNextSessionDir()
         telemetryImageSaver.setSessionDir(currentTelemetryDir)
         visionCore.startDataSavingSession(currentTelemetryDir)
@@ -556,7 +556,7 @@ object VisionManager : ARDataProvider {
         visionCore.stopDataSavingSession()
         clipTimes = visionCore.getAndResetClipsTimeList()
         previousTelemetryDir = currentTelemetryDir
-        videoRecorder.stopRecording()
+//        videoRecorder.stopRecording()
         currentTelemetryDir = ""
     }
 
