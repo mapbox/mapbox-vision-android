@@ -165,12 +165,11 @@ internal class CameraVideoSourceImpl(
             return
         }
         try {
-            mediaRecorder?.apply {
-                stop()
-                reset()
-            }
+            mediaRecorder?.stop()
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            mediaRecorder?.reset()
         }
         isRecordingVideo = false
 
