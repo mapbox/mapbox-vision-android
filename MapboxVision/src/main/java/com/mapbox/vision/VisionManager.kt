@@ -3,6 +3,7 @@ package com.mapbox.vision
 import android.app.Application
 import android.graphics.Bitmap
 import android.util.Log
+import com.mapbox.android.telemetry.AppUserTurnstile
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.ar.ARDataProvider
 import com.mapbox.vision.corewrapper.JNIVisionCoreFactory
@@ -42,7 +43,8 @@ import java.lang.ref.WeakReference
  */
 object VisionManager : ARDataProvider {
 
-    private const val MAPBOX_TELEMETRY_USER_AGENT = "MapboxVision/${BuildConfig.VERSION_NAME}"
+    private const val MAPBOX_VISION_IDENTIFIER = "MapboxVision"
+    private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
     private const val TAG = "VisionManager"
 
     // Work resolution
@@ -157,6 +159,7 @@ object VisionManager : ARDataProvider {
 
     private var isCreated = false
     private var isStarted = false
+    private var isTurnstileEventSent = false
 
     /**
      * Initialize SDK with mapbox access token and application instance.
@@ -182,6 +185,15 @@ object VisionManager : ARDataProvider {
 
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
+
+        if(!isTurnstileEventSent) {
+            val turnstileEvent = AppUserTurnstile(MAPBOX_VISION_IDENTIFIER,
+                    BuildConfig.VERSION_NAME)
+            mapboxTelemetry.push(turnstileEvent)
+            isTurnstileEventSent = true
+        }
+
+
         visionCore = JNIVisionCoreFactory(
                 application = application,
                 eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
