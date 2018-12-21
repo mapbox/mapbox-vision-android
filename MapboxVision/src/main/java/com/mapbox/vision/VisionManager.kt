@@ -1,6 +1,7 @@
 package com.mapbox.vision
 
 import android.app.Application
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.util.Log
 import com.mapbox.android.telemetry.AppUserTurnstile
@@ -194,13 +195,12 @@ object VisionManager : ARDataProvider {
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
 
-        if(!isTurnstileEventSent) {
+        if (!isTurnstileEventSent && (application.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
             val turnstileEvent = AppUserTurnstile(MAPBOX_VISION_IDENTIFIER,
                     BuildConfig.VERSION_NAME)
             mapboxTelemetry.push(turnstileEvent)
             isTurnstileEventSent = true
         }
-
 
         visionCore = JNIVisionCoreFactory(
                 application = application,
