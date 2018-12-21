@@ -4,7 +4,11 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context.WINDOW_SERVICE
 import android.hardware.Sensor
-import android.hardware.Sensor.*
+import android.hardware.Sensor.TYPE_ACCELEROMETER
+import android.hardware.Sensor.TYPE_GAME_ROTATION_VECTOR
+import android.hardware.Sensor.TYPE_GRAVITY
+import android.hardware.Sensor.TYPE_GYROSCOPE
+import android.hardware.Sensor.TYPE_MAGNETIC_FIELD
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
@@ -20,7 +24,7 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
 
     private val sensorManager: SensorManager = application.getSystemService(Activity.SENSOR_SERVICE) as SensorManager
     private val screenOrientation =
-            (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+        (application.getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
 
     private val accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
@@ -95,11 +99,6 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
                 TYPE_GAME_ROTATION_VECTOR -> {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientations)
-
-                    // Hack for core implementation, expecting iOS-like rotation values,
-                    // which remaps and reverses axises depending on orientation.
-                    orientations[0] = -orientations[0]
-                    orientations[2] = -orientations[2]
                 }
                 TYPE_GRAVITY -> {
                     gravity[0] = event.values[0]
@@ -107,7 +106,6 @@ internal class SensorsRequestsManager(application: Application) : SensorEventLis
                     gravity[2] = event.values[2]
                 }
                 else -> {
-                    // Do nothing
                 }
             }
 
