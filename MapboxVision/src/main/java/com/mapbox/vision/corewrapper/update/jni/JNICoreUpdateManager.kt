@@ -246,16 +246,18 @@ internal class JNICoreUpdateManager(
 
         val detections = Detections(localDetectionDataBuffer)
 
-        val visionEventsListenerRef = visionEventsListener?.get() ?: return
         detections.sourceImage.imageSource = detectionsSource
 
-        mainThreadHandler.post {
-            visionEventsListenerRef.detectionsUpdated(detections)
+        val visionEventsListenerRef = visionEventsListener?.get()
+        if (visionEventsListenerRef != null) {
+            mainThreadHandler.post {
+                visionEventsListenerRef.detectionsUpdated(detections)
+            }
         }
 
-        val visualizationListener = visualizationUpdateListener?.get() ?: return
+        val visualizationListener = visualizationUpdateListener?.get()
 
-        if (visualizationListener.getCurrentMode() == VisualizationMode.DETECTION) {
+        if (visualizationListener?.getCurrentMode() == VisualizationMode.DETECTION) {
             visualizationUpdateThreadHandler.post {
                 visualizationListener.onDetectionsUpdated(detections.detections)
                 val array = coreWrapper.getDetectionsSourceImageDataArray(detections.sourceImage.identifier)
