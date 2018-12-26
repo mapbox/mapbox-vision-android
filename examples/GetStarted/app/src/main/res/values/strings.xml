@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Get Started</string>
+
+    <string name="mode">Mode</string>
+    <string name="clear">Clear</string>
+    <string name="detection">Detection</string>
+    <string name="segmentation">Segmentation</string>
 </resources>
