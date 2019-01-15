@@ -37,7 +37,7 @@ internal interface TelemetryManager {
         private val bytesTracker = TotalBytesCounter.Impl()
         private val uuidUtil = UuidHolder.Impl(context)
         @Suppress("DEPRECATION")
-        private val locale = context.resources.configuration.locale.country.toUpperCase()
+        private val locale = context.resources.configuration.locale.toString()
 
         private val uploadInProgress = AtomicBoolean(false)
 
