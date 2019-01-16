@@ -54,6 +54,8 @@ internal interface TelemetryManager {
             imageZipQueue.clear()
             videoQueue.clear()
             threadHandler.removeAllTasks()
+            uploadInProgress.set(false)
+            uuidUtil.start()
 
             File(rootTelemetryDir).listFiles().forEach {
                 if (it.list().isEmpty()) {
@@ -62,9 +64,6 @@ internal interface TelemetryManager {
                     syncSessionDir(it.absolutePath)
                 }
             }
-
-            uuidUtil.start()
-            uploadInProgress.set(false)
         }
 
         override fun stop() {
