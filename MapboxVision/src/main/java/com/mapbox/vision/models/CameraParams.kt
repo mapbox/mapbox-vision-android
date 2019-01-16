@@ -1,6 +1,6 @@
 package com.mapbox.vision.models
 
-data class CameraParamsData(
+data class CameraParams(
         val width: Int,
         val height: Int,
         val focalLength: Float,

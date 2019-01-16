@@ -12,7 +12,7 @@ import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.location.LocationEngineListener
 import com.mapbox.vision.location.android.AndroidLocationEngineImpl
-import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.models.CameraParams
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.FrameStatistics
 import com.mapbox.vision.models.GPSData
@@ -24,13 +24,17 @@ import com.mapbox.vision.sensors.SensorsRequestsManager
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.telemetry.TelemetryImageSaver
 import com.mapbox.vision.telemetry.TelemetryManager
+import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.threads.MainThreadHandler
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.video.videoprocessor.VideoProcessorListener
+import com.mapbox.vision.video.videosource.VideoRecordingListener
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
-import com.mapbox.vision.video.videosource.camera.CameraVideoSourceImpl
+import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
+import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
+import com.mapbox.vision.video.videosource.camera.VideoRecorder
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.FrameSize
@@ -120,7 +124,6 @@ object VisionManager : ARDataProvider {
     }
 
     private val sensorDataListener = object : SensorDataListener {
-
         override fun onDeviceMotionDataReady(deviceMotionData: DeviceMotionData) {
             visionCore.setDeviceMotionData(deviceMotionData)
         }
@@ -135,14 +138,16 @@ object VisionManager : ARDataProvider {
             visionCore.setRGBABytes(rgbBytes, videoSource.getSourceWidth(), videoSource.getSourceHeight())
         }
 
-        override fun onNewCameraParams(cameraParamsData: CameraParamsData) {
-            visionCore.setCameraParamsData(cameraParamsData)
+        override fun onNewCameraParams(cameraParams: CameraParams) {
+            visionCore.setCameraParams(cameraParams)
         }
+    }
 
-        override fun onFileRecorded(recordedFilePath: String) {
+    private val recordingListener = object : VideoRecordingListener {
+        override fun onVideoRecorded(path: String) {
             videoProcessor.splitVideoToParts(
                     parts = clipTimes,
-                    fullVideoPath = recordedFilePath,
+                    fullVideoPath = path,
                     saveDirPath = previousTelemetryDir,
                     startRecordCoreMillis = startRecordCoreMillis
             )
@@ -159,6 +164,8 @@ object VisionManager : ARDataProvider {
     private var isStarted = false
     private var isTurnstileEventSent = false
 
+    private lateinit var videoRecorder: VideoRecorder
+
     /**
      * Initialize SDK with mapbox access token and application instance.
      * Do it once per application session, eg in [android.app.Application.onCreate].
@@ -174,7 +181,7 @@ object VisionManager : ARDataProvider {
      * You should [destroy] when Vision SDK is no longer needed to release all resources.
      * No-op if called while SDK is created already.
      */
-    fun create(videoSource: VideoSource = CameraVideoSourceImpl(application)) {
+    fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
         checkManagerInit()
         if (isCreated) {
             Log.w(TAG, "VisionManager was already created!")
@@ -192,6 +199,23 @@ object VisionManager : ARDataProvider {
         }
 
         this.videoSource = videoSource
+        when (videoSource) {
+            is Camera2VideoSourceImpl -> {
+                val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(
+                        application = VisionManager.application,
+                        buffersDir = FileUtils.getDataDirPath(VisionManager.application),
+                        recordingListener = recordingListener,
+                        sensorOrientation = videoSource.sensorOrientation,
+                        frameWidth = videoSource.getSourceWidth(),
+                        frameHeight = videoSource.getSourceHeight()
+                )
+                this.videoRecorder = videoRecorder
+                videoSource.setRecordingSurface(videoRecorder.surface)
+            }
+            else -> {
+                // TODO implement video recording for external VideoSources.
+            }
+        }
         visionCore = JNIVisionCoreFactory(
                 application = application,
                 eventManager = MapboxTelemetryEventManager(mapboxTelemetry),
@@ -239,8 +263,8 @@ object VisionManager : ARDataProvider {
         startTelemetry()
         startAllHandlers()
 
-        videoSource.attach(videoSourceListener)
         startSessionRecording()
+        videoSource.attach(videoSourceListener)
 
         sensorsRequestsManager.startDataRequesting()
         locationEngine.attach(locationEngineListener)
@@ -289,6 +313,7 @@ object VisionManager : ARDataProvider {
         }
 
         visionCore.release()
+        videoRecorder.release()
         videoProcessor.stop()
 
         isCreated = false
@@ -517,15 +542,14 @@ object VisionManager : ARDataProvider {
     }
 
     private fun startSessionRecording() {
+        videoRecorder.startRecording()
         currentTelemetryDir = telemetryManager.generateNextSessionDir()
         telemetryImageSaver.setSessionDir(currentTelemetryDir)
         visionCore.startDataSavingSession(currentTelemetryDir)
         startRecordCoreMillis = visionCore.getCoreMilliseconds()
         mainThreadHandler.postDelayed({
             stopSessionRecording()
-            videoSource.stopVideoRecording()
             startSessionRecording()
-            mainThreadHandler.post { videoSource.startVideoRecording() }
         }, RESTART_SESSION_RECORDING_DELAY_MILLIS)
     }
 
@@ -533,6 +557,7 @@ object VisionManager : ARDataProvider {
         visionCore.stopDataSavingSession()
         clipTimes = visionCore.getAndResetClipsTimeList()
         previousTelemetryDir = currentTelemetryDir
+        videoRecorder.stopRecording()
         currentTelemetryDir = ""
     }
 

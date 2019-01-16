@@ -8,8 +8,4 @@ interface VideoSource {
     fun attach(videoSourceListener: VideoSourceListener)
 
     fun detach()
-
-    fun stopVideoRecording()
-
-    fun startVideoRecording()
 }

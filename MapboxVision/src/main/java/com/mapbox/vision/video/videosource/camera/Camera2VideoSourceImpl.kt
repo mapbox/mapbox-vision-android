@@ -9,26 +9,19 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.MediaCodec
-import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
 import android.renderscript.RenderScript
 import android.util.Size
-import android.util.SparseIntArray
 import android.view.Surface
-import android.view.WindowManager
-import com.mapbox.vision.models.CameraParamsData
-import com.mapbox.vision.utils.FileUtils
+import com.mapbox.vision.models.CameraParams
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
-import java.io.File
-import java.io.IOException
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
-internal class CameraVideoSourceImpl(
-        val application: Application,
+internal class Camera2VideoSourceImpl(
+        private val application: Application,
         private val desiredWidth: Int = DEFAULT_FRAME_WIDTH,
         private val desiredHeight: Int = DEFAULT_FRAME_HEIGHT
 ) : VideoSource {
@@ -37,9 +30,10 @@ internal class CameraVideoSourceImpl(
 
     private var videoSourceListener: VideoSourceListener? = null
 
+    private lateinit var recordingSurface: Surface
     private lateinit var yuvAllocation2Rgb: YuvAllocation2Rgb
     private lateinit var previewSize: Size
-    private lateinit var cameraParams: CameraParamsData
+    private lateinit var cameraParams: CameraParams
 
     private var captureSession: CameraCaptureSession? = null
 
@@ -55,7 +49,7 @@ internal class CameraVideoSourceImpl(
 
         override fun onOpened(currentCameraDevice: CameraDevice) {
             cameraDevice = currentCameraDevice
-            createCameraPreviewSession()
+            createCaptureSession()
             cameraOpenCloseLock.release()
         }
 
@@ -72,21 +66,14 @@ internal class CameraVideoSourceImpl(
         }
     }
 
-    private var nextVideoFilePath: String? = null
-
-    private var mediaRecorder: MediaRecorder? = null
-    private var isRecordingVideo = false
-
-    private val recordingSurface = MediaCodec.createPersistentInputSurface()
-
-    private var currentBufferNum = 0
-
-    private var sensorOrientation = 0
-
-    private val buffersDataDir = FileUtils.getDataDirPath(application)
+    var sensorOrientation: Int = 0
 
     init {
         cameraId = setUpCamera()
+    }
+
+    fun setRecordingSurface(surface: Surface) {
+        recordingSurface = surface
     }
 
     override fun getSourceWidth(): Int = previewSize.width
@@ -99,7 +86,6 @@ internal class CameraVideoSourceImpl(
         yuvAllocation2Rgb = YuvAllocation2Rgb(RenderScript.create(application), previewSize) { bytes ->
             this.videoSourceListener?.onNewFrame(bytes)
         }
-        mediaRecorder = MediaRecorder()
         startBackgroundThread()
         openCamera()
     }
@@ -108,39 +94,6 @@ internal class CameraVideoSourceImpl(
         closeCamera()
         stopBackgroundThread()
         yuvAllocation2Rgb.release()
-        videoSourceListener = null
-
-        recordingSurface.release()
-        mediaRecorder?.release()
-        mediaRecorder = null
-    }
-
-    override fun stopVideoRecording() {
-        if (!isRecordingVideo) {
-            return
-        }
-        try {
-            mediaRecorder?.stop()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            mediaRecorder?.reset()
-        }
-        isRecordingVideo = false
-
-        val filePath = nextVideoFilePath
-        if (filePath != null && !filePath.isBlank()) {
-            videoSourceListener?.onFileRecorded(filePath)
-        }
-
-        nextVideoFilePath = null
-    }
-
-    override fun startVideoRecording() {
-        updateNextBufferFile()
-        mediaRecorder?.setup(nextVideoFilePath!!)
-        mediaRecorder?.start()
-        isRecordingVideo = true
     }
 
     private fun openCamera() {
@@ -190,23 +143,16 @@ internal class CameraVideoSourceImpl(
         }
     }
 
-    private fun createCameraPreviewSession() {
+    private fun createCaptureSession() {
         try {
-            updateNextBufferFile()
-            mediaRecorder?.setup(nextVideoFilePath!!)
-
             cameraDevice?.let { camera ->
 
-                val previewRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-                    addTarget(yuvAllocation2Rgb.getInputSurface())
-                    addTarget(recordingSurface)
-                }
+                val previewRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                val surfaces = listOf(yuvAllocation2Rgb.getInputSurface(), recordingSurface)
+                surfaces.forEach(previewRequestBuilder::addTarget)
 
                 camera.createCaptureSession(
-                        listOf(
-                                yuvAllocation2Rgb.getInputSurface(),
-                                recordingSurface
-                        ),
+                        surfaces,
                         object : CameraCaptureSession.StateCallback() {
                             override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
                                 cameraOpenCloseLock.acquire()
@@ -217,11 +163,8 @@ internal class CameraVideoSourceImpl(
 
                                 captureSession = cameraCaptureSession
 
-                                isRecordingVideo = true
-                                mediaRecorder?.start()
-
                                 try {
-                                    // Auto focus should be continuous for camera preview.
+                                    // TODO test LENS_INFO_HYPERFOCAL_DISTANCE or 0.0f fixed infinity focus
                                     previewRequestBuilder.set(
                                             CaptureRequest.CONTROL_AF_MODE,
                                             CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
@@ -281,7 +224,7 @@ internal class CameraVideoSourceImpl(
                 val focalInPixelsX: Float = focalLength * previewSize.width / physicalSensorSize.width
                 val focalInPixelsY: Float = focalLength * previewSize.height / physicalSensorSize.height
 
-                cameraParams = CameraParamsData(
+                cameraParams = CameraParams(
                         width = previewSize.width,
                         height = previewSize.height,
                         focalLength = focalLength,
@@ -302,70 +245,9 @@ internal class CameraVideoSourceImpl(
         return ""
     }
 
-    @Throws(IOException::class)
-    private fun MediaRecorder.setup(nextVideoFilePath: String) {
-        val rotation = (application.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
-        when (sensorOrientation) {
-            SENSOR_ORIENTATION_DEFAULT_DEGREES ->
-                setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation))
-            SENSOR_ORIENTATION_INVERSE_DEGREES ->
-                setOrientationHint(INVERSE_ORIENTATIONS.get(rotation))
-        }
-
-        setVideoSource(MediaRecorder.VideoSource.SURFACE)
-        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        setOutputFile(nextVideoFilePath)
-        setVideoEncodingBitRate(6000000)
-        setVideoFrameRate(30)
-        setVideoSize(previewSize.width, previewSize.height)
-        setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-        setInputSurface(recordingSurface)
-        prepare()
-    }
-
-    private fun updateNextBufferFile() {
-        if (nextVideoFilePath.isNullOrEmpty()) {
-            nextVideoFilePath = FileUtils.getVideoFilePath(buffersDataDir, BUFFER_FILE_NAMES[currentBufferNum])
-            val bufferFile = File(nextVideoFilePath)
-            if (bufferFile.exists()) {
-                bufferFile.delete()
-            }
-            currentBufferNum++
-            if (currentBufferNum >= VIDEO_BUFFERS_NUMBER) {
-                currentBufferNum = 0
-            }
-        }
-    }
-
     companion object {
-        private const val VIDEO_BUFFERS_NUMBER = 3
-
         private const val HANDLE_THREAD_NAME = "CameraBackground"
 
-        private const val SENSOR_ORIENTATION_DEFAULT_DEGREES = 90
-        private const val SENSOR_ORIENTATION_INVERSE_DEGREES = 270
-
-        private val DEFAULT_ORIENTATIONS = SparseIntArray().apply {
-            append(Surface.ROTATION_0, 90)
-            append(Surface.ROTATION_90, 0)
-            append(Surface.ROTATION_180, 270)
-            append(Surface.ROTATION_270, 180)
-        }
-
-        private val INVERSE_ORIENTATIONS = SparseIntArray().apply {
-            append(Surface.ROTATION_0, 270)
-            append(Surface.ROTATION_90, 180)
-            append(Surface.ROTATION_180, 90)
-            append(Surface.ROTATION_270, 0)
-        }
-
-        val BUFFER_FILE_NAMES = listOf(
-                "video1.mp4",
-                "video2.mp4",
-                "video3.mp4"
-        )
-
-        // Work resolution
         private const val DEFAULT_FRAME_WIDTH = 1280
         private const val DEFAULT_FRAME_HEIGHT = 720
     }

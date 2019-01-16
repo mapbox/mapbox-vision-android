@@ -12,7 +12,7 @@ internal object FileUtils {
     private const val SOURCE_VIDEO_BUFFERS_DIR_NAME = "Buffers"
     private const val TELEMETRY_DIR_NAME = "Telemetry"
 
-    fun getVideoFilePath(dataDirPath: String, fileName: String): String {
+    fun getFilePath(dataDirPath: String, fileName: String): String {
         val baseDir = File(dataDirPath)
 
         if (!baseDir.exists() && !baseDir.mkdirs()) {

@@ -12,12 +12,16 @@ import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
 import com.mapbox.vision.corewrapper.update.jni.JNICoreUpdateManager
-import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.models.CameraParams
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
 import com.mapbox.vision.models.route.NavigationRoute
-import com.mapbox.vision.performance.*
+import com.mapbox.vision.performance.ModelPerformance
+import com.mapbox.vision.performance.ModelPerformanceConfig
+import com.mapbox.vision.performance.ModelPerformanceMode
+import com.mapbox.vision.performance.ModelPerformanceRate
+import com.mapbox.vision.performance.PerformanceManagerFactory
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
@@ -147,13 +151,13 @@ internal class JNIVisionCoreImpl constructor(
         )
     }
 
-    override fun setCameraParamsData(cameraParamsData: CameraParamsData) {
+    override fun setCameraParams(cameraParams: CameraParams) {
         coreWrapper.setCameraParams(
-                weight = cameraParamsData.width,
-                height = cameraParamsData.height,
-                focalLength = cameraParamsData.focalLength,
-                focalXPixels = cameraParamsData.focalInPixelsX,
-                focalYPixels = cameraParamsData.focalInPixelsY
+                weight = cameraParams.width,
+                height = cameraParams.height,
+                focalLength = cameraParams.focalLength,
+                focalXPixels = cameraParams.focalInPixelsX,
+                focalYPixels = cameraParams.focalInPixelsY
         )
     }
 

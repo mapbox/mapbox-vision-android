@@ -3,7 +3,7 @@ package com.mapbox.vision.corewrapper
 import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
-import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.models.CameraParams
 import com.mapbox.vision.models.DeviceMotionData
 import com.mapbox.vision.models.GPSData
 import com.mapbox.vision.models.HeadingData
@@ -51,7 +51,7 @@ internal interface VisionCore {
 
     fun setHeadingData(headingData: HeadingData)
 
-    fun setCameraParamsData(cameraParamsData: CameraParamsData)
+    fun setCameraParams(cameraParams: CameraParams)
 
     fun setRouteData(navigationRoute: NavigationRoute?)
 
