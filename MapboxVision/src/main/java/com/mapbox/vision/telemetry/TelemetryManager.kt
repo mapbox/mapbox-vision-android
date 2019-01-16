@@ -32,7 +32,7 @@ internal interface TelemetryManager {
         private val videoQueue = ConcurrentLinkedQueue<AttachmentProperties>()
         private val threadHandler = WorkThreadHandler()
         private val fileCompressor = ZipFileCompressorImpl()
-        private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
+        private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
         private val bytesTracker = TotalBytesCounter.Impl()
         private val uuidUtil = UuidHolder.Impl(context)
@@ -57,7 +57,7 @@ internal interface TelemetryManager {
             uploadInProgress.set(false)
             uuidUtil.start()
 
-            File(rootTelemetryDir).listFiles().forEach {
+            File(rootTelemetryDir).listFiles()?.forEach {
                 if (it.list().isEmpty()) {
                     it.delete()
                 } else {
