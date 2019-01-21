@@ -17,6 +17,7 @@ import android.view.Surface
 import com.mapbox.vision.models.CameraParams
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
+import java.lang.IllegalStateException
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -183,7 +184,7 @@ internal class Camera2VideoSourceImpl(
                             }
 
                             override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-                                // TODO: Proceed edge case
+                                throw IllegalStateException("Failed to configure Camera ${cameraCaptureSession.device.id}!")
                             }
                         },
                         null

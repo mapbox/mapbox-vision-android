@@ -74,8 +74,8 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
         }
 
         override fun release() {
-            mediaRecorder?.reset()
             mediaRecorder?.release()
+            mediaRecorder?.reset()
             mediaRecorder = null
             surface.release()
         }

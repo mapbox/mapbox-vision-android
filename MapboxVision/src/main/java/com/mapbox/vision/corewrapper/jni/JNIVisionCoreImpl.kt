@@ -7,7 +7,7 @@ import com.mapbox.vision.VideoStreamListener
 import com.mapbox.vision.core.CoreWrapper
 import com.mapbox.vision.core.events.EventManager
 import com.mapbox.vision.core.events.ImageSaver
-import com.mapbox.vision.core.map.MapDataSource
+import com.mapbox.vision.core.map.HttpClient
 import com.mapbox.vision.corewrapper.VisionCore
 import com.mapbox.vision.corewrapper.update.RoadRestrictionsListener
 import com.mapbox.vision.corewrapper.update.VisionEventsListener
@@ -34,12 +34,11 @@ import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
 import java.lang.ref.WeakReference
 
-
 internal class JNIVisionCoreImpl constructor(
         override val imageWidth: Int,
         override val imageHeight: Int,
         override val imageFormat: Image.Format,
-        mapDataSource: MapDataSource,
+        httpClient: HttpClient,
         externalFileDir: String,
         application: Application,
         mapboxTelemetryEventManager: EventManager,
@@ -48,7 +47,7 @@ internal class JNIVisionCoreImpl constructor(
 
     private val coreWrapper = CoreWrapper(
             application,
-            mapDataSource,
+            httpClient,
             externalFileDir,
             mapboxTelemetryEventManager,
             imageSaver
@@ -60,7 +59,7 @@ internal class JNIVisionCoreImpl constructor(
     private var isSessionRecording = false
 
     init {
-        mapDataSource.onSuccessCallback = { response: String, url: String ->
+        httpClient.onSuccessCallback = { response: String, url: String ->
             coreWrapper.onMatchResponse(response, url)
         }
         coreWrapper.setCoreConfig(
@@ -117,6 +116,14 @@ internal class JNIVisionCoreImpl constructor(
 
     override fun setRGBABytes(rgbaByteArray: ByteArray, width: Int, height: Int) {
         jniCoreUpdateManager.setRGBABytes(rgbaByteArray, width, height)
+    }
+
+    override fun playTelemetry(telemetryPath: String) {
+        coreWrapper.playTelemetry(telemetryPath)
+    }
+
+    override fun setTelemetryTimestamp(timestamp: Long) {
+        coreWrapper.setTelemetryTimestamp(timestamp)
     }
 
     override fun setGPSData(gpsData: GPSData) {
@@ -274,6 +281,6 @@ internal class JNIVisionCoreImpl constructor(
     }
 
     companion object {
-        private const val TAG = "JNICoreImpl"
+        private const val TAG = "JNIVisionCoreImpl"
     }
 }

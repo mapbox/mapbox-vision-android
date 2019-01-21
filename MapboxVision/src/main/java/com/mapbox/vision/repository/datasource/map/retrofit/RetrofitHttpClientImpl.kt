@@ -1,27 +1,25 @@
 package com.mapbox.vision.repository.datasource.map.retrofit
 
-import com.mapbox.vision.core.map.MapDataSource
+import com.mapbox.vision.core.map.HttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.scalars.ScalarsConverterFactory
 
-internal class RetrofitMapDataSourceImpl : MapDataSource {
+internal class RetrofitHttpClientImpl : HttpClient {
 
     override lateinit var onSuccessCallback: (response: String, url: String) -> Unit
     override lateinit var onFailCallback: (error: String) -> Unit
-    private val callsMap = HashMap<Call<String>, String>()
 
     private val retrofitService = Retrofit.Builder()
             .baseUrl("http://mapbox.com")
             .addConverterFactory(ScalarsConverterFactory.create())
-            .build().create(MapDataSourceService::class.java)
+            .build()
+            .create(RetrofitHttpClient::class.java)
 
-
-    override fun matchGPSData(url: String) {
-        val call = retrofitService.getMatchedGPSData(url)
-        callsMap[call] = url
+    override fun httpGet(url: String) {
+        val call = retrofitService.httpGet(url)
         call.enqueue(object : Callback<String> {
             override fun onFailure(call: Call<String>, t: Throwable) {
                 if (!::onFailCallback.isInitialized) {
@@ -34,10 +32,19 @@ internal class RetrofitMapDataSourceImpl : MapDataSource {
                 if (!::onSuccessCallback.isInitialized) {
                     return
                 }
-                val mappedUrl = callsMap[call] ?: ""
-                onSuccessCallback.invoke(response.body() ?: "", mappedUrl)
+                onSuccessCallback.invoke(
+                        response.body() ?: "", response.raw().request().url().toString()
+                )
             }
+        })
+    }
 
+    override fun httpPost(url: String, data: String) {
+        val call = retrofitService.httpPost(url, data)
+        call.enqueue(object : Callback<String> {
+            override fun onFailure(call: Call<String>, t: Throwable) {}
+
+            override fun onResponse(call: Call<String>, response: Response<String>) {}
         })
     }
 }

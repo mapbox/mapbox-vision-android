@@ -41,7 +41,7 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
         try {
             workThread.join()
         } catch (e: InterruptedException) {
-            Log.e(TAG, " InterruptedException " + e.localizedMessage);
+            e.printStackTrace()
         }
     }
 

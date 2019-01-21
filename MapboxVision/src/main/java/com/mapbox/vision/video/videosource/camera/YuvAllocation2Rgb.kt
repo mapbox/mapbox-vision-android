@@ -17,7 +17,7 @@ internal class YuvAllocation2Rgb(
 
     private val inputAllocation: Allocation
     private val outputAllocation: Allocation
-    private val rgbBytes = ByteArray(previewSize.width * previewSize.height * 4)
+    private val rgbaBytes = ByteArray(previewSize.width * previewSize.height * 4)
     private val script = ScriptIntrinsicYuvToRGB.create(renderScript, Element.RGBA_8888(renderScript))
 
     init {
@@ -51,8 +51,8 @@ internal class YuvAllocation2Rgb(
     override fun onBufferAvailable(a: Allocation) {
         inputAllocation.ioReceive()
         script.forEach(outputAllocation)
-        outputAllocation.copyTo(rgbBytes)
-        rgbListener.invoke(rgbBytes)
+        outputAllocation.copyTo(rgbaBytes)
+        rgbListener.invoke(rgbaBytes)
     }
 
     fun release() {

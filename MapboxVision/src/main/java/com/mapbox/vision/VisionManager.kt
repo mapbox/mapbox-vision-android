@@ -59,7 +59,7 @@ object VisionManager : ARDataProvider {
     private const val TAG = "VisionManager"
 
     // Video buffer length
-    private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L // 5 min
+    private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L
 
     // Desired update rate up to 30 FPS
     private const val CORE_UPDATE_DELAY_MILLIS = 33L
@@ -74,6 +74,7 @@ object VisionManager : ARDataProvider {
     private lateinit var visionCore: VisionCore
 
     private lateinit var videoSource: VideoSource
+    private lateinit var videoRecorder: VideoRecorder
     private lateinit var sensorsRequestsManager: SensorsRequestsManager
     private lateinit var locationEngine: LocationEngine
     private lateinit var videoProcessor: VideoProcessor
@@ -163,8 +164,6 @@ object VisionManager : ARDataProvider {
     private var isCreated = false
     private var isStarted = false
     private var isTurnstileEventSent = false
-
-    private lateinit var videoRecorder: VideoRecorder
 
     /**
      * Initialize SDK with mapbox access token and application instance.
@@ -270,7 +269,6 @@ object VisionManager : ARDataProvider {
         locationEngine.attach(locationEngineListener)
 
         coreUpdateThreadHandler.post { requestCoreUpdate() }
-
         isStarted = true
     }
 
@@ -507,10 +505,11 @@ object VisionManager : ARDataProvider {
     }
 
     private fun requestCoreUpdate() {
-        val lastCoreUpdateStartTime = System.currentTimeMillis()
+        coreUpdateThreadHandler.postDelayed(
+                { requestCoreUpdate() },
+                CORE_UPDATE_DELAY_MILLIS
+        )
         visionCore.requestUpdate()
-        val coreUpdateRunTime = System.currentTimeMillis() - lastCoreUpdateStartTime
-        coreUpdateThreadHandler.postDelayed({ requestCoreUpdate() }, CORE_UPDATE_DELAY_MILLIS - coreUpdateRunTime)
     }
 
     private fun startAllHandlers() {
