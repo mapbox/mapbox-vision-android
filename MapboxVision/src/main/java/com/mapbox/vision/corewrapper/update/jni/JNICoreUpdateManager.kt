@@ -119,10 +119,6 @@ internal class JNICoreUpdateManager(
     fun requestUpdate() {
         coreWrapper.requestUpdate()
 
-        if (visualizationUpdateListener?.get() == null) {
-            return
-        }
-
         updateDetections()
         updateSegmentation()
         updateSignClassification()
