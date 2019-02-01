@@ -156,7 +156,9 @@ internal class CameraVideoSourceImpl(
     }
 
     override fun release() {
-        yuv2RgbRender.release()
+        if(::yuv2RgbRender.isInitialized) {
+            yuv2RgbRender.release()
+        }
         releaseMediaRecorder()
     }
 
