@@ -35,6 +35,7 @@ import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
 import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
+import com.mapbox.vision.video.videosource.media.FileVideoSource
 import com.mapbox.vision.view.VisualizationUpdateListener
 import com.mapbox.vision.visionevents.CalibrationProgress
 import com.mapbox.vision.visionevents.FrameSize
@@ -44,6 +45,7 @@ import com.mapbox.vision.visionevents.WorldCoordinate
 import com.mapbox.vision.visionevents.events.position.Position
 import com.mapbox.vision.visionevents.events.roaddescription.RoadDescription
 import com.mapbox.vision.visionevents.events.worlddescription.WorldDescription
+import java.io.File
 import java.lang.ref.WeakReference
 
 /**
@@ -174,13 +176,48 @@ object VisionManager : ARDataProvider {
         this.application = application
     }
 
+    private val RECORDINGS_BASE_PATH by lazy {
+        "${application.getExternalFilesDir(null)!!.absolutePath}/Replays"
+    }
+    private val LOCK_FILE by lazy {
+        "$RECORDINGS_BASE_PATH/.lock"
+    }
+    private val RECORDED_TELEMETRY_PATH by lazy {
+        "$RECORDINGS_BASE_PATH/Telemetry/"
+    }
+    private val RECORDED_VIDEO_PATH by lazy {
+        "$RECORDINGS_BASE_PATH/Video/"
+    }
+    private var setTelemetry: Boolean = false
+
     /**
      * Initialize SDK. Creates core services and allocates necessary resources.
      * Typically is called when application need to launch Vision SDK, eg. [android.app.Activity.onCreate].
      * You should [destroy] when Vision SDK is no longer needed to release all resources.
      * No-op if called while SDK is created already.
      */
-    fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
+    fun create(videoSource: VideoSource =
+            FileVideoSource(
+                    application,
+                    videoFiles = File(RECORDED_VIDEO_PATH)
+                            .listFiles { _: File?, name: String? ->
+                                name?.contains("mp4") ?: false
+                            }
+                            .sorted(),
+                    onVideoStarted = {
+                        val lockFile = File(LOCK_FILE)
+                        if (!lockFile.exists()) {
+                            lockFile.createNewFile()
+                        }
+                        stopSessionRecording()
+                        startSessionRecording(it)
+                    },
+                    onVideosEnded = {
+                        File(LOCK_FILE).delete()
+                        stopSessionRecording()
+                    }
+            )
+    ) {
         checkManagerInit()
         if (isCreated) {
             Log.w(TAG, "VisionManager was already created!")
@@ -259,16 +296,20 @@ object VisionManager : ARDataProvider {
 
         videoProcessor.setVideoProcessorListener(videoProcessorListener)
 
-        startTelemetry()
         startAllHandlers()
 
-        startSessionRecording()
         videoSource.attach(videoSourceListener)
 
         sensorsRequestsManager.startDataRequesting()
         locationEngine.attach(locationEngineListener)
 
-        coreUpdateThreadHandler.post { requestCoreUpdate() }
+        coreUpdateThreadHandler.post {
+            setTelemetry = File(RECORDED_TELEMETRY_PATH).exists()
+            if (setTelemetry) {
+                visionCore.playTelemetry(RECORDED_TELEMETRY_PATH)
+            }
+            requestCoreUpdate()
+        }
         isStarted = true
     }
 
@@ -286,12 +327,9 @@ object VisionManager : ARDataProvider {
             return
         }
 
-        stopTelemetry()
-
         locationEngine.detach()
         sensorsRequestsManager.stopDataRequesting()
         stopAllHandlers()
-        stopSessionRecording()
         videoSource.detach()
         visionCore.onPause()
 
@@ -510,6 +548,9 @@ object VisionManager : ARDataProvider {
                 CORE_UPDATE_DELAY_MILLIS
         )
         visionCore.requestUpdate()
+        if (setTelemetry) {
+            visionCore.setTelemetryTimestamp((videoSource as FileVideoSource).getProgress())
+        }
     }
 
     private fun startAllHandlers() {
@@ -540,39 +581,26 @@ object VisionManager : ARDataProvider {
         }
     }
 
-    private fun startSessionRecording() {
-//        videoRecorder.startRecording()
-        currentTelemetryDir = telemetryManager.generateNextSessionDir()
+    private fun generateTelemetryDir(videoName: String): String {
+        val file = File("${application.getExternalFilesDir(null)!!.absolutePath}/Telemetry/$videoName")
+        if (!file.exists() && !file.mkdirs()) {
+            return ""
+        }
+
+        return "${file.absolutePath}/"
+    }
+
+    private fun startSessionRecording(videoName: String) {
+        currentTelemetryDir = generateTelemetryDir(videoName)
         telemetryImageSaver.setSessionDir(currentTelemetryDir)
         visionCore.startDataSavingSession(currentTelemetryDir)
         startRecordCoreMillis = visionCore.getCoreMilliseconds()
-        mainThreadHandler.postDelayed({
-            stopSessionRecording()
-            startSessionRecording()
-        }, RESTART_SESSION_RECORDING_DELAY_MILLIS)
     }
 
     private fun stopSessionRecording() {
         visionCore.stopDataSavingSession()
         clipTimes = visionCore.getAndResetClipsTimeList()
         previousTelemetryDir = currentTelemetryDir
-//        videoRecorder.stopRecording()
         currentTelemetryDir = ""
-    }
-
-    private fun startTelemetry() {
-        if (mapboxTelemetry.enable()) {
-            telemetryManager.start()
-        } else {
-            Log.e(TAG, "Can not enable telemetry")
-        }
-    }
-
-    private fun stopTelemetry() {
-        if (mapboxTelemetry.disable()) {
-            telemetryManager.stop()
-        } else {
-            Log.e(TAG, "Can not disable telemetry")
-        }
     }
 }
