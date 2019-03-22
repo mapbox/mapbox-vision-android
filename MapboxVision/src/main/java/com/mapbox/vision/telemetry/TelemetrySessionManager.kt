@@ -3,7 +3,7 @@ package com.mapbox.vision.telemetry
 import com.mapbox.vision.mobile.NativeVisionManager
 import com.mapbox.vision.mobile.models.VideoClip
 import com.mapbox.vision.utils.FileUtils
-import com.mapbox.vision.utils.threads.MainThreadHandler
+import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
 import java.io.File
 
@@ -24,19 +24,18 @@ internal interface TelemetrySessionManager {
         private val onSessionEnded: (String, Long, String, Array<VideoClip>) -> Unit
     ) : TelemetrySessionManager {
 
-        private val mainThreadHandler = MainThreadHandler()
+        private val handler = WorkThreadHandler("Session")
 
         private var telemetryDir: String = ""
         private var startRecordCoreMillis = 0L
 
         override fun start() {
-            mainThreadHandler.start()
+            handler.start()
             startSession()
         }
 
         override fun stop() {
-            // TODO shouldn't remove ALL main thread tasks
-            mainThreadHandler.stop()
+            handler.stop()
         }
 
         private fun startSession() {
@@ -48,7 +47,7 @@ internal interface TelemetrySessionManager {
             videoRecorder.startRecording()
             startRecordCoreMillis = (nativeVisionManager.getCoreTimeSeconds() * 1000).toLong()
 
-            mainThreadHandler.postDelayed({
+            handler.postDelayed({
                 stopSession()
                 startSession()
             }, RESTART_SESSION_RECORDING_DELAY_MILLIS)

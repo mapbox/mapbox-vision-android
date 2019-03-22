@@ -13,9 +13,9 @@ import java.io.IOException
 
 internal interface VideoRecorder {
 
+    fun init(frameWidth: Int, frameHeight: Int, sensorOrientation: Int)
     fun startRecording()
     fun stopRecording(): String
-
     fun release()
 }
 
@@ -24,26 +24,35 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
     val surface: Surface
 
     class MediaCodecPersistentSurfaceImpl(
-            private val application: Application,
-            private val buffersDir: String,
-            private val sensorOrientation: Int,
-            private val frameWidth: Int,
-            private val frameHeight: Int
+        private val application: Application,
+        private val buffersDir: String
     ) : SurfaceVideoRecorder {
 
         private var mediaRecorder: MediaRecorder? = null
 
         private var nextVideoFilePath: String? = null
         private var currentBufferNum = 0
+        private var frameWidth = 0
+        private var frameHeight = 0
+        private var sensorOrientation = 0
 
         override var surface: Surface = MediaCodec.createPersistentInputSurface()
+
+        override fun init(frameWidth: Int, frameHeight: Int, sensorOrientation: Int) {
+            this.frameWidth = frameWidth
+            this.frameHeight = frameHeight
+            this.sensorOrientation = sensorOrientation
+        }
 
         override fun startRecording() {
             if (mediaRecorder == null) {
                 mediaRecorder = MediaRecorder()
             }
             updateNextBufferFile()
-            mediaRecorder?.setup(nextVideoFilePath!!)
+            if (frameHeight == 0 || frameWidth == 0) {
+                throw IllegalStateException("Zero in recorder!")
+            }
+            mediaRecorder?.setup(nextVideoFilePath!!, frameWidth, frameHeight)
             mediaRecorder?.start()
         }
 
@@ -72,8 +81,9 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
         }
 
         @Throws(IOException::class)
-        private fun MediaRecorder.setup(outputFile: String) {
-            val rotation = (application.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+        private fun MediaRecorder.setup(outputFile: String, frameWidth: Int, frameHeight: Int) {
+            val rotation =
+                (application.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             when (sensorOrientation) {
                 SENSOR_ORIENTATION_DEFAULT_DEGREES ->
                     setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation))
@@ -127,9 +137,9 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
             }
 
             val BUFFER_FILE_NAMES = listOf(
-                    "video1.mp4",
-                    "video2.mp4",
-                    "video3.mp4"
+                "video1.mp4",
+                "video2.mp4",
+                "video3.mp4"
             )
         }
     }

@@ -20,7 +20,7 @@ class VisionView : ImageView, VideoSourceListener {
     private val detectionDrawer = DetectionDrawerImpl()
 
     private var imageSize = ImageSize(0, 0)
-    private lateinit var bitmap: Bitmap
+    private var bitmap: Bitmap? = null
 
     constructor(context: Context) : this(context, null)
 
@@ -45,7 +45,7 @@ class VisionView : ImageView, VideoSourceListener {
             bitmap = Bitmap.createBitmap(imageSize.imageWidth, imageSize.imageHeight, android.graphics.Bitmap.Config.ARGB_8888)
         }
 
-        bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
+        bitmap?.copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
     }
 
     fun setDetections(frameDetections: FrameDetections) {
@@ -60,7 +60,7 @@ class VisionView : ImageView, VideoSourceListener {
             val bitmapWithDetections = if (frameDetections.detections.isEmpty()) {
                 bitmap
             } else {
-                bitmap.copy(Bitmap.Config.ARGB_8888, true).also {
+                bitmap?.copy(Bitmap.Config.ARGB_8888, true)?.also {
                     detectionDrawer.draw(it, frameDetections.detections)
                 }
             }
@@ -97,7 +97,11 @@ class VisionView : ImageView, VideoSourceListener {
         }
     }
 
-    override fun onNewFrame(rgbaBytes: ByteArray, imageFormat: ImageFormat) {
+    override fun onNewFrame(
+        rgbaBytes: ByteArray,
+        imageFormat: ImageFormat,
+        imageSize: ImageSize
+    ) {
         setBytes(rgbaBytes)
     }
 
