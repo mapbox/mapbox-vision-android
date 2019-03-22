@@ -1,36 +1,36 @@
 package com.mapbox.vision.video.videosource.camera
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
-import android.os.Handler
-import android.os.HandlerThread
 import android.renderscript.RenderScript
 import android.util.Size
-import android.view.Surface
 import com.mapbox.vision.mobile.models.frame.ImageFormat
 import com.mapbox.vision.mobile.models.CameraParameters
+import com.mapbox.vision.mobile.models.frame.ImageSize
+import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 class Camera2VideoSourceImpl(
-        private val application: Application,
-        private val desiredWidth: Int = DEFAULT_FRAME_WIDTH,
-        private val desiredHeight: Int = DEFAULT_FRAME_HEIGHT
+    private val application: Application,
+    private val desiredWidth: Int = DEFAULT_FRAME_WIDTH,
+    private val desiredHeight: Int = DEFAULT_FRAME_HEIGHT
 ) : VideoSource {
 
     private val cameraId: String
 
     private var videoSourceListener: VideoSourceListener? = null
 
-    private lateinit var recordingSurface: Surface
+    private lateinit var videoRecorder: SurfaceVideoRecorder
     private lateinit var yuvAllocation2Rgba: YuvAllocation2Rgba
-    private lateinit var previewSize: Size
+    private lateinit var previewSize: ImageSize
     private lateinit var cameraParameters: CameraParameters
+
+    private var sensorOrientation: Int = 0
 
     private var captureSession: CameraCaptureSession? = null
 
@@ -39,8 +39,7 @@ class Camera2VideoSourceImpl(
 
     private var cameraDevice: CameraDevice? = null
 
-    private var backgroundHandler: Handler? = null
-    private var backgroundThread: HandlerThread? = null
+    private var backgroundThreadHandler: WorkThreadHandler = WorkThreadHandler(HANDLE_THREAD_NAME)
 
     private val stateCallback = object : CameraDevice.StateCallback() {
 
@@ -63,33 +62,33 @@ class Camera2VideoSourceImpl(
         }
     }
 
-    var sensorOrientation: Int = 0
-
     init {
         cameraId = setUpCamera()
     }
 
-    fun setRecordingSurface(surface: Surface) {
-        recordingSurface = surface
+    internal fun setVideoRecorder(videoRecorder: SurfaceVideoRecorder) {
+        this.videoRecorder = videoRecorder
+        videoRecorder.init(
+            frameWidth = previewSize.imageWidth,
+            frameHeight = previewSize.imageHeight,
+            sensorOrientation = sensorOrientation
+        )
     }
-
-    override fun getSourceWidth(): Int = previewSize.width
-
-    override fun getSourceHeight(): Int = previewSize.height
 
     override fun attach(videoSourceListener: VideoSourceListener) {
         this.videoSourceListener = videoSourceListener
         videoSourceListener.onNewCameraParameters(cameraParameters)
         yuvAllocation2Rgba = YuvAllocation2Rgba(RenderScript.create(application), previewSize) { bytes ->
-            this.videoSourceListener?.onNewFrame(bytes, ImageFormat.RGBA)
+            this.videoSourceListener?.onNewFrame(bytes, ImageFormat.RGBA, previewSize)
         }
-        startBackgroundThread()
+        backgroundThreadHandler.start()
         openCamera()
     }
 
     override fun detach() {
         closeCamera()
-        stopBackgroundThread()
+        videoSourceListener = null
+        backgroundThreadHandler.stop()
         yuvAllocation2Rgba.release()
     }
 
@@ -99,7 +98,7 @@ class Camera2VideoSourceImpl(
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw RuntimeException("Time out waiting to lock camera opening.")
             }
-            manager.openCamera(cameraId, stateCallback, backgroundHandler)
+            manager.openCamera(cameraId, stateCallback, backgroundThreadHandler.handler)
         } catch (e: InterruptedException) {
             throw RuntimeException("Interrupted while trying to lock camera opening.", e)
         }
@@ -123,23 +122,6 @@ class Camera2VideoSourceImpl(
         }
     }
 
-    private fun startBackgroundThread() {
-        backgroundThread = HandlerThread(HANDLE_THREAD_NAME)
-        backgroundThread!!.start()
-        backgroundHandler = Handler(backgroundThread!!.looper)
-    }
-
-    private fun stopBackgroundThread() {
-        backgroundThread!!.quitSafely()
-        try {
-            backgroundThread!!.join()
-            backgroundThread = null
-            backgroundHandler = null
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
-    }
-
     private fun createCaptureSession() {
         try {
             cameraDevice?.let { camera ->
@@ -149,41 +131,41 @@ class Camera2VideoSourceImpl(
                 surfaces.forEach(previewRequestBuilder::addTarget)
 
                 camera.createCaptureSession(
-                        surfaces,
-                        object : CameraCaptureSession.StateCallback() {
-                            override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
-                                cameraOpenCloseLock.acquire()
-                                if (cameraDevice == null) {
-                                    cameraOpenCloseLock.release()
-                                    return
-                                }
-
-                                captureSession = cameraCaptureSession
-
-                                try {
-                                    // TODO test LENS_INFO_HYPERFOCAL_DISTANCE or 0.0f fixed infinity focus
-                                    previewRequestBuilder.set(
-                                            CaptureRequest.CONTROL_AF_MODE,
-                                            CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                                    )
-
-                                    cameraCaptureSession.setRepeatingRequest(
-                                            previewRequestBuilder.build(),
-                                            null,
-                                            backgroundHandler
-                                    )
-                                } catch (e: CameraAccessException) {
-                                    e.printStackTrace()
-                                } finally {
-                                    cameraOpenCloseLock.release()
-                                }
+                    surfaces,
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                            cameraOpenCloseLock.acquire()
+                            if (cameraDevice == null) {
+                                cameraOpenCloseLock.release()
+                                return
                             }
 
-                            override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-                                throw IllegalStateException("Failed to configure Camera ${cameraCaptureSession.device.id}!")
+                            captureSession = cameraCaptureSession
+
+                            try {
+                                // TODO test LENS_INFO_HYPERFOCAL_DISTANCE or 0.0f fixed infinity focus
+                                previewRequestBuilder.set(
+                                    CaptureRequest.CONTROL_AF_MODE,
+                                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                                )
+
+                                cameraCaptureSession.setRepeatingRequest(
+                                    previewRequestBuilder.build(),
+                                    null,
+                                    backgroundThreadHandler.handler
+                                )
+                            } catch (e: CameraAccessException) {
+                                e.printStackTrace()
+                            } finally {
+                                cameraOpenCloseLock.release()
                             }
-                        },
-                        null
+                        }
+
+                        override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
+                            throw IllegalStateException("Failed to configure Camera ${cameraCaptureSession.device.id}!")
+                        }
+                    },
+                    null
                 )
             }
         } catch (e: CameraAccessException) {
@@ -202,28 +184,28 @@ class Camera2VideoSourceImpl(
                 }
 
                 val sizes = characteristics
-                                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                                    ?.getOutputSizes(SurfaceTexture::class.java)
-                                    ?.toList()
-                            ?: continue
+                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                    ?.getOutputSizes(SurfaceTexture::class.java)
+                    ?.toList()
+                    ?: continue
 
                 previewSize = chooseOptimalCameraResolution(
-                        supportedSizes = sizes,
-                        desiredSize = Size(desiredWidth, desiredHeight)
+                    supportedSizes = sizes,
+                    desiredSize = Size(desiredWidth, desiredHeight)
                 )
                 sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)!!
 
                 val focalLength = characteristics
-                        .get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)!!
-                        .first()
+                    .get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)!!
+                    .first()
 
                 val physicalSensorSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)!!
-                val focalInPixelsX: Float = focalLength * previewSize.width / physicalSensorSize.width
-                val focalInPixelsY: Float = focalLength * previewSize.height / physicalSensorSize.height
+                val focalInPixelsX: Float = focalLength * previewSize.imageWidth / physicalSensorSize.width
+                val focalInPixelsY: Float = focalLength * previewSize.imageHeight / physicalSensorSize.height
 
                 cameraParameters = CameraParameters(
-                    width = previewSize.width,
-                    height = previewSize.height,
+                    width = previewSize.imageWidth,
+                    height = previewSize.imageHeight,
                     focalInPixelsX = focalInPixelsX,
                     focalInPixelsY = focalInPixelsY
                 )
@@ -246,5 +228,29 @@ class Camera2VideoSourceImpl(
 
         private const val DEFAULT_FRAME_WIDTH = 1280
         private const val DEFAULT_FRAME_HEIGHT = 720
+
+        private fun chooseOptimalCameraResolution(
+            supportedSizes: List<Size>,
+            desiredSize: Size
+        ): ImageSize {
+            val minDimension = Math.min(desiredSize.width, desiredSize.height)
+
+            val bigEnough = mutableListOf<Size>()
+            for (option in supportedSizes) {
+                if (option == desiredSize) {
+                    return ImageSize(desiredSize.width, desiredSize.height)
+                }
+
+                if (option.height >= minDimension && option.width >= minDimension) {
+                    bigEnough.add(option)
+                }
+            }
+
+            // Pick the smallest of those, assuming we found any
+            val size = bigEnough.minBy { it.width.toLong() * it.height } ?: supportedSizes.first()
+
+            return ImageSize(size.width, size.height)
+        }
+
     }
 }

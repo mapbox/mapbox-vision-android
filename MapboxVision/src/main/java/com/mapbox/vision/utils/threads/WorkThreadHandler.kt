@@ -6,8 +6,8 @@ import com.mapbox.vision.utils.VisionLogger
 
 internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_THREAD_NAME) : ThreadHandler {
 
-    private lateinit var workThread: HandlerThread
-    private lateinit var workThreadHandler: Handler
+    private lateinit var handlerThread: HandlerThread
+    lateinit var handler: Handler
 
     private var started = false
 
@@ -16,7 +16,7 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
             VisionLogger.d(TAG, "The thread was not started")
             return
         }
-        workThreadHandler.post { task.invoke() }
+        handler.post { task.invoke() }
     }
 
     override fun postDelayed(task: () -> Unit, delayMillis: Long) {
@@ -24,29 +24,29 @@ internal class WorkThreadHandler(private val handleThreadName: String = HANDLE_T
             VisionLogger.d(TAG, "The thread was not started")
             return
         }
-        workThreadHandler.postDelayed({ task.invoke() }, delayMillis)
+        handler.postDelayed({ task.invoke() }, delayMillis)
     }
 
     override fun start() {
-        workThread = HandlerThread(handleThreadName)
-        workThread.start()
-        workThreadHandler = Handler(workThread.looper)
+        handlerThread = HandlerThread(handleThreadName)
+        handlerThread.start()
+        handler = Handler(handlerThread.looper)
         started = true
     }
 
     override fun stop() {
         started = false
-        workThreadHandler.removeCallbacksAndMessages(null)
-        workThread.quitSafely()
+        handler.removeCallbacksAndMessages(null)
+        handlerThread.quitSafely()
         try {
-            workThread.join()
+            handlerThread.join()
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
     }
 
     override fun removeAllTasks() {
-        workThreadHandler.removeCallbacksAndMessages(null)
+        handler.removeCallbacksAndMessages(null)
     }
 
     override fun isStarted(): Boolean = started

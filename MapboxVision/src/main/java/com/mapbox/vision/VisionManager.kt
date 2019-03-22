@@ -10,6 +10,7 @@ import com.mapbox.vision.mobile.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.models.*
 import com.mapbox.vision.mobile.models.detection.FrameDetections
 import com.mapbox.vision.mobile.models.frame.ImageFormat
+import com.mapbox.vision.mobile.models.frame.ImageSize
 import com.mapbox.vision.mobile.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.models.world.WorldCoordinate
@@ -47,16 +48,16 @@ object VisionManager {
 
     private lateinit var mapboxTelemetry: MapboxTelemetry
     private lateinit var videoSource: VideoSource
-    private lateinit var videoRecorder: VideoRecorder
     private lateinit var sensorsManager: SensorsManager
     private lateinit var locationEngine: LocationEngine
     private lateinit var videoProcessor: VideoProcessor
     private lateinit var telemetrySyncManager: TelemetrySyncManager
-    private lateinit var sessionManager: TelemetrySessionManager
     private lateinit var telemetryImageSaver: TelemetryImageSaver
     private lateinit var performanceManager: PerformanceManager
+    private lateinit var visionEventsListener: VisionEventsListener
 
-    private var visionEventsListener: VisionEventsListener? = null
+    private var sessionManager: TelemetrySessionManager? = null
+    private var videoRecorder: VideoRecorder? = null
     private var externalVideoSourceListener: VideoSourceListener? = null
 
     private lateinit var rootTelemetryDir: String
@@ -87,14 +88,18 @@ object VisionManager {
     }
 
     private val videoSourceListener = object : VideoSourceListener {
-        override fun onNewFrame(rgbaBytes: ByteArray, imageFormat: ImageFormat) {
+        override fun onNewFrame(
+            rgbaBytes: ByteArray,
+            imageFormat: ImageFormat,
+            imageSize: ImageSize
+        ) {
             nativeVisionManager.setFrame(
                 rgbaByteArray = rgbaBytes,
                 imageFormat = imageFormat,
-                width = videoSource.getSourceWidth(),
-                height = videoSource.getSourceHeight()
+                width = imageSize.imageWidth,
+                height = imageSize.imageHeight
             )
-            externalVideoSourceListener?.onNewFrame(rgbaBytes, imageFormat)
+            externalVideoSourceListener?.onNewFrame(rgbaBytes, imageFormat, imageSize)
         }
 
         override fun onNewCameraParameters(cameraParameters: CameraParameters) {
@@ -141,14 +146,19 @@ object VisionManager {
      * Initialize SDK. Creates core services and allocates necessary resources.
      * No-op if called while SDK is created already.
      */
+    @JvmOverloads
+    @JvmStatic
     fun create(
-        videoSource: VideoSource = Camera2VideoSourceImpl(application)
+        videoSource: VideoSource = Camera2VideoSourceImpl(application),
+        visionEventsListener: VisionEventsListener
     ) {
         checkManagerInit()
         if (isCreated) {
             VisionLogger.w(TAG, "VisionManager was already created!")
             return
         }
+
+        this.visionEventsListener = visionEventsListener
 
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
@@ -165,16 +175,10 @@ object VisionManager {
             is Camera2VideoSourceImpl -> {
                 val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(
                     application = application,
-                    buffersDir = FileUtils.getAppRelativeDir(application, DIR_VIDEO_BUFFERS),
-                    sensorOrientation = videoSource.sensorOrientation,
-                    frameWidth = videoSource.getSourceWidth(),
-                    frameHeight = videoSource.getSourceHeight()
+                    buffersDir = FileUtils.getAppRelativeDir(application, DIR_VIDEO_BUFFERS)
                 )
                 this.videoRecorder = videoRecorder
-                videoSource.setRecordingSurface(videoRecorder.surface)
-            }
-            else -> {
-                // TODO implement video recording for external VideoSources.
+                videoSource.setVideoRecorder(videoRecorder)
             }
         }
 
@@ -199,13 +203,15 @@ object VisionManager {
         )
         performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
 
-        sessionManager = TelemetrySessionManager.Impl(
-            nativeVisionManager,
-            rootTelemetryDir,
-            videoRecorder,
-            telemetryImageSaver,
-            sessionListener
-        )
+        videoRecorder?.let { recorder ->
+            sessionManager = TelemetrySessionManager.Impl(
+                nativeVisionManager,
+                rootTelemetryDir,
+                recorder,
+                telemetryImageSaver,
+                sessionListener
+            )
+        }
 
         isCreated = true
     }
@@ -215,24 +221,22 @@ object VisionManager {
      * Should be called with all permission granted, and after [create] is called.
      * No-op if called while SDK is started already.
      */
+    @JvmStatic
     fun start() {
         checkManagerInit()
+        checkManagerCreated()
         if (isStarted) {
             VisionLogger.w(TAG, "VisionManager was already started.")
             return
-        } else if (!isCreated) {
-            VisionLogger.w(TAG, "VisionManager wasn't created, forcing it.")
-            create()
         }
 
         sensorsManager.start()
         locationEngine.attach(nativeVisionManager)
         videoProcessor.attach(videoProcessorListener)
+        sessionManager?.start()
         videoSource.attach(videoSourceListener)
-        sessionManager.start()
 
-        // FIXME
-        nativeVisionManager.start(visionEventsListener!!)
+        nativeVisionManager.start(visionEventsListener)
         isStarted = true
     }
 
@@ -242,6 +246,7 @@ object VisionManager {
      * To resume call [start] again.
      * No-op if called while SDK is not created or started.
      */
+    @JvmStatic
     fun stop() {
         checkManagerInit()
         if (!isCreated || !isStarted) {
@@ -249,8 +254,8 @@ object VisionManager {
             return
         }
 
-        sessionManager.stop()
         videoSource.detach()
+        sessionManager?.stop()
         videoProcessor.detach()
         locationEngine.detach()
         sensorsManager.stop()
@@ -263,6 +268,7 @@ object VisionManager {
      * Releases all resources.
      * No-op if called while SDK is not created.
      */
+    @JvmStatic
     fun destroy() {
         checkManagerInit()
         if (!isCreated) {
@@ -270,59 +276,65 @@ object VisionManager {
             return
         }
 
-        videoRecorder.release()
+        videoRecorder?.release()
 
         nativeVisionManager.destroy()
         isCreated = false
     }
 
-    fun setVisionEventListener(visionEventsListener: VisionEventsListener) {
-        this.visionEventsListener = visionEventsListener
-    }
-
+    @JvmStatic
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener) {
         this.externalVideoSourceListener = videoSourceListener
     }
 
+    @JvmStatic
     fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig) {
         performanceManager.setModelConfig(modelPerformanceConfig)
     }
 
+    @JvmStatic
     fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate {
         checkManagerStarted()
         return nativeVisionManager.worldToPixel(worldCoordinate)
     }
 
+    @JvmStatic
     fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate {
         checkManagerStarted()
         return nativeVisionManager.pixelToWorld(pixelCoordinate)
     }
 
+    @JvmStatic
     fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate {
         checkManagerStarted()
         return nativeVisionManager.worldToGeo(worldCoordinate)
     }
 
+    @JvmStatic
     fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate {
         checkManagerStarted()
         return nativeVisionManager.geoToWorld(geoCoordinate)
     }
 
+    @JvmStatic
     fun getFrameStatistics(): FrameStatistics {
         checkManagerStarted()
         return nativeVisionManager.getFrameStatistics()
     }
 
+    @JvmStatic
     fun getDetectionsImage(frameDetections: FrameDetections): ByteArray {
         checkManagerStarted()
         return nativeVisionManager.getDetectionsFrameBytes(frameDetections.frame.image.identifier)
     }
 
+    @JvmStatic
     fun getSegmentationImage(frameSegmentation: FrameSegmentation): ByteArray {
         checkManagerStarted()
         return nativeVisionManager.getSegmentationFrameBytes(frameSegmentation.frame.image.identifier)
     }
 
+    @JvmStatic
     fun registerModule(moduleInterface: ModuleInterface) {
         moduleInterface.registerModule(nativeVisionManager.getModulePtr())
     }
