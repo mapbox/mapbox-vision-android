@@ -1,5 +1,19 @@
 include ':CoreSdk'
 project(':CoreSdk').projectDir = new File(CORE_VISION_SDK)
 
-include ':MapboxVision'
+include ':CoreSafety'
+project(':CoreSafety').projectDir = new File(CORE_VISION_SAFETY)
 
+include ':CoreAr'
+project(':CoreAr').projectDir = new File(CORE_VISION_AR)
+
+include ':Vision'
+project(':Vision').projectDir = new File(VISION_SDK)
+
+include ':VisionAr'
+project(':VisionAr').projectDir = new File(VISION_AR)
+
+include ':VisionSafety'
+project(':VisionSafety').projectDir = new File(VISION_SAFETY)
+
+include ':Examples'

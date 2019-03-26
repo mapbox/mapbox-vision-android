@@ -80,7 +80,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        api project(path: ':CoreSdk')
+        implementation project(path: ':CoreSdk')
     } else {
         implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
     }
