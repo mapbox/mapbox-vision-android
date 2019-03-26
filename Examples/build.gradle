@@ -1,0 +1,89 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+apply from: 'generate-token.gradle'
+
+def envVarOrLocalProperty(String name) {
+    if (System.getenv(name) != null) {
+        return System.getenv(name)
+    }
+
+    Properties properties = new Properties()
+    def file = project.rootProject.file('local.properties')
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+        def localProperty = properties.getProperty(name)
+        if (localProperty != null) {
+            return localProperty
+        }
+    }
+    return null
+}
+
+if (file("${rootDir}/gradle/versions.gradle").exists()) {
+    apply from: "${rootDir}/gradle/versions.gradle"
+}
+
+android {
+    compileSdkVersion 28
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    defaultConfig {
+        applicationId "com.mapbox.vision.examples"
+        minSdkVersion 23
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += 'src/main/java'
+            java.srcDirs += 'src/main/kotlin'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "com.android.support:appcompat-v7:27.1.1"
+    implementation "com.android.support.constraint:constraint-layout:1.1.3"
+
+    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:6.6.1"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:0.22.0"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.22.0"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.8.2"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-core:0.2.1"
+
+    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
+        implementation project(path: ':Vision')
+        implementation project(path: ':VisionAr')
+        implementation project(path: ':VisionSafety')
+        implementation project(path: ':CoreAr')
+        implementation project(path: ':CoreSdk')
+        implementation project(path: ':CoreSafety')
+    } else {
+        implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
+//        TODO ar
+//        TODO safety
+    }
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    mavenCentral()
+}
