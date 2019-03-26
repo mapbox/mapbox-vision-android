@@ -65,6 +65,7 @@ internal interface PerformanceManager {
             ) {
                 companion object {
                     fun fromBoardName(boardName: String): SnpeBoard = when (boardName) {
+                        SupportedSnapdragonBoards.SDM855.name -> Snapdragon_855
                         SupportedSnapdragonBoards.SDM845.name -> Snapdragon_845
                         SupportedSnapdragonBoards.MSM8998.name -> Snapdragon_835
                         SupportedSnapdragonBoards.MSM8996.name -> Snapdragon_821
@@ -92,6 +93,14 @@ internal interface PerformanceManager {
 
                         }
                     }
+
+                object Snapdragon_855 : SnpeBoard(
+                    maxSupportedFps = ModelsFps(
+                        detectionFps = Fps(30f),
+                        segmentationFps = Fps(22f),
+                        mergedFpsRange = Fps(18f)
+                    )
+                )
 
                 object Snapdragon_845 : SnpeBoard(
                     maxSupportedFps = ModelsFps(
