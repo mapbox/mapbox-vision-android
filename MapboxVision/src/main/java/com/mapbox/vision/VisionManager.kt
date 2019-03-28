@@ -62,8 +62,11 @@ object VisionManager {
 
     private lateinit var rootTelemetryDir: String
 
-    private var isCreated = false
+    @Volatile
     private var isStarted = false
+    @Volatile
+    private var isCreated = false
+
     private var isTurnstileEventSent = false
 
     private val sensorDataListener = object : SensorDataListener {
@@ -230,14 +233,14 @@ object VisionManager {
             return
         }
 
+        isStarted = true
+        nativeVisionManager.start(visionEventsListener)
         sensorsManager.start()
         locationEngine.attach(nativeVisionManager)
         videoProcessor.attach(videoProcessorListener)
         sessionManager?.start()
         videoSource.attach(videoSourceListener)
 
-        nativeVisionManager.start(visionEventsListener)
-        isStarted = true
     }
 
     /**
@@ -259,7 +262,6 @@ object VisionManager {
         videoProcessor.detach()
         locationEngine.detach()
         sensorsManager.stop()
-
         nativeVisionManager.stop()
         isStarted = false
     }

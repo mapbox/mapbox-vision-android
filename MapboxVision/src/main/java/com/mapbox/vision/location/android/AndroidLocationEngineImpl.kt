@@ -22,19 +22,16 @@ internal class AndroidLocationEngineImpl(context: Context) : LocationEngine, Loc
     // Bearing returned can be invalid - it'll contain 0.0f then. We cache last valid bearing to return it to subscribers.
     private var lastValidBearing: Float = 0f
 
-    private var attached = false
-
     @SuppressLint("MissingPermission")
     override fun attach(locationEngineListener: LocationEngineListener) {
         this.locationEngineListener = locationEngineListener
         if (!TextUtils.isEmpty(currentProvider)) {
             locationManager.requestLocationUpdates(currentProvider, DEFAULT_MIN_TIME, DEFAULT_MIN_DISTANCE, this)
         }
-        attached = true
     }
 
     override fun detach() {
-        attached = false
+        locationEngineListener = null
         locationManager.removeUpdates(this)
     }
 
