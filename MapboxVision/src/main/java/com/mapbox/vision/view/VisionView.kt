@@ -6,11 +6,11 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import com.mapbox.vision.R
 import com.mapbox.vision.VisionManager
-import com.mapbox.vision.mobile.models.CameraParameters
-import com.mapbox.vision.mobile.models.FrameSegmentation
-import com.mapbox.vision.mobile.models.detection.FrameDetections
-import com.mapbox.vision.mobile.models.frame.ImageFormat
-import com.mapbox.vision.mobile.models.frame.ImageSize
+import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.FrameSegmentation
+import com.mapbox.vision.mobile.core.models.detection.FrameDetections
+import com.mapbox.vision.mobile.core.models.frame.ImageFormat
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.drawer.detections.DetectionDrawerImpl
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.nio.ByteBuffer

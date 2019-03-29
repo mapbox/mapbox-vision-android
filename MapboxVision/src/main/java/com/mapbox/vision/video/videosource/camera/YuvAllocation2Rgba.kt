@@ -3,7 +3,7 @@ package com.mapbox.vision.video.videosource.camera
 import android.graphics.ImageFormat
 import android.renderscript.*
 import android.view.Surface
-import com.mapbox.vision.mobile.models.frame.ImageSize
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 
 internal class YuvAllocation2Rgba(
     renderScript: RenderScript,

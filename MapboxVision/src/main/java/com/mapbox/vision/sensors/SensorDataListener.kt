@@ -1,7 +1,7 @@
 package com.mapbox.vision.sensors
 
-import com.mapbox.vision.mobile.models.DeviceMotionData
-import com.mapbox.vision.mobile.models.HeadingData
+import com.mapbox.vision.mobile.core.models.DeviceMotionData
+import com.mapbox.vision.mobile.core.models.HeadingData
 
 internal interface SensorDataListener {
 

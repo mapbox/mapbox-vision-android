@@ -6,9 +6,9 @@ import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.renderscript.RenderScript
 import android.util.Size
-import com.mapbox.vision.mobile.models.frame.ImageFormat
-import com.mapbox.vision.mobile.models.CameraParameters
-import com.mapbox.vision.mobile.models.frame.ImageSize
+import com.mapbox.vision.mobile.core.models.frame.ImageFormat
+import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener

@@ -1,8 +1,8 @@
 package com.mapbox.vision.performance
 
-import com.mapbox.vision.mobile.NativeVisionManager
-import com.mapbox.vision.mobile.utils.SystemInfoUtils
-import com.mapbox.vision.mobile.utils.snapdragon.SupportedSnapdragonBoards
+import com.mapbox.vision.mobile.core.NativeVisionManager
+import com.mapbox.vision.mobile.core.utils.SystemInfoUtils
+import com.mapbox.vision.mobile.core.utils.snapdragon.SupportedSnapdragonBoards
 
 internal interface PerformanceManager {
 

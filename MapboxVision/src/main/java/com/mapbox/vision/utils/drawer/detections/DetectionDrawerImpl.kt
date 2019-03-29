@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.mapbox.vision.mobile.models.detection.Detection
+import com.mapbox.vision.mobile.core.models.detection.Detection
 
 class DetectionDrawerImpl : DetectionDrawer {
 

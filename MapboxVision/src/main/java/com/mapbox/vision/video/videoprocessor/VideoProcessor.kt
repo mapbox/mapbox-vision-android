@@ -3,7 +3,7 @@ package com.mapbox.vision.video.videoprocessor
 import android.annotation.TargetApi
 import android.media.*
 import android.os.Build
-import com.mapbox.vision.mobile.models.VideoClip
+import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import org.json.JSONArray
