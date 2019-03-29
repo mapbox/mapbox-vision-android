@@ -1,7 +1,7 @@
 package com.mapbox.vision.telemetry
 
-import com.mapbox.vision.mobile.NativeVisionManager
-import com.mapbox.vision.mobile.models.VideoClip
+import com.mapbox.vision.mobile.core.NativeVisionManager
+import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.camera.VideoRecorder

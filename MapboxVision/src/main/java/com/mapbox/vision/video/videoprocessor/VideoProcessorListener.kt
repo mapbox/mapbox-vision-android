@@ -1,6 +1,6 @@
 package com.mapbox.vision.video.videoprocessor
 
-import com.mapbox.vision.mobile.models.VideoClip
+import com.mapbox.vision.mobile.core.models.VideoClip
 
 internal interface VideoProcessorListener {
 

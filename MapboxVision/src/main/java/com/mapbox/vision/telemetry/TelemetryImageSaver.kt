@@ -1,7 +1,7 @@
 package com.mapbox.vision.telemetry
 
 import android.graphics.Bitmap
-import com.mapbox.vision.mobile.telemetry.TelemetryImageSaver
+import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import java.io.File
 import java.nio.ByteBuffer
@@ -20,15 +20,15 @@ internal class TelemetryImageSaver : TelemetryImageSaver {
     override fun saveImage(rgbaBytes: ByteArray, width: Int, height: Int, fileName: String) {
         threadHandler.post {
             File(sessionDir.get(), "$fileName.png").also { it.createNewFile() }
-                    .outputStream()
-                    .use { outputStream ->
-                        Bitmap
-                                .createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                                .apply {
-                                    copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
-                                }
-                                .compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                    }
+                .outputStream()
+                .use { outputStream ->
+                    Bitmap
+                        .createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                        .apply {
+                            copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
+                        }
+                        .compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                }
         }
     }
 }

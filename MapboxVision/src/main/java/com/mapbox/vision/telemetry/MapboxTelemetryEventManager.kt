@@ -2,7 +2,7 @@ package com.mapbox.vision.telemetry
 
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.android.telemetry.VisionObjectDetectionEvent
-import com.mapbox.vision.mobile.telemetry.TelemetryEventManager
+import com.mapbox.vision.mobile.core.telemetry.TelemetryEventManager
 
 internal class MapboxTelemetryEventManager(
     private val mapboxTelemetry: MapboxTelemetry

@@ -1,5 +1,5 @@
-include ':CoreVisionSdk'
-project(':CoreVisionSdk').projectDir = new File(CORE_VISION_SDK)
+include ':CoreSdk'
+project(':CoreSdk').projectDir = new File(CORE_VISION_SDK)
 
 include ':MapboxVision'
 

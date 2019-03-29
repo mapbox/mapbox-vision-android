@@ -30,11 +30,15 @@ if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
         }
 
         packageOptions {
-            prefix = "com.mapbox.vision.mobile"
+            prefix = "com.mapbox.vision"
+            suppress = false
+        }
+        packageOptions {
+            prefix = "com.mapbox.vision.mobile.core"
             suppress = true
         }
         packageOptions {
-            prefix = "com.mapbox.vision.mobile.models"
+            prefix = "com.mapbox.vision.mobile.core.models"
             suppress = false
         }
         // TODO finish dokka settings for other sdk core packages

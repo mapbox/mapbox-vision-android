@@ -10,8 +10,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Handler
 import android.view.WindowManager
-import com.mapbox.vision.mobile.models.DeviceMotionData
-import com.mapbox.vision.mobile.models.HeadingData
+import com.mapbox.vision.mobile.core.models.DeviceMotionData
+import com.mapbox.vision.mobile.core.models.HeadingData
 
 internal class SensorsManager(application: Application) : SensorEventListener {
 

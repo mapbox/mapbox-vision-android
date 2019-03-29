@@ -9,7 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import com.mapbox.vision.location.LocationEngine
-import com.mapbox.vision.mobile.interfaces.LocationEngineListener
+import com.mapbox.vision.mobile.core.interfaces.LocationEngineListener
 import com.mapbox.vision.utils.VisionLogger
 
 internal class AndroidLocationEngineImpl(context: Context) : LocationEngine, LocationListener {
@@ -65,11 +65,17 @@ internal class AndroidLocationEngineImpl(context: Context) : LocationEngine, Loc
     }
 
     override fun onProviderEnabled(provider: String?) {
-        VisionLogger.v(TAG, String.format("Provider %s was enabled (current provider is %s).", provider, currentProvider))
+        VisionLogger.v(
+            TAG,
+            String.format("Provider %s was enabled (current provider is %s).", provider, currentProvider)
+        )
     }
 
     override fun onProviderDisabled(provider: String?) {
-        VisionLogger.v(TAG, String.format("Provider %s was disabled (current provider is %s).", provider, currentProvider))
+        VisionLogger.v(
+            TAG,
+            String.format("Provider %s was disabled (current provider is %s).", provider, currentProvider)
+        )
     }
 
     companion object {
