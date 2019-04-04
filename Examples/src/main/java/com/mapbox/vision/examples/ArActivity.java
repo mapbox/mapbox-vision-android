@@ -158,8 +158,16 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
                         }
 
                         // Start navigation session with retrieved route.
-                        directionsRoute = response.body().routes().get(0);
-                        mapboxNavigation.startNavigation(directionsRoute);
+                        DirectionsRoute route = response.body().routes().get(0);
+                        mapboxNavigation.startNavigation(route);
+
+                        // Set route progress.
+                        VisionArManager.setRoute(new Route(
+                                getRoutePoints(route),
+                                directionsRoute.duration().floatValue(),
+                                "",
+                                ""
+                        ));
                     }
 
                     @Override
@@ -208,21 +216,23 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         if (response.routes().isEmpty()) {
             Toast.makeText(this, "Can not calculate the route requested", Toast.LENGTH_SHORT).show();
         } else {
-            mapboxNavigation.startNavigation(response.routes().get(0));
+            DirectionsRoute route = response.routes().get(0);
+
+            mapboxNavigation.startNavigation(route);
+
+            // Set route progress.
+            VisionArManager.setRoute(new Route(
+                    getRoutePoints(route),
+                    (float) routeProgress.durationRemaining(),
+                    "",
+                    ""
+            ));
         }
     }
 
     @Override
     public void onProgressChange(Location location, RouteProgress routeProgress) {
         lastRouteProgress = routeProgress;
-
-        // Set route progress.
-        VisionArManager.setRoute(new Route(
-                getRoutePoints(routeProgress),
-                (float) routeProgress.durationRemaining(),
-                "",
-                ""
-        ));
     }
 
     @Override
@@ -230,34 +240,32 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         routeFetcher.findRouteFromRouteProgress(location, lastRouteProgress);
     }
 
-    private RoutePoint[] getRoutePoints(@NotNull RouteProgress progress) {
+    private RoutePoint[] getRoutePoints(@NotNull DirectionsRoute route) {
         ArrayList<RoutePoint> routePoints = new ArrayList<>();
-        DirectionsRoute mapboxNavigation = progress.directionsRoute();
-        if (mapboxNavigation != null) {
-            List<RouteLeg> legs = mapboxNavigation.legs();
-            if (legs != null) {
-                for (RouteLeg leg : legs) {
 
-                    List<LegStep> steps = leg.steps();
-                    if (steps != null) {
-                        for (LegStep step : steps) {
-                            RoutePoint point = new RoutePoint((new GeoCoordinate(
-                                    step.maneuver().location().latitude(),
-                                    step.maneuver().location().longitude()
-                            )));
+        List<RouteLeg> legs = route.legs();
+        if (legs != null) {
+            for (RouteLeg leg : legs) {
 
-                            routePoints.add(point);
+                List<LegStep> steps = leg.steps();
+                if (steps != null) {
+                    for (LegStep step : steps) {
+                        RoutePoint point = new RoutePoint((new GeoCoordinate(
+                                step.maneuver().location().latitude(),
+                                step.maneuver().location().longitude()
+                        )));
 
-                            List<StepIntersection> intersections = step.intersections();
-                            if (intersections != null) {
-                                for (StepIntersection intersection : intersections) {
-                                    point = new RoutePoint((new GeoCoordinate(
-                                            step.maneuver().location().latitude(),
-                                            step.maneuver().location().longitude()
-                                    )));
+                        routePoints.add(point);
 
-                                    routePoints.add(point);
-                                }
+                        List<StepIntersection> intersections = step.intersections();
+                        if (intersections != null) {
+                            for (StepIntersection intersection : intersections) {
+                                point = new RoutePoint((new GeoCoordinate(
+                                        step.maneuver().location().latitude(),
+                                        step.maneuver().location().longitude()
+                                )));
+
+                                routePoints.add(point);
                             }
                         }
                     }
