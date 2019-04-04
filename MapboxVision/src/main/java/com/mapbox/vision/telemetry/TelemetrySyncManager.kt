@@ -209,14 +209,14 @@ internal interface TelemetrySyncManager {
                 file: File,
                 attachmentProperties: AttachmentProperties
         ) {
-            AttachmentManager(mapboxTelemetry).apply {
-                addFileAttachment(
-                        filePath = file.absolutePath,
-                        mediaType = attachmentProperties.mediaType,
-                        attachmentMetadata = attachmentProperties.metadata
-                )
-                pushEvent()
-            }
+//            AttachmentManager(mapboxTelemetry).apply {
+//                addFileAttachment(
+//                        filePath = file.absolutePath,
+//                        mediaType = attachmentProperties.mediaType,
+//                        attachmentMetadata = attachmentProperties.metadata
+//                )
+//                pushEvent()
+//            }
         }
 
         override fun onAttachmentResponse(message: String?, code: Int, fileIds: MutableList<String>?) {
