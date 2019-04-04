@@ -7,10 +7,11 @@ import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
 import com.mapbox.vision.mobile.core.models.Camera
+import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation
+import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.safety.VisionSafetyManager
@@ -28,23 +29,22 @@ class SafetyActivityKt : AppCompatActivity() {
 
     // this listener handles events from Vision SDK
     private val visionEventsListener = object : VisionEventsListener {
-        override fun onAuthorizationStatusChanged(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
+        override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onDetectionsUpdated(frameDetections: FrameDetections) {
+        override fun onFrameSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
 
-        }
+        override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {}
 
-        override fun onSignsUpdated(frameSigns: FrameSigns) {}
+        override fun onFrameSignClassificationsUpdated(frameSignClassifications: FrameSignClassifications) {}
 
-        override fun onRoadUpdated(roadDescription: RoadDescription) {}
+        override fun onRoadDescriptionUpdated(roadDescription: RoadDescription) {}
 
-        override fun onWorldUpdated(worldDescription: WorldDescription) {}
+        override fun onWorldDescriptionUpdated(worldDescription: WorldDescription) {}
 
-        override fun onVehicleLocationUpdated(vehicleLocation: VehicleLocation) {
+        override fun onVehicleStateUpdated(vehicleState: VehicleState) {
             // current speed of our car
-            val mySpeed = vehicleLocation.speed
+            val mySpeed = vehicleState.speed
 
             // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
@@ -58,7 +58,9 @@ class SafetyActivityKt : AppCompatActivity() {
 
         override fun onCameraUpdated(camera: Camera) {}
 
-        override fun onClientUpdate() {}
+        override fun onCountryUpdated(country: Country) {}
+
+        override fun onUpdateCompleted() {}
     }
 
     // this listener handles events from VisionSafety SDK
@@ -79,8 +81,8 @@ class SafetyActivityKt : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        VisionManager.create(visionEventsListener = visionEventsListener)
-        VisionManager.start()
+        VisionManager.create()
+        VisionManager.start(visionEventsListener)
         VisionManager.setVideoSourceListener(vision_view);
 
         VisionSafetyManager.create(VisionManager, visionSafetyListener)

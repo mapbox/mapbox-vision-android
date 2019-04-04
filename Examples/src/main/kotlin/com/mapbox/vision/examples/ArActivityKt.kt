@@ -88,7 +88,7 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
         mapboxNavigation.addProgressChangeListener(this)
 
         // Create and start VisionManager.
-        VisionManager.create(visionEventsListener = object : VisionEventsListener {})
+        VisionManager.create()
         VisionManager.setModelPerformanceConfig(
             ModelPerformanceConfig.Merged(
                 ModelPerformance.On(
@@ -97,7 +97,7 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
                 )
             )
         )
-        VisionManager.start()
+        VisionManager.start(visionEventsListener = object : VisionEventsListener {})
 
         VisionManager.setVideoSourceListener(mapbox_ar_view)
 
@@ -119,6 +119,16 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
 
                     directionsRoute = response.body()!!.routes()[0]
                     mapboxNavigation.startNavigation(directionsRoute)
+
+                    // Set route progress.
+                    VisionArManager.setRoute(
+                        Route(
+                            directionsRoute.getRoutePoints(),
+                            directionsRoute.duration()?.toFloat() ?: 0f,
+                            "",
+                            ""
+                        )
+                    )
                 }
 
                 override fun onFailure(call: Call<DirectionsResponse>, t: Throwable) {
@@ -162,30 +172,32 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
             Toast.makeText(this, "Can not calculate the route requested", Toast.LENGTH_SHORT).show()
         } else {
             mapboxNavigation.startNavigation(response.routes()[0])
+
+            val route = response.routes()[0]
+
+            // Set route progress.
+            VisionArManager.setRoute(
+                Route(
+                    route.getRoutePoints(),
+                    route.duration()?.toFloat() ?: 0f,
+                    "",
+                    ""
+                )
+            )
         }
     }
 
     override fun onProgressChange(location: Location, routeProgress: RouteProgress) {
         lastRouteProgress = routeProgress
-
-        // Set route progress.
-        VisionArManager.setRoute(
-            Route(
-                routeProgress.getRoutePoints(),
-                routeProgress.durationRemaining().toFloat(),
-                "",
-                ""
-            )
-        )
     }
 
     override fun userOffRoute(location: Location) {
         routeFetcher.findRouteFromRouteProgress(location, lastRouteProgress)
     }
 
-    private fun RouteProgress.getRoutePoints(): Array<RoutePoint> {
+    private fun DirectionsRoute.getRoutePoints(): Array<RoutePoint> {
         val routePoints = arrayListOf<RoutePoint>()
-        this.directionsRoute()?.legs()?.forEach { it ->
+        legs()?.forEach { it ->
             it.steps()?.forEach { step ->
                 val maneuverPoint = RoutePoint(
                     GeoCoordinate(

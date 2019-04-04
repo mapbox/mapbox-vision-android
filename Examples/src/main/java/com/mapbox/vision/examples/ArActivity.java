@@ -29,10 +29,10 @@ import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
 import com.mapbox.vision.mobile.core.models.Camera;
 import com.mapbox.vision.mobile.core.models.Country;
 import com.mapbox.vision.mobile.core.models.FrameSegmentation;
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns;
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications;
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections;
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate;
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation;
+import com.mapbox.vision.mobile.core.models.position.VehicleState;
 import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.performance.ModelPerformance.On;
@@ -102,39 +102,42 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         mapboxNavigation.addProgressChangeListener(this);
 
         // Create and start VisionManager.
-        VisionManager.create(new VisionEventsListener() {
-            @Override
-            public void onAuthorizationStatusChanged(@NotNull AuthorizationStatus authorizationStatus) {}
-
-            @Override
-            public void onSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
-
-            @Override
-            public void onDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
-
-            @Override
-            public void onSignsUpdated(@NotNull FrameSigns frameSigns) {}
-
-            @Override
-            public void onRoadUpdated(@NotNull RoadDescription roadDescription) {}
-
-            @Override
-            public void onWorldUpdated(@NotNull WorldDescription worldDescription) {}
-
-            @Override
-            public void onVehicleLocationUpdated(@NotNull VehicleLocation vehicleLocation) {}
-
-            @Override
-            public void onCameraUpdated(@NotNull Camera camera) {}
-
-            @Override
-            public void onCountryUpdated(@NotNull Country country) {}
-
-            @Override
-            public void onClientUpdate() {}
-        });
+        VisionManager.create();
         VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.FIXED, ModelPerformanceRate.LOW)));
-        VisionManager.start();
+        VisionManager.start(
+                new VisionEventsListener() {
+
+                    @Override
+                    public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
+
+                    @Override
+                    public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+
+                    @Override
+                    public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
+
+                    @Override
+                    public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
+
+                    @Override
+                    public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
+
+                    @Override
+                    public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
+
+                    @Override
+                    public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {}
+
+                    @Override
+                    public void onCameraUpdated(@NotNull Camera camera) {}
+
+                    @Override
+                    public void onCountryUpdated(@NotNull Country country) {}
+
+                    @Override
+                    public void onUpdateCompleted() {}
+                }
+        );
 
         VisionArView visionArView = findViewById(R.id.mapbox_ar_view);
         VisionManager.setVideoSourceListener(visionArView);
@@ -158,8 +161,16 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
                         }
 
                         // Start navigation session with retrieved route.
-                        directionsRoute = response.body().routes().get(0);
-                        mapboxNavigation.startNavigation(directionsRoute);
+                        DirectionsRoute route = response.body().routes().get(0);
+                        mapboxNavigation.startNavigation(route);
+
+                        // Set route progress.
+                        VisionArManager.setRoute(new Route(
+                                getRoutePoints(route),
+                                directionsRoute.duration().floatValue(),
+                                "",
+                                ""
+                        ));
                     }
 
                     @Override
@@ -208,21 +219,23 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         if (response.routes().isEmpty()) {
             Toast.makeText(this, "Can not calculate the route requested", Toast.LENGTH_SHORT).show();
         } else {
-            mapboxNavigation.startNavigation(response.routes().get(0));
+            DirectionsRoute route = response.routes().get(0);
+
+            mapboxNavigation.startNavigation(route);
+
+            // Set route progress.
+            VisionArManager.setRoute(new Route(
+                    getRoutePoints(route),
+                    (float) routeProgress.durationRemaining(),
+                    "",
+                    ""
+            ));
         }
     }
 
     @Override
     public void onProgressChange(Location location, RouteProgress routeProgress) {
         lastRouteProgress = routeProgress;
-
-        // Set route progress.
-        VisionArManager.setRoute(new Route(
-                getRoutePoints(routeProgress),
-                (float) routeProgress.durationRemaining(),
-                "",
-                ""
-        ));
     }
 
     @Override
@@ -230,34 +243,32 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         routeFetcher.findRouteFromRouteProgress(location, lastRouteProgress);
     }
 
-    private RoutePoint[] getRoutePoints(@NotNull RouteProgress progress) {
+    private RoutePoint[] getRoutePoints(@NotNull DirectionsRoute route) {
         ArrayList<RoutePoint> routePoints = new ArrayList<>();
-        DirectionsRoute mapboxNavigation = progress.directionsRoute();
-        if (mapboxNavigation != null) {
-            List<RouteLeg> legs = mapboxNavigation.legs();
-            if (legs != null) {
-                for (RouteLeg leg : legs) {
 
-                    List<LegStep> steps = leg.steps();
-                    if (steps != null) {
-                        for (LegStep step : steps) {
-                            RoutePoint point = new RoutePoint((new GeoCoordinate(
-                                    step.maneuver().location().latitude(),
-                                    step.maneuver().location().longitude()
-                            )));
+        List<RouteLeg> legs = route.legs();
+        if (legs != null) {
+            for (RouteLeg leg : legs) {
 
-                            routePoints.add(point);
+                List<LegStep> steps = leg.steps();
+                if (steps != null) {
+                    for (LegStep step : steps) {
+                        RoutePoint point = new RoutePoint((new GeoCoordinate(
+                                step.maneuver().location().latitude(),
+                                step.maneuver().location().longitude()
+                        )));
 
-                            List<StepIntersection> intersections = step.intersections();
-                            if (intersections != null) {
-                                for (StepIntersection intersection : intersections) {
-                                    point = new RoutePoint((new GeoCoordinate(
-                                            step.maneuver().location().latitude(),
-                                            step.maneuver().location().longitude()
-                                    )));
+                        routePoints.add(point);
 
-                                    routePoints.add(point);
-                                }
+                        List<StepIntersection> intersections = step.intersections();
+                        if (intersections != null) {
+                            for (StepIntersection intersection : intersections) {
+                                point = new RoutePoint((new GeoCoordinate(
+                                        step.maneuver().location().latitude(),
+                                        step.maneuver().location().longitude()
+                                )));
+
+                                routePoints.add(point);
                             }
                         }
                     }
