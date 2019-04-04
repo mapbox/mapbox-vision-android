@@ -10,12 +10,13 @@ import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
 import com.mapbox.vision.mobile.core.models.Camera
+import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation
+import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.video.videosource.VideoSource
@@ -56,23 +57,26 @@ class ExternalCameraSourceKt : AppCompatActivity() {
 
     // VideoSourceListener handles events from Vision SDK.
     private val visionEventsListener = object : VisionEventsListener {
-        override fun onAuthorizationStatusChanged(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
+        override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onDetectionsUpdated(frameDetections: FrameDetections) {}
+        override fun onFrameSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
 
-        override fun onSignsUpdated(frameSigns: FrameSigns) {}
+        override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {}
 
-        override fun onRoadUpdated(roadDescription: RoadDescription) {}
+        override fun onFrameSignClassificationsUpdated(frameSignClassifications: FrameSignClassifications) {}
 
-        override fun onWorldUpdated(worldDescription: WorldDescription) {}
+        override fun onRoadDescriptionUpdated(roadDescription: RoadDescription) {}
 
-        override fun onVehicleLocationUpdated(vehicleLocation: VehicleLocation) {}
+        override fun onWorldDescriptionUpdated(worldDescription: WorldDescription) {}
+
+        override fun onVehicleStateUpdated(vehicleState: VehicleState) {}
 
         override fun onCameraUpdated(camera: Camera) {}
 
-        override fun onClientUpdate() {}
+        override fun onCountryUpdated(country: Country) {}
+
+        override fun onUpdateCompleted() {}
     }
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,11 +87,8 @@ class ExternalCameraSourceKt : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        VisionManager.create(
-            customVideoSource,
-            visionEventsListener
-        )
-        VisionManager.start()
+        VisionManager.create()
+        VisionManager.start(visionEventsListener)
         VisionManager.setVideoSourceListener(vision_view)
     }
 
