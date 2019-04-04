@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit;
 
 /**
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
