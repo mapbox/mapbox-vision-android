@@ -173,17 +173,6 @@ object VisionManager {
             isTurnstileEventSent = true
         }
 
-        this.videoSource = videoSource
-        when (videoSource) {
-            is Camera2VideoSourceImpl -> {
-                val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(
-                    application = application,
-                    buffersDir = FileUtils.getAppRelativeDir(application, DIR_VIDEO_BUFFERS)
-                )
-                this.videoRecorder = videoRecorder
-                videoSource.setVideoRecorder(videoRecorder)
-            }
-        }
 
         telemetryImageSaver = TelemetryImageSaver()
 
@@ -206,11 +195,18 @@ object VisionManager {
         )
         performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
 
-        videoRecorder?.let { recorder ->
-            sessionManager = TelemetrySessionManager.Impl(
+        this.videoSource = videoSource
+        (videoSource as? Camera2VideoSourceImpl)?.let {
+            val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
+            it.setVideoRecorder(videoRecorder)
+
+            this.videoRecorder = videoRecorder
+
+            sessionManager = TelemetrySessionManager.RotatedBuffersImpl(
+                application,
                 nativeVisionManager,
                 rootTelemetryDir,
-                recorder,
+                videoRecorder,
                 telemetryImageSaver,
                 sessionListener
             )

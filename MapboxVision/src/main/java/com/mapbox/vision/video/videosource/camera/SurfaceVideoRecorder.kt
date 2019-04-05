@@ -7,15 +7,13 @@ import android.media.MediaRecorder
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.WindowManager
-import com.mapbox.vision.utils.FileUtils
-import java.io.File
 import java.io.IOException
 
 internal interface VideoRecorder {
 
     fun init(frameWidth: Int, frameHeight: Int, sensorOrientation: Int)
-    fun startRecording()
-    fun stopRecording(): String
+    fun startRecording(path: String)
+    fun stopRecording()
     fun release()
 }
 
@@ -24,14 +22,11 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
     val surface: Surface
 
     class MediaCodecPersistentSurfaceImpl(
-        private val application: Application,
-        private val buffersDir: String
+        private val application: Application
     ) : SurfaceVideoRecorder {
 
         private var mediaRecorder: MediaRecorder? = null
 
-        private var nextVideoFilePath: String? = null
-        private var currentBufferNum = 0
         private var frameWidth = 0
         private var frameHeight = 0
         private var sensorOrientation = 0
@@ -44,19 +39,18 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
             this.sensorOrientation = sensorOrientation
         }
 
-        override fun startRecording() {
+        override fun startRecording(path: String) {
             if (mediaRecorder == null) {
                 mediaRecorder = MediaRecorder()
             }
-            updateNextBufferFile()
             if (frameHeight == 0 || frameWidth == 0) {
-                throw IllegalStateException("Zero in recorder!")
+                throw IllegalStateException("Uninitialized image size, can not record!")
             }
-            mediaRecorder?.setup(nextVideoFilePath!!, frameWidth, frameHeight)
+            mediaRecorder?.setup(path, frameWidth, frameHeight)
             mediaRecorder?.start()
         }
 
-        override fun stopRecording(): String {
+        override fun stopRecording() {
             try {
                 mediaRecorder?.stop()
             } catch (e: Exception) {
@@ -64,14 +58,6 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
             } finally {
                 mediaRecorder?.reset()
             }
-
-            val filePath = nextVideoFilePath
-            if (filePath != null && !filePath.isBlank()) {
-                return filePath
-            }
-
-            nextVideoFilePath = null
-            return ""
         }
 
         override fun release() {
@@ -102,23 +88,7 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
             prepare()
         }
 
-        private fun updateNextBufferFile() {
-            if (nextVideoFilePath.isNullOrEmpty()) {
-                nextVideoFilePath = FileUtils.getAbsoluteFile(buffersDir, BUFFER_FILE_NAMES[currentBufferNum])
-                val bufferFile = File(nextVideoFilePath)
-                if (bufferFile.exists()) {
-                    bufferFile.delete()
-                }
-                currentBufferNum++
-                if (currentBufferNum >= VIDEO_BUFFERS_NUMBER) {
-                    currentBufferNum = 0
-                }
-            }
-        }
-
         companion object {
-            private const val VIDEO_BUFFERS_NUMBER = 3
-
             private const val SENSOR_ORIENTATION_DEFAULT_DEGREES = 90
             private const val SENSOR_ORIENTATION_INVERSE_DEGREES = 270
 
@@ -135,12 +105,6 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
                 append(Surface.ROTATION_180, 90)
                 append(Surface.ROTATION_270, 0)
             }
-
-            val BUFFER_FILE_NAMES = listOf(
-                "video1.mp4",
-                "video2.mp4",
-                "video3.mp4"
-            )
         }
     }
 }
