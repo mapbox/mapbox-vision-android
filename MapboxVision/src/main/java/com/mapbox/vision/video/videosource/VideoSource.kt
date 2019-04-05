@@ -1,13 +1,15 @@
 package com.mapbox.vision.video.videosource
 
+interface Progress {
+    fun setProgress(timestampMillis: Long)
+
+    fun getProgress(): Long
+}
+
 interface VideoSource {
     fun attach(videoSourceListener: VideoSourceListener)
 
     fun detach()
 
-    interface WithProgress {
-        fun setProgress(timestampMillis: Long)
-
-        fun getProgress(): Long
-    }
+    interface WithProgress : VideoSource, Progress
 }

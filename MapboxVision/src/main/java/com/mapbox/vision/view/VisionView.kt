@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.AttributeSet
 import android.widget.ImageView
+import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.R
-import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
@@ -24,6 +24,8 @@ constructor(
 ) : ImageView(context, attrs, defStyleAttr), VideoSourceListener {
 
     private val detectionDrawer = DetectionDrawerImpl()
+
+    internal var baseVisionManager: BaseVisionManager? = null
 
     @Volatile
     private var bitmap: Bitmap? = null
@@ -59,8 +61,8 @@ constructor(
             return
         }
 
-        val rgbaBytes = VisionManager.getDetectionsImage(frameDetections);
-        if (rgbaBytes.isNotEmpty()) {
+        val rgbaBytes = baseVisionManager?.getDetectionsImage(frameDetections);
+        if (rgbaBytes?.isNotEmpty() == true) {
             updateBitmap(rgbaBytes, frameDetections.frame.image.size)
 
             val bitmapWithDetections = if (frameDetections.detections.isEmpty()) {
@@ -82,8 +84,8 @@ constructor(
             return
         }
 
-        val rgbaBytes = VisionManager.getSegmentationImage(frameSegmentation);
-        if (rgbaBytes.isNotEmpty()) {
+        val rgbaBytes = baseVisionManager?.getSegmentationImage(frameSegmentation);
+        if (rgbaBytes?.isNotEmpty() == true) {
             updateBitmap(rgbaBytes, frameSegmentation.frame.image.size)
 
             handler.post {
@@ -92,7 +94,11 @@ constructor(
         }
     }
 
-    fun setBytes(rgbaBytes: ByteArray, imageSize: ImageSize) {
+    override fun onNewFrame(
+        rgbaBytes: ByteArray,
+        imageFormat: ImageFormat,
+        imageSize: ImageSize
+    ) {
         if (visualizationMode != VisualizationMode.Clear) {
             return
         }
@@ -101,14 +107,6 @@ constructor(
         handler.post {
             setImageBitmap(bitmap)
         }
-    }
-
-    override fun onNewFrame(
-        rgbaBytes: ByteArray,
-        imageFormat: ImageFormat,
-        imageSize: ImageSize
-    ) {
-        setBytes(rgbaBytes, imageSize)
     }
 
     override fun onNewCameraParameters(cameraParameters: CameraParameters) = Unit

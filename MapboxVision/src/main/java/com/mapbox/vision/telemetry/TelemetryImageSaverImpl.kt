@@ -7,14 +7,20 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
 
-internal class TelemetryImageSaver : TelemetryImageSaver {
+internal class TelemetryImageSaverImpl : TelemetryImageSaver {
 
-    private val threadHandler = WorkThreadHandler().apply { start() }
+    private val threadHandler = WorkThreadHandler()
 
     private val sessionDir: AtomicReference<String> = AtomicReference()
 
-    fun setSessionDir(dir: String) {
+    fun start(dir: String) {
         sessionDir.set(dir)
+        threadHandler.start()
+    }
+
+    fun stop() {
+        threadHandler.stop()
+        sessionDir.set("")
     }
 
     override fun saveImage(rgbaBytes: ByteArray, width: Int, height: Int, fileName: String) {

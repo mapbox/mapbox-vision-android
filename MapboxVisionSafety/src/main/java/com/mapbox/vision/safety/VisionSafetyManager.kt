@@ -1,13 +1,14 @@
 package com.mapbox.vision.safety
 
-import com.mapbox.vision.ModuleInterface
-import com.mapbox.vision.VisionManager
+import com.mapbox.vision.manager.BaseVisionManager
+import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.safety.core.NativeSafetyManager
 import com.mapbox.vision.safety.core.VisionSafetyListener
 
 object VisionSafetyManager : ModuleInterface {
 
     private lateinit var nativeSafetyManager: NativeSafetyManager
+    private lateinit var visionManager: BaseVisionManager
     private var modulePtr: Long = 0L
 
     override fun registerModule(ptr: Long) {
@@ -19,15 +20,18 @@ object VisionSafetyManager : ModuleInterface {
     }
 
     @JvmStatic
-    fun create(visionManager: VisionManager, visionSafetyListener: VisionSafetyListener) {
+    fun create(baseVisionManager: BaseVisionManager, visionSafetyListener: VisionSafetyListener) {
+        this.visionManager = baseVisionManager
+        baseVisionManager.registerModule(this)
+
         nativeSafetyManager = NativeSafetyManager()
-        visionManager.registerModule(this)
         nativeSafetyManager.create(modulePtr, visionSafetyListener)
     }
 
     @JvmStatic
     fun destroy() {
         nativeSafetyManager.destroy()
+        visionManager.unregisterModule(this)
     }
 
     /**
