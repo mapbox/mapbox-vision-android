@@ -127,7 +127,7 @@ class Camera2VideoSourceImpl(
             cameraDevice?.let { camera ->
 
                 val previewRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                val surfaces = listOf(yuvAllocation2Rgba.getInputSurface())
+                val surfaces = listOf(yuvAllocation2Rgba.getInputSurface(), videoRecorder.surface)
                 surfaces.forEach(previewRequestBuilder::addTarget)
 
                 camera.createCaptureSession(
