@@ -42,11 +42,9 @@ internal class SensorsManager(application: Application) : SensorEventListener {
 
     private var lastTimestamp = 0L
 
-    fun setSensorDataListener(sensorDataListener: SensorDataListener) {
+    fun start(sensorDataListener: SensorDataListener) {
         this.sensorDataListener = sensorDataListener
-    }
 
-    fun start() {
         if (accelerometerSensor == null || magneticSensor == null) {
             return
         }
@@ -56,14 +54,13 @@ internal class SensorsManager(application: Application) : SensorEventListener {
         sensorManager.registerListener(this, gravitySensor, SENSOR_DELAY_MICROS)
         sensorManager.registerListener(this, gyroscopeSensor, SENSOR_DELAY_MICROS)
 
-        if (sensorDataListener != null) {
-            listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
-        }
+        listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
     }
 
     fun stop() {
         sensorManager.unregisterListener(this)
         listenerUpdateHandler.removeCallbacksAndMessages(null)
+        sensorDataListener = null
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {

@@ -1,7 +1,6 @@
 package com.mapbox.vision.telemetry
 
 import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.android.telemetry.VisionObjectDetectionEvent
 import com.mapbox.vision.mobile.core.telemetry.TelemetryEventManager
 
 internal class MapboxTelemetryEventManager(
@@ -28,23 +27,23 @@ internal class MapboxTelemetryEventManager(
     }
 
     override fun pushEvent() {
-        mapboxTelemetry.push(
-            VisionObjectDetectionEvent(paramsMap["created"].toString()).apply {
-                objectLatitude = paramsMap["object_lat"] as? Double ?: .0
-                objectLongitude = paramsMap["object_lat"] as? Double ?: .0
-
-                vehicleLatitude = paramsMap["vehicle_lat"] as? Double ?: .0
-                vehicleLongitude = paramsMap["vehicle_lon"] as? Double ?: .0
-
-                clazz = paramsMap["class"]?.toString() ?: ""
-                signValue = paramsMap["sign_value"]?.toString() ?: ""
-
-                objectSizeWidth = paramsMap["object_size_width"] as? Double ?: .0
-                objectSizeHeight = paramsMap["object_size_height"] as? Double ?: .0
-
-                objectPositionHeight = paramsMap["object_pos_height"] as? Double ?: .0
-                distanceFromCamera = paramsMap["distance_from_camera"] as? Double ?: .0
-            }
-        )
+//        mapboxTelemetry.push(
+//            VisionObjectDetectionEvent(paramsMap["created"].toString()).apply {
+//                objectLatitude = paramsMap["object_lat"] as? Double ?: .0
+//                objectLongitude = paramsMap["object_lat"] as? Double ?: .0
+//
+//                vehicleLatitude = paramsMap["vehicle_lat"] as? Double ?: .0
+//                vehicleLongitude = paramsMap["vehicle_lon"] as? Double ?: .0
+//
+//                clazz = paramsMap["class"]?.toString() ?: ""
+//                signValue = paramsMap["sign_value"]?.toString() ?: ""
+//
+//                objectSizeWidth = paramsMap["object_size_width"] as? Double ?: .0
+//                objectSizeHeight = paramsMap["object_size_height"] as? Double ?: .0
+//
+//                objectPositionHeight = paramsMap["object_pos_height"] as? Double ?: .0
+//                distanceFromCamera = paramsMap["distance_from_camera"] as? Double ?: .0
+//            }
+//        )
     }
 }

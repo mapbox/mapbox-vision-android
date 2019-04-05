@@ -29,7 +29,7 @@ interface VisionLogger {
     fun e(t: Throwable, tag: String, message: String)
 
     companion object {
-        private var DEFAULT_LOGGER: VisionLogger = VisionLogger.FileImpl(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
+        private var DEFAULT_LOGGER: VisionLogger = VisionLogger.LogcatImpl(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
 
         fun setLogger(visionLogger: VisionLogger) {
             DEFAULT_LOGGER = visionLogger

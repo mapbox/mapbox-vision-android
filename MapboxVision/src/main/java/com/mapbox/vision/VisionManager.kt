@@ -31,6 +31,8 @@ import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
 import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
+import com.mapbox.vision.video.videosource.file.FileVideoSource
+import java.io.File
 
 object VisionManager {
 
@@ -38,7 +40,6 @@ object VisionManager {
     private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
     private const val TAG = "VisionManager"
 
-    private const val DIR_VIDEO_BUFFERS = "Buffers"
     private const val DIR_TELEMETRY = "Telemetry"
 
     private lateinit var application: Application
@@ -59,8 +60,6 @@ object VisionManager {
     private var sessionManager: TelemetrySessionManager? = null
     private var videoRecorder: VideoRecorder? = null
     private var externalVideoSourceListener: VideoSourceListener? = null
-
-    private lateinit var rootTelemetryDir: String
 
     @Volatile
     private var isStarted = false
@@ -96,6 +95,10 @@ object VisionManager {
             imageFormat: ImageFormat,
             imageSize: ImageSize
         ) {
+            (videoSource as? VideoSource.WithProgress)?.let {
+                nativeVisionManager.setTelemetryTimestamp(it.getProgress())
+            }
+
             nativeVisionManager.setFrame(
                 rgbaByteArray = rgbaBytes,
                 imageFormat = imageFormat,
@@ -118,12 +121,12 @@ object VisionManager {
 
     private val sessionListener: (String, Long, String, Array<VideoClip>) -> Unit =
         { telemetryDir, sessionStartMillis, videoPath, clips ->
-            videoProcessor.splitVideoClips(
-                clips = clips,
-                videoPath = videoPath,
-                outputDir = telemetryDir,
-                sessionStartMillis = sessionStartMillis
-            )
+//            videoProcessor.splitVideoClips(
+//                clips = clips,
+//                videoPath = videoPath,
+//                outputDir = telemetryDir,
+//                sessionStartMillis = sessionStartMillis
+//            )
         }
 
     private val videoProcessorListener = object : VideoProcessorListener {
@@ -132,7 +135,7 @@ object VisionManager {
             videoDir: String,
             jsonFile: String
         ) {
-            telemetrySyncManager.syncSessionDir(videoDir)
+//            telemetrySyncManager.syncSessionDir(videoDir)
         }
     }
 
@@ -145,6 +148,14 @@ object VisionManager {
         this.application = application
     }
 
+    sealed class VisionMode {
+        object Default : VisionMode()
+        data class SessionRecording(val path: String) : VisionMode()
+        data class SessionReplay(val path: String) : VisionMode()
+    }
+
+    private var mode: VisionMode = VisionManager.VisionMode.Default
+
     /**
      * Initialize SDK. Creates core services and allocates necessary resources.
      * No-op if called while SDK is created already.
@@ -152,7 +163,7 @@ object VisionManager {
     @JvmOverloads
     @JvmStatic
     fun create(
-        videoSource: VideoSource = Camera2VideoSourceImpl(application),
+        mode: VisionMode = VisionManager.VisionMode.Default,
         visionEventsListener: VisionEventsListener
     ) {
         checkManagerInit()
@@ -173,18 +184,6 @@ object VisionManager {
             isTurnstileEventSent = true
         }
 
-        this.videoSource = videoSource
-        when (videoSource) {
-            is Camera2VideoSourceImpl -> {
-                val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(
-                    application = application,
-                    buffersDir = FileUtils.getAppRelativeDir(application, DIR_VIDEO_BUFFERS)
-                )
-                this.videoRecorder = videoRecorder
-                videoSource.setVideoRecorder(videoRecorder)
-            }
-        }
-
         telemetryImageSaver = TelemetryImageSaver()
 
         nativeVisionManager = NativeVisionManager(mapboxToken, application)
@@ -194,11 +193,10 @@ object VisionManager {
         )
 
         sensorsManager = SensorsManager(application)
-        sensorsManager.setSensorDataListener(sensorDataListener)
         locationEngine = AndroidLocationEngineImpl(application)
         videoProcessor = VideoProcessor.Impl()
 
-        rootTelemetryDir = FileUtils.getAppRelativeDir(application, DIR_TELEMETRY)
+        val rootTelemetryDir = FileUtils.getAppRelativeDir(application, DIR_TELEMETRY)
         telemetrySyncManager = TelemetrySyncManager.Impl(
             mapboxTelemetry = mapboxTelemetry,
             context = application,
@@ -206,14 +204,57 @@ object VisionManager {
         )
         performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
 
-        videoRecorder?.let { recorder ->
-            sessionManager = TelemetrySessionManager.Impl(
-                nativeVisionManager,
-                rootTelemetryDir,
-                recorder,
-                telemetryImageSaver,
-                sessionListener
-            )
+        when (mode) {
+            VisionMode.Default -> {
+                val videoSource = Camera2VideoSourceImpl(application)
+                val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
+                videoSource.setVideoRecorder(videoRecorder)
+
+                this@VisionManager.videoSource = videoSource
+                this@VisionManager.videoRecorder = videoRecorder
+
+                sessionManager = TelemetrySessionManager.RotatedBuffersImpl(
+                    application,
+                    nativeVisionManager,
+                    rootTelemetryDir,
+                    videoRecorder,
+                    telemetryImageSaver,
+                    sessionListener
+                )
+            }
+            is VisionMode.SessionRecording -> {
+                val videoSource = Camera2VideoSourceImpl(application)
+                val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
+                videoSource.setVideoRecorder(videoRecorder)
+
+                this@VisionManager.videoSource = videoSource
+                this@VisionManager.videoRecorder = videoRecorder
+
+                sessionManager = TelemetrySessionManager.RecordingImpl(
+                    nativeVisionManager,
+                    sessionDir = "${mode.path}/",
+                    videoRecorder = videoRecorder,
+                    telemetryImageSaver = telemetryImageSaver
+                )
+            }
+            is VisionMode.SessionReplay -> {
+                this.videoSource = FileVideoSource(
+                    application,
+                    videoFiles = File(mode.path)
+                        .listFiles
+                        { _: File?, name: String? ->
+                            name?.contains("mp4") ?: false
+                        }
+                        .sorted(),
+                    onVideoStarted = {},
+                    onVideosEnded = {}
+                )
+
+                sessionManager = TelemetrySessionManager.ReplayImpl(
+                    nativeVisionManager,
+                    mode.path
+                )
+            }
         }
 
         isCreated = true
@@ -235,12 +276,14 @@ object VisionManager {
 
         isStarted = true
         nativeVisionManager.start(visionEventsListener)
-        sensorsManager.start()
-        locationEngine.attach(nativeVisionManager)
-        videoProcessor.attach(videoProcessorListener)
+
+        if (mode !is VisionManager.VisionMode.SessionReplay) {
+            sensorsManager.start(sensorDataListener)
+            locationEngine.attach(nativeVisionManager)
+        }
+//        videoProcessor.attach(videoProcessorListener)
         sessionManager?.start()
         videoSource.attach(videoSourceListener)
-
     }
 
     /**
@@ -259,9 +302,13 @@ object VisionManager {
 
         videoSource.detach()
         sessionManager?.stop()
-        videoProcessor.detach()
-        locationEngine.detach()
-        sensorsManager.stop()
+
+//        videoProcessor.detach()
+        if (mode !is VisionManager.VisionMode.SessionReplay) {
+            locationEngine.detach()
+            sensorsManager.stop()
+        }
+
         nativeVisionManager.stop()
         isStarted = false
     }

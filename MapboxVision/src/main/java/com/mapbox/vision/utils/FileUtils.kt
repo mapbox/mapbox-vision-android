@@ -32,6 +32,6 @@ internal object FileUtils {
             File(context.filesDir, relativeDir)
         }
 
-        return getAbsoluteDir(dir.absolutePath)
+        return "${getAbsoluteDir(dir.absolutePath)}/"
     }
 }

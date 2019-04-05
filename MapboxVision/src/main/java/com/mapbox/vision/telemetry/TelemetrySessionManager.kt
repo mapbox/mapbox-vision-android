@@ -110,6 +110,7 @@ internal interface TelemetrySessionManager {
         )
 
         override fun start() {
+            File(sessionDir).mkdirs()
             telemetryImageSaver.setSessionDir(sessionDir)
             nativeVisionManager.startTelemetrySavingSession(sessionDir)
             rotatedBuffers.rotate()
@@ -120,5 +121,17 @@ internal interface TelemetrySessionManager {
             nativeVisionManager.stopTelemetrySavingSession()
             videoRecorder.stopRecording()
         }
+    }
+
+    class ReplayImpl(
+        private val nativeVisionManager: NativeVisionManager,
+        private val sessionDir: String
+    ) : TelemetrySessionManager {
+
+        override fun start() {
+            nativeVisionManager.playTelemetry(sessionDir)
+        }
+
+        override fun stop() {}
     }
 }
