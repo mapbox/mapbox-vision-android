@@ -1,5 +1,6 @@
 package com.mapbox.vision.telemetry
 
+import android.app.Application
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.utils.FileUtils
@@ -9,14 +10,38 @@ import java.io.File
 
 internal interface TelemetrySessionManager {
 
-    companion object {
-        private const val RESTART_SESSION_RECORDING_DELAY_MILLIS = 5 * 60 * 1000L
-    }
-
     fun start()
     fun stop()
 
-    class Impl(
+    private class RotatedBuffers(
+        private val buffersDir: String,
+        private val totalBuffersNumber: Int = DEFAULT_BUFFERS_NUMBER
+    ) {
+        companion object {
+            private const val DEFAULT_BUFFERS_NUMBER = 3
+        }
+
+        private var bufferIndex = 0
+
+        fun rotate() {
+            bufferIndex++
+            if (bufferIndex >= totalBuffersNumber) {
+                bufferIndex = 0
+            }
+
+            val bufferFile = File(getBuffer())
+            if (bufferFile.exists()) {
+                bufferFile.delete()
+            }
+        }
+
+        fun getBuffer() = FileUtils.getAbsoluteFile(buffersDir, generateBufferName(bufferIndex))
+
+        private fun generateBufferName(index: Int) = "video$index.mp4"
+    }
+
+    class RotatedBuffersImpl(
+        private val application: Application,
         private val nativeVisionManager: NativeVisionManager,
         private val rootTelemetryDir: String,
         private val videoRecorder: VideoRecorder,
@@ -24,8 +49,13 @@ internal interface TelemetrySessionManager {
         private val onSessionEnded: (String, Long, String, Array<VideoClip>) -> Unit
     ) : TelemetrySessionManager {
 
-        private val handler = WorkThreadHandler("Session")
+        companion object {
+            private const val VIDEO_BUFFERS_DIR = "Buffers"
+            private const val SESSION_LENGTH_MILLIS = 5 * 60 * 1000L
+        }
 
+        private val handler = WorkThreadHandler("Session")
+        private val buffers = RotatedBuffers(FileUtils.getAppRelativeDir(application, VIDEO_BUFFERS_DIR))
         private var telemetryDir: String = ""
         private var startRecordCoreMillis = 0L
 
@@ -39,29 +69,56 @@ internal interface TelemetrySessionManager {
         }
 
         private fun startSession() {
-            telemetryDir =
-                FileUtils.getAbsoluteDir(File(rootTelemetryDir, System.currentTimeMillis().toString()).absolutePath)
-
+            telemetryDir = FileUtils.getAbsoluteDir(
+                File(rootTelemetryDir, System.currentTimeMillis().toString()).absolutePath
+            )
             telemetryImageSaver.setSessionDir(telemetryDir)
             nativeVisionManager.startTelemetrySavingSession(telemetryDir)
-            videoRecorder.startRecording()
+
+            videoRecorder.startRecording(buffers.getBuffer())
             startRecordCoreMillis = (nativeVisionManager.getCoreTimeSeconds() * 1000).toLong()
 
             handler.postDelayed({
                 stopSession()
                 startSession()
-            }, RESTART_SESSION_RECORDING_DELAY_MILLIS)
+            }, SESSION_LENGTH_MILLIS)
         }
 
         private fun stopSession() {
-            val videoPath = videoRecorder.stopRecording()
+            videoRecorder.stopRecording()
             nativeVisionManager.stopTelemetrySavingSession()
             val clips = nativeVisionManager.getClips()
             nativeVisionManager.resetClips()
 
             onSessionEnded(
-                telemetryDir, startRecordCoreMillis, videoPath, clips
+                telemetryDir, startRecordCoreMillis, buffers.getBuffer(), clips
             )
+            buffers.rotate()
+        }
+    }
+
+    class RecordingImpl(
+        private val nativeVisionManager: NativeVisionManager,
+        private val sessionDir: String,
+        private val videoRecorder: VideoRecorder,
+        private val telemetryImageSaver: TelemetryImageSaver
+    ) : TelemetrySessionManager {
+
+        private val rotatedBuffers = RotatedBuffers(
+            buffersDir = sessionDir,
+            totalBuffersNumber = 1
+        )
+
+        override fun start() {
+            telemetryImageSaver.setSessionDir(sessionDir)
+            nativeVisionManager.startTelemetrySavingSession(sessionDir)
+            rotatedBuffers.rotate()
+            videoRecorder.startRecording(rotatedBuffers.getBuffer())
+        }
+
+        override fun stop() {
+            nativeVisionManager.stopTelemetrySavingSession()
+            videoRecorder.stopRecording()
         }
     }
 }
