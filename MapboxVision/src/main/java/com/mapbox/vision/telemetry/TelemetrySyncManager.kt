@@ -21,9 +21,9 @@ internal interface TelemetrySyncManager {
     fun syncSessionDir(path: String)
 
     class Impl(
-            private val mapboxTelemetry: MapboxTelemetry,
-            context: Context,
-            private val rootTelemetryDir: String
+        private val mapboxTelemetry: MapboxTelemetry,
+        context: Context,
+        private val rootTelemetryDir: String
     ) : TelemetrySyncManager, AttachmentListener {
 
         private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
@@ -35,6 +35,8 @@ internal interface TelemetrySyncManager {
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
         private val bytesTracker = TotalBytesCounter.Impl()
         private val uuidUtil = UuidHolder.Impl(context)
+        @Suppress("DEPRECATION")
+        private val language = context.resources.configuration.locale.language
         @Suppress("DEPRECATION")
         private val locale = context.resources.configuration.locale.toString()
 
@@ -141,16 +143,20 @@ internal interface TelemetrySyncManager {
                     .sum()
         }
 
-        private fun File.toAttachmentProperties(format: String, type: String, mediaType: MediaType): AttachmentProperties {
+        private fun File.toAttachmentProperties(
+            format: String,
+            type: String,
+            mediaType: MediaType
+        ): AttachmentProperties {
             val fileId = dateFormat.format(Date(parentFile.name.toLong()))
 
             return AttachmentProperties(
-                    absolutePath,
-                    AttachmentMetadata(
-                            name, "$fileId/$name", format, type,
-                            "${fileId}_${locale}_${uuidUtil.uniqueId}_Android"
-                    ),
-                    mediaType
+                absolutePath,
+                AttachmentMetadata(
+                    name, "$fileId/$name", format, type,
+                    "${fileId}_${language}_${locale}_${uuidUtil.uniqueId}_Android"
+                ),
+                mediaType
             )
         }
 
