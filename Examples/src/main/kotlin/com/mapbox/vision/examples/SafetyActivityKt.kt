@@ -28,21 +28,20 @@ class SafetyActivityKt : AppCompatActivity() {
 
     // this listener handles events from Vision SDK
     private val visionEventsListener = object : VisionEventsListener {
-        override fun onAuthorizationStatusChanged(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
+        override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {}
 
-        override fun onDetectionsUpdated(frameDetections: FrameDetections) {
+        override fun onFrameSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
 
-        }
+        override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {}
 
-        override fun onSignsUpdated(frameSigns: FrameSigns) {}
+        override fun onFrameSignClassificationsUpdated(frameSignClassifications: FrameSignClassifications) {}
 
-        override fun onRoadUpdated(roadDescription: RoadDescription) {}
+        override fun onRoadDescriptionUpdated(roadDescription: RoadDescription) {}
 
-        override fun onWorldUpdated(worldDescription: WorldDescription) {}
+        override fun onWorldDescriptionUpdated(worldDescription: WorldDescription) {}
 
-        override fun onVehicleLocationUpdated(vehicleLocation: VehicleLocation) {
+        override fun onVehicleStateUpdated(vehicleState: VehicleState) {
             // current speed of our car
             val mySpeed = vehicleLocation.speed
 
@@ -58,7 +57,9 @@ class SafetyActivityKt : AppCompatActivity() {
 
         override fun onCameraUpdated(camera: Camera) {}
 
-        override fun onClientUpdate() {}
+        override fun onCountryUpdated(country: Country) {}
+
+        override fun onUpdateCompleted() {}
     }
 
     // this listener handles events from VisionSafety SDK
