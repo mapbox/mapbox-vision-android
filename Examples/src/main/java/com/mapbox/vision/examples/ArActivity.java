@@ -29,10 +29,10 @@ import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
 import com.mapbox.vision.mobile.core.models.Camera;
 import com.mapbox.vision.mobile.core.models.Country;
 import com.mapbox.vision.mobile.core.models.FrameSegmentation;
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns;
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications;
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections;
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate;
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation;
+import com.mapbox.vision.mobile.core.models.position.VehicleState;
 import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.performance.ModelPerformance.On;
@@ -103,26 +103,27 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
 
         // Create and start VisionManager.
         VisionManager.create(new VisionEventsListener() {
-            @Override
-            public void onAuthorizationStatusChanged(@NotNull AuthorizationStatus authorizationStatus) {}
 
             @Override
-            public void onSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+            public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
 
             @Override
-            public void onDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
+            public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
 
             @Override
-            public void onSignsUpdated(@NotNull FrameSigns frameSigns) {}
+            public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
 
             @Override
-            public void onRoadUpdated(@NotNull RoadDescription roadDescription) {}
+            public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
 
             @Override
-            public void onWorldUpdated(@NotNull WorldDescription worldDescription) {}
+            public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
 
             @Override
-            public void onVehicleLocationUpdated(@NotNull VehicleLocation vehicleLocation) {}
+            public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
+
+            @Override
+            public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {}
 
             @Override
             public void onCameraUpdated(@NotNull Camera camera) {}
@@ -131,7 +132,7 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
             public void onCountryUpdated(@NotNull Country country) {}
 
             @Override
-            public void onClientUpdate() {}
+            public void onUpdateCompleted() {}
         });
         VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.FIXED, ModelPerformanceRate.LOW)));
         VisionManager.start();

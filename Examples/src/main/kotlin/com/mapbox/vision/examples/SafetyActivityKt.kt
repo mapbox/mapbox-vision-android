@@ -7,10 +7,11 @@ import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
 import com.mapbox.vision.mobile.core.models.Camera
+import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation
+import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.safety.VisionSafetyManager
@@ -43,7 +44,7 @@ class SafetyActivityKt : AppCompatActivity() {
 
         override fun onVehicleStateUpdated(vehicleState: VehicleState) {
             // current speed of our car
-            val mySpeed = vehicleLocation.speed
+            val mySpeed = vehicleState.speed
 
             // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {

@@ -9,9 +9,9 @@ import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
 import com.mapbox.vision.mobile.core.models.Camera;
 import com.mapbox.vision.mobile.core.models.Country;
 import com.mapbox.vision.mobile.core.models.FrameSegmentation;
-import com.mapbox.vision.mobile.core.models.classification.FrameSigns;
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications;
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections;
-import com.mapbox.vision.mobile.core.models.position.VehicleLocation;
+import com.mapbox.vision.mobile.core.models.position.VehicleState;
 import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.safety.VisionSafetyManager;
@@ -31,27 +31,27 @@ public class SafetyActivity extends AppCompatActivity {
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
 
         @Override
-        public void onAuthorizationStatusChanged(@NotNull AuthorizationStatus authorizationStatus) {}
+        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
 
         @Override
-        public void onSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
 
         @Override
-        public void onDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
+        public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
 
         @Override
-        public void onSignsUpdated(@NotNull FrameSigns frameSigns) {}
+        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
 
         @Override
-        public void onRoadUpdated(@NotNull RoadDescription roadDescription) {}
+        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
 
         @Override
-        public void onWorldUpdated(@NotNull WorldDescription worldDescription) {}
+        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
 
         @Override
-        public void onVehicleLocationUpdated(@NotNull VehicleLocation vehicleLocation) {
+        public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
             // current speed of our car
-            Float mySpeed = vehicleLocation.getSpeed();
+            Float mySpeed = vehicleState.getSpeed();
 
             // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
@@ -71,7 +71,7 @@ public class SafetyActivity extends AppCompatActivity {
         public void onCountryUpdated(@NotNull Country country) {}
 
         @Override
-        public void onClientUpdate() {}
+        public void onUpdateCompleted() {}
     };
 
     private VisionSafetyListener visionSafetyListener = new VisionSafetyListener() {
