@@ -25,6 +25,16 @@ allprojects {
     repositories {
         google()
         jcenter()
-        maven { url "https://mapbox.bintray.com/mapbox" }
+        maven {
+            credentials {
+                username mapboxMavenUser
+                password mapboxMavenToken
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+
+            url 'https://cloudfront-staging.tilestream.net/downloads/v1/vision/maven'
+        }
     }
 }

@@ -7,7 +7,8 @@ ext {
     build_tools_version = '28.0.3'
 
     support_lib = '27.1.1'
-    vision_core = '0.2.0'
+
+    vision_native = '0.3.0'
 
     mapbox_core = '0.2.1'
     mapbox_telemetry = '3.5.8'
