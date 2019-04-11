@@ -22,6 +22,6 @@ internal class AttachmentManager(private val mapboxTelemetry: MapboxTelemetry) {
     }
 
     fun pushEvent() {
-        mapboxTelemetry.push(attachment)
+//        mapboxTelemetry.push(attachment)
     }
 }

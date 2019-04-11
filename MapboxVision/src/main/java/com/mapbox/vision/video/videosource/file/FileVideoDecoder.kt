@@ -4,6 +4,7 @@ import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.video.videosource.VideoSource
 
 class FileVideoDecoder(
@@ -23,6 +24,7 @@ class FileVideoDecoder(
     private var mediaExtractor: MediaExtractor? = null
     private var videoProgressTimestamp = 0L
     private var playStartTimestamp = 0L
+
     private fun startDecoder(mimeType: String, trackFormat: MediaFormat) {
         decoder = MediaCodec.createDecoderByType(mimeType).apply {
             configure(
@@ -86,9 +88,10 @@ class FileVideoDecoder(
     }
 
     override fun setProgress(timestampMillis: Long) {
-        playStartTimestamp = System.currentTimeMillis()
-        counterStartTimestamp = System.currentTimeMillis()
+        playStartTimestamp = System.currentTimeMillis() - timestampMillis
+        counterStartTimestamp = System.currentTimeMillis() - timestampMillis
         mediaExtractor!!.seekTo(timestampMillis * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+        videoProgressTimestamp = timestampMillis
     }
 
     override fun getProgress(): Long = videoProgressTimestamp
@@ -143,7 +146,7 @@ class FileVideoDecoder(
         counterFrames++
         val millisPassed = System.currentTimeMillis() - counterStartTimestamp
         if (millisPassed > LOG_FPS_EVERY_MILLIS) {
-            println("FileVideoDecoder FPS for last $LOG_FPS_EVERY_MILLIS milliseconds was : ${(counterFrames.toFloat() / millisPassed.toFloat() * 1000).toString()}")
+            VisionLogger.d("FileVideoDecoder", "FPS for last $LOG_FPS_EVERY_MILLIS milliseconds was : ${(counterFrames.toFloat() / millisPassed.toFloat() * 1000).toString()}")
             counterStartTimestamp = System.currentTimeMillis()
             counterFrames = 0
         }

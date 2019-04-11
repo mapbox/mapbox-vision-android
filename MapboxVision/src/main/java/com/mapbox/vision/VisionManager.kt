@@ -156,6 +156,18 @@ object VisionManager {
 
     private var mode: VisionMode = VisionManager.VisionMode.Default
 
+    fun setSessionProgress(timestamp: Long) {
+        when (mode) {
+            is VisionMode.SessionReplay -> {
+                println("Set video progress $timestamp")
+                (videoSource as VideoSource.WithProgress).setProgress(timestamp)
+            }
+            else -> {
+                throw java.lang.IllegalStateException("Session progress can only be set in Replay mode, but is $mode")
+            }
+        }
+    }
+
     /**
      * Initialize SDK. Creates core services and allocates necessary resources.
      * No-op if called while SDK is created already.
@@ -252,10 +264,11 @@ object VisionManager {
 
                 sessionManager = TelemetrySessionManager.ReplayImpl(
                     nativeVisionManager,
-                    mode.path
+                    "${mode.path}/"
                 )
             }
         }
+        this.mode = mode
 
         isCreated = true
     }
