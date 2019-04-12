@@ -152,16 +152,13 @@ object VisionManager {
     @JvmOverloads
     @JvmStatic
     fun create(
-        videoSource: VideoSource = Camera2VideoSourceImpl(application),
-        visionEventsListener: VisionEventsListener
+        videoSource: VideoSource = Camera2VideoSourceImpl(application)
     ) {
         checkManagerInit()
         if (isCreated) {
             VisionLogger.w(TAG, "VisionManager was already created!")
             return
         }
-
-        this.visionEventsListener = visionEventsListener
 
         mapboxTelemetry = MapboxTelemetry(application, mapboxToken, MAPBOX_TELEMETRY_USER_AGENT)
         mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
@@ -221,7 +218,7 @@ object VisionManager {
      * No-op if called while SDK is started already.
      */
     @JvmStatic
-    fun start() {
+    fun start(visionEventsListener: VisionEventsListener) {
         checkManagerInit()
         checkManagerCreated()
         if (isStarted) {
@@ -230,6 +227,7 @@ object VisionManager {
         }
 
         isStarted = true
+        this.visionEventsListener = visionEventsListener
         nativeVisionManager.start(visionEventsListener)
         sensorsManager.start()
         locationEngine.attach(nativeVisionManager)
