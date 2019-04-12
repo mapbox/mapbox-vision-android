@@ -60,12 +60,17 @@ internal interface TelemetrySessionManager {
         private var startRecordCoreMillis = 0L
 
         override fun start() {
-            handler.start()
-            startSession()
+            if (!handler.isStarted()) {
+                handler.start()
+                startSession()
+            }
         }
 
         override fun stop() {
-            handler.stop()
+            if (handler.isStarted()) {
+                handler.stop()
+                stopSession()
+            }
         }
 
         private fun startSession() {

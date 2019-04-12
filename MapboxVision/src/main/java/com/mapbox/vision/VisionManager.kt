@@ -31,6 +31,7 @@ import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
 import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
+import java.io.File
 
 object VisionManager {
 
@@ -38,7 +39,6 @@ object VisionManager {
     private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
     private const val TAG = "VisionManager"
 
-    private const val DIR_VIDEO_BUFFERS = "Buffers"
     private const val DIR_TELEMETRY = "Telemetry"
 
     private lateinit var application: Application
@@ -68,6 +68,7 @@ object VisionManager {
     private var isCreated = false
 
     private var isTurnstileEventSent = false
+    private var country: Country = Country.Unknown
 
     private val sensorDataListener = object : SensorDataListener {
         override fun onDeviceMotionData(deviceMotionData: DeviceMotionData) {
@@ -170,7 +171,6 @@ object VisionManager {
             isTurnstileEventSent = true
         }
 
-
         telemetryImageSaver = TelemetryImageSaver()
 
         nativeVisionManager = NativeVisionManager(mapboxToken, application)
@@ -228,13 +228,45 @@ object VisionManager {
 
         isStarted = true
         this.visionEventsListener = visionEventsListener
-        nativeVisionManager.start(visionEventsListener)
+        nativeVisionManager.start(object : VisionEventsListener by visionEventsListener {
+            override fun onCountryUpdated(country: Country) {
+                visionEventsListener.onCountryUpdated(country)
+                setCountry(country)
+            }
+        })
         sensorsManager.start()
         locationEngine.attach(nativeVisionManager)
         videoProcessor.attach(videoProcessorListener)
         sessionManager?.start()
         videoSource.attach(videoSourceListener)
 
+    }
+
+    fun setCountry(country: Country) {
+        if (this.country == country) {
+            return
+        }
+
+        when (country) {
+            Country.China -> {
+                telemetrySyncManager.stop()
+                sessionManager?.stop()
+                File(rootTelemetryDir).apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+            }
+            Country.USA, Country.Other -> {
+                telemetrySyncManager.start()
+                sessionManager?.start()
+            }
+            Country.Unknown -> {
+                telemetrySyncManager.stop()
+                sessionManager?.start()
+            }
+        }
+
+        this.country = country
     }
 
     /**

@@ -44,14 +44,17 @@ internal interface TelemetrySyncManager {
 
         init {
             mapboxTelemetry.addAttachmentListener(this)
-            threadHandler.start()
         }
 
         override fun start() {
+            if (threadHandler.isStarted()) {
+                return
+            }
+
             zipQueue.clear()
             imageZipQueue.clear()
             videoQueue.clear()
-            threadHandler.removeAllTasks()
+            threadHandler.start()
             uploadInProgress.set(false)
             uuidUtil.start()
 
@@ -65,11 +68,19 @@ internal interface TelemetrySyncManager {
         }
 
         override fun stop() {
-            // TODO stop processing queues?
+            if (!threadHandler.isStarted()) {
+                return
+            }
+
             uuidUtil.stop()
+            threadHandler.stop()
         }
 
         override fun syncSessionDir(path: String) {
+            if (!threadHandler.isStarted()) {
+                return
+            }
+
             val dirFile = File(path)
 
             removeTelemetryOverQuota(dirFile.parentFile)
@@ -90,14 +101,14 @@ internal interface TelemetrySyncManager {
                 file.name.endsWith("mp4")
             }?.forEach { videoFile ->
                 videoQueue.add(
-                        videoFile.toAttachmentProperties(FORMAT_MP4, TYPE_VIDEO, MEDIA_TYPE_MP4).also {
-                            val parentTimestamp = videoFile.parentFile.name.toLong()
-                            val interval = videoFile.name.substringBeforeLast(".").split("_")
-                            val startMillis = (interval[0].toFloat() * 1000).toLong()
-                            val endMillis = (interval[1].toFloat() * 1000).toLong()
-                            it.metadata.startTime = isoDateFormat.format(Date(parentTimestamp + startMillis))
-                            it.metadata.endTime = isoDateFormat.format(Date(parentTimestamp + endMillis))
-                        }
+                    videoFile.toAttachmentProperties(FORMAT_MP4, TYPE_VIDEO, MEDIA_TYPE_MP4).also {
+                        val parentTimestamp = videoFile.parentFile.name.toLong()
+                        val interval = videoFile.name.substringBeforeLast(".").split("_")
+                        val startMillis = (interval[0].toFloat() * 1000).toLong()
+                        val endMillis = (interval[1].toFloat() * 1000).toLong()
+                        it.metadata.startTime = isoDateFormat.format(Date(parentTimestamp + startMillis))
+                        it.metadata.endTime = isoDateFormat.format(Date(parentTimestamp + endMillis))
+                    }
                 )
             }
 
@@ -109,8 +120,8 @@ internal interface TelemetrySyncManager {
             if (totalTelemetrySize > MAX_TELEMETRY_SIZE) {
                 var bytesToRemove = totalTelemetrySize - MAX_TELEMETRY_SIZE
                 val sortedTelemetryDirs = rootTelemetryDirectory
-                        .listFiles()
-                        .sortedBy { it.name }
+                    .listFiles()
+                    .sortedBy { it.name }
 
                 for (telemetryDir in sortedTelemetryDirs) {
                     bytesToRemove -= telemetryDir.directorySizeRecursive()
@@ -137,10 +148,10 @@ internal interface TelemetrySyncManager {
             0
         } else {
             listFiles()
-                    .map {
-                        (if (it.isFile) it.length() else it.directorySizeRecursive())
-                    }
-                    .sum()
+                .map {
+                    (if (it.isFile) it.length() else it.directorySizeRecursive())
+                }
+                .sum()
         }
 
         private fun File.toAttachmentProperties(
@@ -203,23 +214,23 @@ internal interface TelemetrySyncManager {
                 sendFile(file, attachmentProperties)
             } else {
                 threadHandler.postDelayed(
-                        {
-                            sendAttachment(attachmentProperties)
-                        },
-                        bytesTracker.millisToNextSession()
+                    {
+                        sendAttachment(attachmentProperties)
+                    },
+                    bytesTracker.millisToNextSession()
                 )
             }
         }
 
         private fun sendFile(
-                file: File,
-                attachmentProperties: AttachmentProperties
+            file: File,
+            attachmentProperties: AttachmentProperties
         ) {
             AttachmentManager(mapboxTelemetry).apply {
                 addFileAttachment(
-                        filePath = file.absolutePath,
-                        mediaType = attachmentProperties.mediaType,
-                        attachmentMetadata = attachmentProperties.metadata
+                    filePath = file.absolutePath,
+                    mediaType = attachmentProperties.mediaType,
+                    attachmentMetadata = attachmentProperties.metadata
                 )
                 pushEvent()
             }
@@ -237,10 +248,10 @@ internal interface TelemetrySyncManager {
 
         private fun ConcurrentLinkedQueue<AttachmentProperties>.removeByFileId(fileId: String): Boolean =
             this.firstOrNull { it.metadata.fileId == fileId }
-                    ?.also { attachment ->
-                        File(attachment.absolutePath).delete()
-                        remove(attachment)
-                    } != null
+                ?.also { attachment ->
+                    File(attachment.absolutePath).delete()
+                    remove(attachment)
+                } != null
 
         override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
             uploadInProgress.set(false)
@@ -249,9 +260,9 @@ internal interface TelemetrySyncManager {
     }
 
     private data class AttachmentProperties(
-            val absolutePath: String,
-            val metadata: AttachmentMetadata,
-            val mediaType: MediaType
+        val absolutePath: String,
+        val metadata: AttachmentMetadata,
+        val mediaType: MediaType
     )
 
     companion object {
