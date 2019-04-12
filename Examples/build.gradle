@@ -78,9 +78,9 @@ dependencies {
         implementation project(path: ':CoreSdk')
         implementation project(path: ':CoreSafety')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision-core:$vision_core"
-//        TODO ar
-//        TODO safety
+        implementation "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
+        implementation "com.mapbox.vision:mapbox-android-vision-ar-native:$vision_native"
+        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_native"
     }
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
