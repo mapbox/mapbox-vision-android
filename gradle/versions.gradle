@@ -9,6 +9,9 @@ ext {
     support_lib = '27.1.1'
 
     vision_native = '0.3.0'
+    vision= '0.3.0'
+    vision_ar = '0.3.0'
+    vision_safety = '0.3.0'
 
     mapbox_core = '0.2.1'
     mapbox_telemetry = '3.5.8'

@@ -70,7 +70,7 @@ dependencies {
     implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.8.2"
     implementation "com.mapbox.mapboxsdk:mapbox-android-core:0.2.1"
 
-    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
+    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')?.toBoolean()) {
         implementation project(path: ':Vision')
         implementation project(path: ':VisionAr')
         implementation project(path: ':VisionSafety')
@@ -78,12 +78,10 @@ dependencies {
         implementation project(path: ':CoreSdk')
         implementation project(path: ':CoreSafety')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
-        implementation "com.mapbox.vision:mapbox-android-vision-ar-native:$vision_native"
-        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_native"
+        implementation "com.mapbox.vision:mapbox-android-vision:$vision"
+        implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision_ar"
+        implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision_safety"
     }
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-}
-repositories {
-    mavenCentral()
 }
