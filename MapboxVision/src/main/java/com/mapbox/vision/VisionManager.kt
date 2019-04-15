@@ -141,6 +141,7 @@ object VisionManager {
      * Initialize SDK with mapbox access token and application instance.
      * Do it once per application session, eg in [android.app.Application.onCreate].
      */
+    @JvmStatic
     fun init(application: Application, mapboxToken: String) {
         this.mapboxToken = mapboxToken
         this.application = application
