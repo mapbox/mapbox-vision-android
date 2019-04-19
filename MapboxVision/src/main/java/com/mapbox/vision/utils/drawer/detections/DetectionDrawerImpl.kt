@@ -4,10 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.mapbox.vision.visionevents.events.detection.Detection
+import com.mapbox.vision.mobile.core.models.detection.Detection
 
 class DetectionDrawerImpl : DetectionDrawer {
-
 
     private val rectPaint = Paint().also {
         it.strokeWidth = 4f
@@ -28,12 +27,11 @@ class DetectionDrawerImpl : DetectionDrawer {
     private val textOffset = 10
     private val textBgColor = Color.argb(127, 0, 0, 0)
 
-
-    override fun draw(bitmap: Bitmap, detections: List<Detection>) {
+    override fun draw(bitmap: Bitmap, detections: Array<Detection>) {
         val bitmapCanvas = Canvas(bitmap)
 
         for (detection in detections) {
-            val typeModel = TypeModel.values()[detection.objectType.ordinal]
+            val typeModel = TypeModel.values()[detection.objectClass.ordinal]
 
             val bbox = detection.boundingBox
 
@@ -41,9 +39,11 @@ class DetectionDrawerImpl : DetectionDrawer {
             bitmapCanvas.drawRect(bbox, rectPaint)
 
             textPaint.color = textBgColor
-            bitmapCanvas.drawRect((bbox.left  - textMargin).toFloat(), bbox.top - textOffset + fontMetrics.top - textMargin,
-                    bbox.left + textPaint.measureText(typeModel.typeName) + textMargin, (bbox.top +textMargin).toFloat(),
-                    textPaint)
+            bitmapCanvas.drawRect(
+                (bbox.left - textMargin).toFloat(), bbox.top - textOffset + fontMetrics.top - textMargin,
+                bbox.left + textPaint.measureText(typeModel.typeName) + textMargin, (bbox.top + textMargin).toFloat(),
+                textPaint
+            )
 
             textPaint.color = typeModel.color
             bitmapCanvas.drawText(typeModel.typeName, bbox.left.toFloat(), (bbox.top - textOffset).toFloat(), textPaint)
@@ -51,14 +51,26 @@ class DetectionDrawerImpl : DetectionDrawer {
         }
     }
 
-
-
     private enum class TypeModel(val color: Int, val typeName: String) {
-        LIGHT(Color.argb(255, 6, 241, 255), "LIGHT"),
-        SIGN(Color.argb(255, 255, 204, 22), "SIGN"),
-        CAR(Color.argb(255, 144, 255, 22), "CAR"),
-        PERSON(Color.argb(255, 239, 6, 255), "PERSON"),
-
+        Car(
+            Color.argb(255, 144, 255, 22),
+            "CAR"
+        ),
+        Bicycle(
+            Color.argb(255, 144, 128, 22),
+            "BICYCLE"
+        ),
+        Person(
+            Color.argb(255, 239, 6, 255),
+            "PERSON"
+        ),
+        Light(
+            Color.argb(255, 6, 241, 255),
+            "LIGHT"
+        ),
+        Sign(
+            Color.argb(255, 255, 204, 22),
+            "SIGN"
+        )
     }
-
 }

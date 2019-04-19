@@ -6,21 +6,21 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import com.mapbox.vision.R
 import com.mapbox.vision.VisionManager
+import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.FrameSegmentation
+import com.mapbox.vision.mobile.core.models.detection.FrameDetections
+import com.mapbox.vision.mobile.core.models.frame.ImageFormat
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.drawer.detections.DetectionDrawerImpl
-import com.mapbox.vision.visionevents.events.detection.Detection
+import com.mapbox.vision.video.videosource.VideoSourceListener
+import java.nio.ByteBuffer
 
+class VisionView : ImageView, VideoSourceListener {
 
-class VisionView : ImageView, VisualizationUpdateListener {
-
-    var visualizationMode = VisualizationMode.CLEAR
-
-    private val bufferBitmap by lazy {
-        val frameSize = VisionManager.getFrameSize()
-        Bitmap.createBitmap(frameSize.width, frameSize.height, Bitmap.Config.ARGB_8888)
-    }
-
-    private var detections: List<Detection> = emptyList()
     private val detectionDrawer = DetectionDrawerImpl()
+
+    private var imageSize = ImageSize(0, 0)
+    private var bitmap: Bitmap? = null
 
     constructor(context: Context) : this(context, null)
 
@@ -35,35 +35,80 @@ class VisionView : ImageView, VisualizationUpdateListener {
             visualizationMode = VisualizationMode.values()[ordinal]
         }
         typedArray.recycle()
-
-        VisionManager.setVisualizationUpdateListener(this)
     }
 
-    override fun getCurrentMode(): VisualizationMode {
-        return visualizationMode
+    var visualizationMode = VisualizationMode.Clear
+
+    private fun updateBitmap(rgbaBytes: ByteArray, imageSize: ImageSize) {
+        if (this.imageSize.imageWidth != imageSize.imageWidth || this.imageSize.imageHeight != imageSize.imageHeight) {
+            this.imageSize = imageSize
+            bitmap = Bitmap.createBitmap(imageSize.imageWidth, imageSize.imageHeight, android.graphics.Bitmap.Config.ARGB_8888)
+        }
+
+        bitmap?.copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
     }
 
-    override fun getBitmapBuffer(): Bitmap = bufferBitmap
+    fun setDetections(frameDetections: FrameDetections) {
+        if (visualizationMode != VisualizationMode.Detections) {
+            return
+        }
 
-    override fun onDetectionsUpdated(detections: List<Detection>) {
-        this.detections = detections
-    }
+        val rgbaBytes = VisionManager.getDetectionsImage(frameDetections);
+        if (rgbaBytes.isNotEmpty()) {
+            updateBitmap(rgbaBytes, frameDetections.frame.image.size)
 
-    override fun onByteArrayUpdated() {
-        when (visualizationMode) {
-            VisualizationMode.CLEAR,
-            VisualizationMode.SEGMENTATION -> {
-                setImageBitmap(bufferBitmap)
-            }
-            VisualizationMode.DETECTION -> {
-                if (detections.isEmpty()) {
-                    setImageBitmap(bufferBitmap)
-                    return
+            val bitmapWithDetections = if (frameDetections.detections.isEmpty()) {
+                bitmap
+            } else {
+                bitmap?.copy(Bitmap.Config.ARGB_8888, true)?.also {
+                    detectionDrawer.draw(it, frameDetections.detections)
                 }
-                val bitmap = bufferBitmap.copy(Bitmap.Config.ARGB_8888, true)
-                detectionDrawer.draw(bitmap, detections)
+            }
+
+            handler.post {
+                setImageBitmap(bitmapWithDetections)
+            }
+        }
+    }
+
+    fun setSegmentation(frameSegmentation: FrameSegmentation) {
+        if (visualizationMode != VisualizationMode.Segmentation) {
+            return
+        }
+
+        val rgbaBytes = VisionManager.getSegmentationImage(frameSegmentation);
+        if (rgbaBytes.isNotEmpty()) {
+            updateBitmap(rgbaBytes, frameSegmentation.frame.image.size)
+
+            handler.post {
                 setImageBitmap(bitmap)
             }
         }
+    }
+
+    fun setBytes(rgbaBytes: ByteArray) {
+        if (visualizationMode != VisualizationMode.Clear) {
+            return
+        }
+
+        updateBitmap(rgbaBytes, imageSize)
+        handler.post {
+            setImageBitmap(bitmap)
+        }
+    }
+
+    override fun onNewFrame(
+        rgbaBytes: ByteArray,
+        imageFormat: ImageFormat,
+        imageSize: ImageSize
+    ) {
+        setBytes(rgbaBytes)
+    }
+
+    override fun onNewCameraParameters(cameraParameters: CameraParameters) {
+        imageSize = ImageSize(
+            imageWidth = cameraParameters.width,
+            imageHeight = cameraParameters.height
+        )
     }
 }

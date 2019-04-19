@@ -1,7 +1,9 @@
 package com.mapbox.vision.video.videoprocessor
 
+import com.mapbox.vision.mobile.core.models.VideoClip
+
 internal interface VideoProcessorListener {
 
-    fun onVideoPartsReady(videoPartMap: HashMap<String, VideoProcessor.VideoPart>, dirPath: String, jsonFilePath: String)
+    fun onVideoClipsReady(videoClips: HashMap<String, VideoClip>, videoDir: String, jsonFile: String)
 
 }

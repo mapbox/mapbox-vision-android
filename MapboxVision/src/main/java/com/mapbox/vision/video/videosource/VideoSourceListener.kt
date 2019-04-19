@@ -1,16 +1,15 @@
 package com.mapbox.vision.video.videosource
 
-import android.graphics.Bitmap
-import com.mapbox.vision.models.CameraParamsData
+import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.frame.ImageFormat
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 
-internal interface VideoSourceListener {
+interface VideoSourceListener {
+    fun onNewFrame(
+        rgbaBytes: ByteArray,
+        imageFormat: ImageFormat,
+        imageSize: ImageSize
+    )
 
-    fun onNewFrame(rgbBytes: ByteArray)
-
-    fun onNewBitmap(bitmap: Bitmap)
-
-    fun onNewCameraParams(cameraParamsData: CameraParamsData)
-
-    fun onFileRecorded(recordedFilePath:String)
-
+    fun onNewCameraParameters(cameraParameters: CameraParameters)
 }

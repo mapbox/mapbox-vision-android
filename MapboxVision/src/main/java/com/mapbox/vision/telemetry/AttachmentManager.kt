@@ -24,8 +24,4 @@ internal class AttachmentManager(private val mapboxTelemetry: MapboxTelemetry) {
     fun pushEvent() {
         mapboxTelemetry.push(attachment)
     }
-
-    companion object {
-        const val TAG = "AttachmentManager"
-    }
 }

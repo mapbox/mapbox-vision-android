@@ -27,8 +27,6 @@ internal class ZipFileCompressorImpl : FileCompressor {
     }
 
     companion object {
-        const val TAG = "ZipFileCompressorImp"
-
         private const val BUFFER_SIZE = 1024
     }
 }

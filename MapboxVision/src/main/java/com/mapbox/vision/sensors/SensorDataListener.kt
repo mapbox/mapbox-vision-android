@@ -1,11 +1,11 @@
 package com.mapbox.vision.sensors
 
-import com.mapbox.vision.models.DeviceMotionData
-import com.mapbox.vision.models.HeadingData
+import com.mapbox.vision.mobile.core.models.DeviceMotionData
+import com.mapbox.vision.mobile.core.models.HeadingData
 
 internal interface SensorDataListener {
 
-    fun onDeviceMotionDataReady(deviceMotionData: DeviceMotionData)
+    fun onDeviceMotionData(deviceMotionData: DeviceMotionData)
 
-    fun onHeadingDataReady(headingData: HeadingData)
+    fun onHeadingData(headingData: HeadingData)
 }
