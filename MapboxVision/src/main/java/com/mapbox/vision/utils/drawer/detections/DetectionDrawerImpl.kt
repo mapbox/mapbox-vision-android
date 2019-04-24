@@ -31,7 +31,7 @@ class DetectionDrawerImpl : DetectionDrawer {
         val bitmapCanvas = Canvas(bitmap)
 
         for (detection in detections) {
-            val typeModel = TypeModel.values()[detection.objectClass.ordinal]
+            val typeModel = TypeModel.values()[detection.detectionClass.ordinal]
 
             val bbox = detection.boundingBox
 
