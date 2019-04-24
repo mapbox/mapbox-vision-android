@@ -1,0 +1,91 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+def envVarOrLocalProperty(String name) {
+    if (System.getenv(name) != null) {
+        return System.getenv(name).toBoolean()
+    }
+
+    Properties properties = new Properties()
+    def file = project.rootProject.file('local.properties')
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+        def isLocalDevelopment = properties.getProperty(name)
+        if (isLocalDevelopment != null) {
+            return isLocalDevelopment.toBoolean()
+        }
+    }
+    return false
+}
+
+if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
+    apply plugin: 'org.jetbrains.dokka-android'
+
+    dokka {
+        moduleName = 'mapbox-vision-ar'
+        outputDirectory = "$buildDir/javadoc"
+        outputFormat = 'javadoc'
+
+        kotlinTasks {
+            defaultKotlinTasks() + [':CoreSafety:compileReleaseKotlin']
+        }
+
+        // TODO finish docs
+        packageOptions {
+            prefix = "com.mapbox.vision.safety.core"
+            suppress = false
+        }
+        packageOptions {
+            prefix = "com.mapbox.vision.safety.core.models"
+            suppress = false
+        }
+        packageOptions {
+            prefix = "com.mapbox.vision.safety"
+            suppress = false
+        }
+    }
+}
+
+if (file("${rootDir}/gradle/versions.gradle").exists()) {
+    apply from: "${rootDir}/gradle/versions.gradle"
+}
+if (file("${rootDir}/gradle/bintray.gradle").exists()) {
+    apply from: "${rootDir}/gradle/bintray.gradle"
+}
+
+android {
+    buildToolsVersion build_tools_version
+    compileSdkVersion compile_sdk_version
+    defaultConfig {
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
+        versionCode project.property('versionCode').toInteger()
+        versionName project.property('versionName')
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
+        api project(path: ':Vision')
+        api project(path: ':CoreSafety')
+    } else {
+        implementation "com.mapbox.vision:mapbox-android-vision:$vision_native"
+        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_native"
+    }
+}
+
+tasks.withType(Javadoc).all {
+    enabled = false
+}
