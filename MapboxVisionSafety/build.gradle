@@ -62,7 +62,7 @@ android {
         targetSdkVersion target_sdk_version
         versionCode project.property('versionCode').toInteger()
         versionName project.property('versionName')
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
