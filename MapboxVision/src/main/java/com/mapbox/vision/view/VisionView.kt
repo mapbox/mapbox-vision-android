@@ -15,19 +15,22 @@ import com.mapbox.vision.utils.drawer.detections.DetectionDrawerImpl
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.nio.ByteBuffer
 
-class VisionView : ImageView, VideoSourceListener {
+class VisionView
+@JvmOverloads
+constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : ImageView(context, attrs, defStyleAttr), VideoSourceListener {
 
     private val detectionDrawer = DetectionDrawerImpl()
 
-    private var imageSize = ImageSize(0, 0)
+    @Volatile
     private var bitmap: Bitmap? = null
 
-    constructor(context: Context) : this(context, null)
+    var visualizationMode = VisualizationMode.Clear
 
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
-
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-
+    init {
         val typedArray = context.theme.obtainStyledAttributes(attrs, R.styleable.VisionView, 0, 0)
         val ordinal = typedArray.getInt(R.styleable.VisionView_visualization_mode, 0)
 
@@ -37,12 +40,15 @@ class VisionView : ImageView, VideoSourceListener {
         typedArray.recycle()
     }
 
-    var visualizationMode = VisualizationMode.Clear
 
     private fun updateBitmap(rgbaBytes: ByteArray, imageSize: ImageSize) {
-        if (this.imageSize.imageWidth != imageSize.imageWidth || this.imageSize.imageHeight != imageSize.imageHeight) {
-            this.imageSize = imageSize
-            bitmap = Bitmap.createBitmap(imageSize.imageWidth, imageSize.imageHeight, android.graphics.Bitmap.Config.ARGB_8888)
+        val btm = bitmap
+        if (btm == null || btm.width != imageSize.imageWidth || btm.height != imageSize.imageHeight) {
+            bitmap = Bitmap.createBitmap(
+                imageSize.imageWidth,
+                imageSize.imageHeight,
+                android.graphics.Bitmap.Config.ARGB_8888
+            )
         }
 
         bitmap?.copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
@@ -86,7 +92,7 @@ class VisionView : ImageView, VideoSourceListener {
         }
     }
 
-    fun setBytes(rgbaBytes: ByteArray) {
+    fun setBytes(rgbaBytes: ByteArray, imageSize: ImageSize) {
         if (visualizationMode != VisualizationMode.Clear) {
             return
         }
@@ -102,13 +108,8 @@ class VisionView : ImageView, VideoSourceListener {
         imageFormat: ImageFormat,
         imageSize: ImageSize
     ) {
-        setBytes(rgbaBytes)
+        setBytes(rgbaBytes, imageSize)
     }
 
-    override fun onNewCameraParameters(cameraParameters: CameraParameters) {
-        imageSize = ImageSize(
-            imageWidth = cameraParameters.width,
-            imageHeight = cameraParameters.height
-        )
-    }
+    override fun onNewCameraParameters(cameraParameters: CameraParameters) = Unit
 }
