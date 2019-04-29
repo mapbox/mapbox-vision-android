@@ -6,8 +6,8 @@ ext {
     compile_sdk_version = 28
     build_tools_version = '28.0.3'
 
-    android_x_annotation = '1.1.0-alpha01'
-    android_x_appcompat = '1.1.0-alpha04'
+    android_x_annotation = '1.0.2'
+    android_x_appcompat = '1.0.2'
 
     vision_native = '0.3.0'
     vision= '0.3.0'
