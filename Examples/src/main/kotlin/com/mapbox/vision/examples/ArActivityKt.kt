@@ -3,7 +3,7 @@ package com.mapbox.vision.examples
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.android.core.location.LocationEngineListener
