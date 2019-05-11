@@ -38,7 +38,7 @@ internal interface TelemetrySyncManager {
         @Suppress("DEPRECATION")
         private val language = context.resources.configuration.locale.language
         @Suppress("DEPRECATION")
-        private val locale = context.resources.configuration.locale.toString()
+        private val locale = context.resources.configuration.locale.country
 
         private val uploadInProgress = AtomicBoolean(false)
 
