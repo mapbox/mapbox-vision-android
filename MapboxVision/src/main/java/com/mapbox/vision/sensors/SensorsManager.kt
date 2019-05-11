@@ -138,9 +138,7 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                     heading = heading.toFloat()
                 )
             )
-
-            Log.d("TAG", "heading = $heading; headingGeomagnetic = $headingGeomagnetic")
-
+            
             listener.onHeadingData(
                 HeadingData(
                     heading.toFloat(),
