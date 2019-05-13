@@ -35,5 +35,10 @@ object VisionArManager : ModuleInterface {
     fun setRoute(route: Route) {
         nativeArManager.setRoute(route)
     }
+
+    @JvmStatic
+    fun newLaneParam(laneMaxLength: Double) {
+        nativeArManager.newLaneParam(laneMaxLength)
+    }
 }
 
