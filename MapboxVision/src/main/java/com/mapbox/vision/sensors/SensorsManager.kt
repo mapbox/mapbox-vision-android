@@ -11,6 +11,7 @@ import android.os.Handler
 import android.view.WindowManager
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
 import com.mapbox.vision.mobile.core.models.HeadingData
+import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
 import java.util.concurrent.TimeUnit
 
 internal class SensorsManager(application: Application) : SensorEventListener {
@@ -81,10 +82,10 @@ internal class SensorsManager(application: Application) : SensorEventListener {
             lastTimestamp = TimeUnit.NANOSECONDS.toMillis(event.timestamp)
             when (event.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> {
-                    event.values.copyInto(userAccelerationWithGravity, endIndex = userAccelerationWithGravity.size)
+                    event.values.copyFrom(userAccelerationWithGravity)
                 }
                 Sensor.TYPE_MAGNETIC_FIELD -> {
-                    event.values.copyInto(geomagneticXyz, endIndex = geomagneticXyz.size)
+                    event.values.copyFrom(geomagneticXyz)
 
                     val rotationMatrix = FloatArray(9)
                     if (SensorManager.getRotationMatrix(
@@ -98,14 +99,14 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                     } else Unit
                 }
                 Sensor.TYPE_GYROSCOPE -> {
-                    System.arraycopy(event.values, 0, rotations, 0, rotations.size)
+                    event.values.copyFrom(rotations)
                 }
                 Sensor.TYPE_GAME_ROTATION_VECTOR -> {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientations)
                 }
                 Sensor.TYPE_GRAVITY -> {
-                    event.values.copyInto(gravity, endIndex = gravity.size)
+                    event.values.copyFrom(gravity)
                 }
                 else -> Unit
             }
