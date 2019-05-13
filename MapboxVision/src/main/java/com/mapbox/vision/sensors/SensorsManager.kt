@@ -87,7 +87,6 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                 Sensor.TYPE_MAGNETIC_FIELD -> {
                     geomagneticXyz.copyFrom(event.values)
 
-                    val rotationMatrix = FloatArray(9)
                     if (SensorManager.getRotationMatrix(
                             rotationMatrix,
                             null,
