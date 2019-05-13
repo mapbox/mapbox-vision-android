@@ -37,8 +37,8 @@ object VisionArManager : ModuleInterface {
     }
 
     @JvmStatic
-    fun newLaneParam(laneMaxLength: Double) {
-        nativeArManager.newLaneParam(laneMaxLength)
+    fun setLaneLength(laneMaxLength: Double) {
+        nativeArManager.setLaneLength(laneMaxLength)
     }
 }
 
