@@ -82,10 +82,10 @@ internal class SensorsManager(application: Application) : SensorEventListener {
             lastTimestamp = TimeUnit.NANOSECONDS.toMillis(event.timestamp)
             when (event.sensor.type) {
                 Sensor.TYPE_ACCELEROMETER -> {
-                    event.values.copyFrom(userAccelerationWithGravity)
+                    userAccelerationWithGravity.copyFrom(event.values)
                 }
                 Sensor.TYPE_MAGNETIC_FIELD -> {
-                    event.values.copyFrom(geomagneticXyz)
+                    geomagneticXyz.copyFrom(event.values)
 
                     val rotationMatrix = FloatArray(9)
                     if (SensorManager.getRotationMatrix(
@@ -99,14 +99,14 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                     } else Unit
                 }
                 Sensor.TYPE_GYROSCOPE -> {
-                    event.values.copyFrom(rotations)
+                    rotations.copyFrom(event.values)
                 }
                 Sensor.TYPE_GAME_ROTATION_VECTOR -> {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientations)
                 }
                 Sensor.TYPE_GRAVITY -> {
-                    event.values.copyFrom(gravity)
+                    gravity.copyFrom(event.values)
                 }
                 else -> Unit
             }
