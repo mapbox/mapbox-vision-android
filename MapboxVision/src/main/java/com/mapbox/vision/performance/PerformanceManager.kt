@@ -11,17 +11,17 @@ internal interface PerformanceManager {
     companion object {
         fun getPerformanceManager(nativeVisionManager: NativeVisionManager): PerformanceManager {
             val board = SystemInfoUtils.getSnpeSupportedBoard()
-            if (board.isNotBlank()) {
-                return PerformanceManager.SnapdragonImpl(nativeVisionManager, board)
+            return if (board.isNotBlank()) {
+                PerformanceManager.SnapdragonImpl(nativeVisionManager, board)
             } else {
-                throw IllegalStateException("Device does not support SNPE! Vision SDK does not work with this device yet.")
+                PerformanceManager.MaceImpl(nativeVisionManager, board)
             }
         }
     }
 
     class SnapdragonImpl(
         private val nativeVisionManager: NativeVisionManager,
-        private val boardName: String
+        boardName: String
     ) : PerformanceManager {
 
         companion object {
@@ -228,6 +228,19 @@ internal interface PerformanceManager {
                     nativeVisionManager.setSegmentationFixedFps(backgroundFps.value)
                 }
             }
+        }
+    }
+
+    class MaceImpl(
+        private val nativeVisionManager: NativeVisionManager,
+        boardName: String
+    ) : PerformanceManager {
+
+        override fun setModelConfig(modelConfig: ModelPerformanceConfig) {
+            // FIXME
+            nativeVisionManager.setUseMergedModel(true)
+            nativeVisionManager.setSegmentationFixedFps(20f)
+            nativeVisionManager.setDetectionFixedFps(20f)
         }
     }
 }

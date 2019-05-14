@@ -40,7 +40,12 @@ class VisionView : ImageView, VideoSourceListener {
     var visualizationMode = VisualizationMode.Clear
 
     private fun updateBitmap(rgbaBytes: ByteArray, imageSize: ImageSize) {
-        if (this.imageSize.imageWidth != imageSize.imageWidth || this.imageSize.imageHeight != imageSize.imageHeight) {
+        if (
+            bitmap == null
+            || this.imageSize.imageWidth != imageSize.imageWidth
+            || this.imageSize.imageHeight != imageSize.imageHeight
+        ) {
+
             this.imageSize = imageSize
             bitmap = Bitmap.createBitmap(imageSize.imageWidth, imageSize.imageHeight, android.graphics.Bitmap.Config.ARGB_8888)
         }
@@ -53,7 +58,8 @@ class VisionView : ImageView, VideoSourceListener {
             return
         }
 
-        val rgbaBytes = VisionManager.getDetectionsImage(frameDetections);
+        val rgbaBytes = VisionManager.getDetectionsImage(frameDetections)
+
         if (rgbaBytes.isNotEmpty()) {
             updateBitmap(rgbaBytes, frameDetections.frame.image.size)
 
@@ -86,7 +92,7 @@ class VisionView : ImageView, VideoSourceListener {
         }
     }
 
-    fun setBytes(rgbaBytes: ByteArray) {
+    private fun setBytes(rgbaBytes: ByteArray) {
         if (visualizationMode != VisualizationMode.Clear) {
             return
         }

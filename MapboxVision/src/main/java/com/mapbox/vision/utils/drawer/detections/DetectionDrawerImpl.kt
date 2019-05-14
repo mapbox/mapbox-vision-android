@@ -35,6 +35,9 @@ class DetectionDrawerImpl : DetectionDrawer {
 
             val bbox = detection.boundingBox
 
+            println("Draw detection $typeModel")
+            println("Draw detection $bbox")
+
             rectPaint.color = typeModel.color
             bitmapCanvas.drawRect(bbox, rectPaint)
 
@@ -52,25 +55,33 @@ class DetectionDrawerImpl : DetectionDrawer {
     }
 
     private enum class TypeModel(val color: Int, val typeName: String) {
+        Light(
+            Color.argb(255, 6, 241, 255),
+            "LIGHT"
+        ),
         Car(
             Color.argb(255, 144, 255, 22),
             "CAR"
-        ),
-        Bicycle(
-            Color.argb(255, 144, 128, 22),
-            "BICYCLE"
         ),
         Person(
             Color.argb(255, 239, 6, 255),
             "PERSON"
         ),
-        Light(
-            Color.argb(255, 6, 241, 255),
-            "LIGHT"
+        Bicycle(
+            Color.argb(255, 144, 128, 22),
+            "BICYCLE"
         ),
         Sign(
             Color.argb(255, 255, 204, 22),
             "SIGN"
+        ),
+        SpeedLimit(
+            Color.argb(255, 255, 0, 22),
+            "SPEED_LIMIT"
+        ),
+        Construction(
+            Color.argb(255, 0, 204, 22),
+            "CONSTRUCTION"
         )
     }
 }
