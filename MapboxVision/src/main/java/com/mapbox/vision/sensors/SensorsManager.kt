@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context.WINDOW_SERVICE
 import android.hardware.Sensor
-import android.hardware.Sensor.*
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
@@ -12,6 +11,8 @@ import android.os.Handler
 import android.view.WindowManager
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
 import com.mapbox.vision.mobile.core.models.HeadingData
+import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
+import java.util.concurrent.TimeUnit
 
 internal class SensorsManager(application: Application) : SensorEventListener {
 
@@ -29,7 +30,8 @@ internal class SensorsManager(application: Application) : SensorEventListener {
     private val gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
 
     private val gravity = FloatArray(3)
-    private val geomagnetic = FloatArray(3)
+    private val geomagneticXyz = FloatArray(3)
+    private val geomagneticOrientation = FloatArray(3)
 
     private val rotations = FloatArray(3)
     private val orientations = FloatArray(3)
@@ -77,32 +79,35 @@ internal class SensorsManager(application: Application) : SensorEventListener {
             return
         }
         synchronized(this) {
-            lastTimestamp = event.timestamp / 1000000
+            lastTimestamp = TimeUnit.NANOSECONDS.toMillis(event.timestamp)
             when (event.sensor.type) {
-                TYPE_ACCELEROMETER -> {
-                    userAccelerationWithGravity[0] = event.values[0]
-                    userAccelerationWithGravity[1] = event.values[1]
-                    userAccelerationWithGravity[2] = event.values[2]
+                Sensor.TYPE_ACCELEROMETER -> {
+                    userAccelerationWithGravity.copyFrom(event.values)
                 }
-                TYPE_MAGNETIC_FIELD -> {
-                    geomagnetic[0] = event.values[0]
-                    geomagnetic[1] = event.values[1]
-                    geomagnetic[2] = event.values[2]
+                Sensor.TYPE_MAGNETIC_FIELD -> {
+                    geomagneticXyz.copyFrom(event.values)
+
+                    if (SensorManager.getRotationMatrix(
+                            rotationMatrix,
+                            null,
+                            userAccelerationWithGravity,
+                            geomagneticXyz
+                        )
+                    ) {
+                        SensorManager.getOrientation(rotationMatrix, geomagneticOrientation)
+                    } else Unit
                 }
-                TYPE_GYROSCOPE -> {
-                    System.arraycopy(event.values, 0, rotations, 0, rotations.size)
+                Sensor.TYPE_GYROSCOPE -> {
+                    rotations.copyFrom(event.values)
                 }
-                TYPE_GAME_ROTATION_VECTOR -> {
+                Sensor.TYPE_GAME_ROTATION_VECTOR -> {
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.getOrientation(rotationMatrix, orientations)
                 }
-                TYPE_GRAVITY -> {
-                    gravity[0] = event.values[0]
-                    gravity[1] = event.values[1]
-                    gravity[2] = event.values[2]
+                Sensor.TYPE_GRAVITY -> {
+                    gravity.copyFrom(event.values)
                 }
-                else -> {
-                }
+                else -> Unit
             }
 
         }
@@ -114,10 +119,10 @@ internal class SensorsManager(application: Application) : SensorEventListener {
         synchronized(this) {
 
             // TODO is it common in HeadingData and DeviceMotionData?
-            var heading = Math.toDegrees(orientations[0].toDouble())
-            if (heading < 0) {
-                heading += 360
-            }
+            val heading = Math.toDegrees(orientations[0].toDouble()).let { if (it < 0) it + 360 else it }
+
+            val headingGeomagnetic =
+                Math.toDegrees(geomagneticOrientation[0].toDouble()).let { if (it < 0) it + 360 else it }
 
             listener.onDeviceMotionData(
                 DeviceMotionData(
@@ -137,7 +142,8 @@ internal class SensorsManager(application: Application) : SensorEventListener {
             listener.onHeadingData(
                 HeadingData(
                     heading.toFloat(),
-                    geomagnetic,
+                    headingGeomagnetic.toFloat(),
+                    geomagneticXyz,
                     lastTimestamp
                 )
             )

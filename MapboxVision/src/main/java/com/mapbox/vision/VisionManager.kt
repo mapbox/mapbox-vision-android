@@ -86,6 +86,7 @@ object VisionManager {
             nativeVisionManager.setHeading(
                 trueHeading = headingData.trueHeading,
                 geomagneticHeading = headingData.geomagneticHeading,
+                geomagneticRawValues = headingData.geomagneticRawValues,
                 timestamp = headingData.timestamp
             )
         }
