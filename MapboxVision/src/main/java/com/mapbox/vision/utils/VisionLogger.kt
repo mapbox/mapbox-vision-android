@@ -42,35 +42,35 @@ interface VisionLogger {
         }
 
         fun d(tag: String, message: String) {
-            DEFAULT_LOGGER.v(tag, message)
+            DEFAULT_LOGGER.d(tag, message)
         }
 
         fun d(t: Throwable, tag: String, message: String) {
-            DEFAULT_LOGGER.v(t, tag, message)
+            DEFAULT_LOGGER.d(t, tag, message)
         }
 
         fun i(tag: String, message: String) {
-            DEFAULT_LOGGER.v(tag, message)
+            DEFAULT_LOGGER.i(tag, message)
         }
 
         fun i(t: Throwable, tag: String, message: String) {
-            DEFAULT_LOGGER.v(t, tag, message)
+            DEFAULT_LOGGER.i(t, tag, message)
         }
 
         fun w(tag: String, message: String) {
-            DEFAULT_LOGGER.v(tag, message)
+            DEFAULT_LOGGER.w(tag, message)
         }
 
         fun w(t: Throwable, tag: String, message: String) {
-            DEFAULT_LOGGER.v(t, tag, message)
+            DEFAULT_LOGGER.w(t, tag, message)
         }
 
         fun e(tag: String, message: String) {
-            DEFAULT_LOGGER.v(tag, message)
+            DEFAULT_LOGGER.e(tag, message)
         }
 
         fun e(t: Throwable, tag: String, message: String) {
-            DEFAULT_LOGGER.v(t, tag, message)
+            DEFAULT_LOGGER.e(t, tag, message)
         }
     }
 
