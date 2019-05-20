@@ -1,35 +1,35 @@
 package com.mapbox.vision.telemetry
 
-import com.mapbox.vision.utils.system.SystemTime
+import com.mapbox.vision.utils.system.Time
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
-import org.spekframework.spek2.lifecycle.CachingMode
 import java.util.concurrent.TimeUnit
 
 object TotalBytesCounterSpek : Spek({
     group("TotalBytesCounter") {
 
-        val systemTimeMills by memoized { System.currentTimeMillis() }
         var advancedByTime: Long = 0
-        val systemTimeMock by memoized(mode = CachingMode.SCOPE) {
-            Mockito.mock(SystemTime::class.java).also {
-                given(it.currentTimeMillis()).willAnswer { systemTimeMills + advancedByTime }
+
+        val systemTimeMills by memoized { System.currentTimeMillis() }
+        val systemTimeMock by memoized {
+            Mockito.mock(Time::class.java).also {
+                given(it.millis()).willAnswer { systemTimeMills + advancedByTime }
             }
         }
-        lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
+        val totalBytesCounter10Min10kBytes: TotalBytesCounter by memoized {
+            TotalBytesCounter.Impl(
+                sessionLengthMillis = TimeUnit.MINUTES.toMillis(10),
+                sessionMaxBytes = 10_000,
+                time = systemTimeMock
+            )
+        }
 
         beforeEachTest {
             advancedByTime = 0
-
-            totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
-                sessionLengthMillis = TimeUnit.MINUTES.toMillis(10),
-                sessionMaxBytes = 10_000,
-                systemTime = systemTimeMock
-            )
         }
 
         fun advancedByTime(seconds: Long) {

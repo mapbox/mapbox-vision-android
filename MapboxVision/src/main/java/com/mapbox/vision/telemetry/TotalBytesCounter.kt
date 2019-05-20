@@ -1,7 +1,6 @@
 package com.mapbox.vision.telemetry
 
-import com.mapbox.vision.utils.VisionLogger
-import com.mapbox.vision.utils.system.SystemTime
+import com.mapbox.vision.utils.system.Time
 import java.util.concurrent.TimeUnit
 
 /**
@@ -21,7 +20,7 @@ internal interface TotalBytesCounter {
     class Impl(
         private val sessionLengthMillis: Long = SESSION_LENGTH_MILLIS,
         private val sessionMaxBytes: Long = SESSION_MAX_BYTES,
-        private val systemTime: SystemTime = SystemTime.Impl
+        private val time: Time = Time.SystemImpl
     ) : TotalBytesCounter {
 
         companion object {
@@ -33,7 +32,7 @@ internal interface TotalBytesCounter {
         private var bytesSentPerSession: Long = 0
 
         override fun trackSentBytes(bytes: Long): Boolean {
-            val timestamp = systemTime.currentTimeMillis()
+            val timestamp = time.millis()
 
             return when {
                 sessionStartMillis + sessionLengthMillis <= timestamp -> {
@@ -55,7 +54,7 @@ internal interface TotalBytesCounter {
         }
 
         override fun millisToNextSession(): Long =
-            (sessionStartMillis + sessionLengthMillis - systemTime.currentTimeMillis()).let { sessionRest ->
+            (sessionStartMillis + sessionLengthMillis - time.millis()).let { sessionRest ->
                 if (sessionRest < 0) 0 else sessionRest
             }
 
