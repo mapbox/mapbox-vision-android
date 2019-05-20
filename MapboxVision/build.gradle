@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: "de.mannodermaus.android-junit5"
 
 def envVarOrLocalProperty(String name) {
     if (System.getenv(name) != null) {
@@ -97,6 +98,16 @@ android {
     compileOptions {
         targetCompatibility 1.8
         sourceCompatibility 1.8
+    }
+
+    testOptions {
+        junitPlatform {
+            filters {
+                engines {
+                    include 'spek2'
+                }
+            }
+        }
     }
 }
 
