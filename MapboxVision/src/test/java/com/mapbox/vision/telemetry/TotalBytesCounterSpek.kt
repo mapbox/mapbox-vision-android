@@ -7,29 +7,29 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
-import org.spekframework.spek2.lifecycle.CachingMode
 import java.util.concurrent.TimeUnit
 
 object TotalBytesCounterSpek : Spek({
     group("TotalBytesCounter") {
 
-        val systemTimeMills by memoized { System.currentTimeMillis() }
         var advancedByTime: Long = 0
-        val systemTimeMock by memoized(mode = CachingMode.SCOPE) {
+
+        val systemTimeMills by memoized { System.currentTimeMillis() }
+        val systemTimeMock by memoized {
             Mockito.mock(SystemTime::class.java).also {
                 given(it.currentTimeMillis()).willAnswer { systemTimeMills + advancedByTime }
             }
         }
-        lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
-
-        beforeEachTest {
-            advancedByTime = 0
-
-            totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
+        val totalBytesCounter10Min10kBytes: TotalBytesCounter by memoized {
+            TotalBytesCounter.Impl(
                 sessionLengthMillis = TimeUnit.MINUTES.toMillis(10),
                 sessionMaxBytes = 10_000,
                 systemTime = systemTimeMock
             )
+        }
+
+        beforeEachTest {
+            advancedByTime = 0
         }
 
         fun advancedByTime(seconds: Long) {
