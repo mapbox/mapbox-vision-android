@@ -1,24 +1,39 @@
 package com.mapbox.vision.telemetry
 
-import com.mapbox.vision.mock.SystemTimeMock
+import com.mapbox.vision.utils.system.SystemTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.mockito.BDDMockito.given
+import org.mockito.Mockito
 import org.spekframework.spek2.Spek
+import org.spekframework.spek2.lifecycle.CachingMode
 import java.util.concurrent.TimeUnit
 
 object TotalBytesCounterSpek : Spek({
     group("TotalBytesCounter") {
 
-        val systemTimeMock by memoized { SystemTimeMock() }
+        val systemTimeMills by memoized { System.currentTimeMillis() }
+        var advancedByTime: Long = 0
+        val systemTimeMock by memoized(mode = CachingMode.SCOPE) {
+            Mockito.mock(SystemTime::class.java).also {
+                given(it.currentTimeMillis()).willAnswer { systemTimeMills + advancedByTime }
+            }
+        }
         lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
 
         beforeEachTest {
+            advancedByTime = 0
+
             totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
                 sessionLengthMillis = TimeUnit.MINUTES.toMillis(10),
                 sessionMaxBytes = 10_000,
                 systemTime = systemTimeMock
             )
+        }
+
+        fun advancedByTime(seconds: Long) {
+            advancedByTime = seconds
         }
 
         test("Check millis to next session") {
@@ -28,16 +43,16 @@ object TotalBytesCounterSpek : Spek({
 
             assertEquals(totalBytesCounter10Min10kBytes.millisToNextSession(), TimeUnit.MINUTES.toMillis(10))
 
-            systemTimeMock.setOffsetMills(TimeUnit.MINUTES.toMillis(8))
+            advancedByTime(TimeUnit.MINUTES.toMillis(8))
             assertEquals(totalBytesCounter10Min10kBytes.millisToNextSession(), TimeUnit.MINUTES.toMillis(2))
 
-            systemTimeMock.setOffsetMills(TimeUnit.MINUTES.toMillis(9))
+            advancedByTime(TimeUnit.MINUTES.toMillis(9))
             assertEquals(totalBytesCounter10Min10kBytes.millisToNextSession(), TimeUnit.MINUTES.toMillis(1))
 
-            systemTimeMock.setOffsetMills(TimeUnit.MINUTES.toMillis(9) + TimeUnit.SECONDS.toMillis(59))
+            advancedByTime(TimeUnit.MINUTES.toMillis(9) + TimeUnit.SECONDS.toMillis(59))
             assertEquals(totalBytesCounter10Min10kBytes.millisToNextSession(), TimeUnit.SECONDS.toMillis(1))
 
-            systemTimeMock.setOffsetMills(TimeUnit.MINUTES.toMillis(10))
+            advancedByTime(TimeUnit.MINUTES.toMillis(10))
             assertEquals(totalBytesCounter10Min10kBytes.millisToNextSession(), 0)
         }
 
@@ -66,7 +81,7 @@ object TotalBytesCounterSpek : Spek({
             assertFalse(totalBytesCounter10Min10kBytes.trackSentBytes(1))
             assertFalse(totalBytesCounter10Min10kBytes.trackSentBytes(1_000))
 
-            systemTimeMock.setOffsetMills(TimeUnit.MINUTES.toMillis(10))
+            advancedByTime(TimeUnit.MINUTES.toMillis(10))
 
             assertTrue(totalBytesCounter10Min10kBytes.trackSentBytes(1))
         }

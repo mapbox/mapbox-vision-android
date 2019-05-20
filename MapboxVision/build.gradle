@@ -107,6 +107,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit_5_version"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
