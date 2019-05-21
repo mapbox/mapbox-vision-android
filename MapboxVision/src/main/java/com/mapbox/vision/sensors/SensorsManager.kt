@@ -11,6 +11,7 @@ import android.os.Handler
 import android.view.WindowManager
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
 import com.mapbox.vision.mobile.core.models.HeadingData
+import com.mapbox.vision.mobile.core.models.referenceFrame.Attitude
 import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
 import java.util.concurrent.TimeUnit
 
@@ -118,8 +119,7 @@ internal class SensorsManager(application: Application) : SensorEventListener {
 
         synchronized(this) {
 
-            // TODO is it common in HeadingData and DeviceMotionData?
-            val heading = Math.toDegrees(orientations[0].toDouble()).let { if (it < 0) it + 360 else it }
+            val headingTrue = Math.toDegrees(orientations[0].toDouble()).let { if (it < 0) it + 360 else it }
 
             val headingGeomagnetic =
                 Math.toDegrees(geomagneticOrientation[0].toDouble()).let { if (it < 0) it + 360 else it }
@@ -135,21 +135,22 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                             (value - gravity[index]) / SensorManager.GRAVITY_EARTH
                         }
                         .toFloatArray(),
-                    heading = heading.toFloat()
+                    heading = headingGeomagnetic.toFloat(),
+                    attitude = Attitude.Attitude_XMagneticNorthZVertical
                 )
             )
 
             listener.onHeadingData(
                 HeadingData(
-                    heading.toFloat(),
+                    headingTrue.toFloat(),
                     headingGeomagnetic.toFloat(),
                     geomagneticXyz,
                     lastTimestamp
                 )
             )
         }
-        listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
 
+        listenerUpdateHandler.postDelayed({ notifyListener() }, LISTENER_UPDATE_DELAY_MILLIS)
     }
 
     companion object {
