@@ -24,7 +24,7 @@ internal interface TotalBytesCounter {
     ) : TotalBytesCounter {
 
         companion object {
-            private val SESSION_LENGTH_MILLIS by lazy(LazyThreadSafetyMode.NONE) { TimeUnit.HOURS.toMillis(1) }
+            private val SESSION_LENGTH_MILLIS = TimeUnit.HOURS.toMillis(1)
             private const val SESSION_MAX_BYTES = 30 * 1024 * 1024L // 30 MB
         }
 
