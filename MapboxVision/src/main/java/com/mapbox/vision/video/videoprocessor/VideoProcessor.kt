@@ -23,7 +23,7 @@ internal interface VideoProcessor {
     fun splitVideoClips(
         clips: Array<VideoClip>,
         videoPath: String,
-        outputDir: String,
+        outputPath: String,
         sessionStartMillis: Long
     )
 
@@ -46,7 +46,7 @@ internal interface VideoProcessor {
         override fun splitVideoClips(
             clips: Array<VideoClip>,
             videoPath: String,
-            outputDir: String,
+            outputPath: String,
             sessionStartMillis: Long
         ) {
             workThreadHandler.post {
@@ -65,7 +65,7 @@ internal interface VideoProcessor {
                         Locale.ENGLISH,
                         relativeEndMillis / 1000f
                     )}"
-                    val outputClipPath = "$outputDir/$timespan.mp4"
+                    val outputClipPath = "$outputPath/$timespan.mp4"
                     val videoPart = genVideoUsingMuxer(
                         srcPath = videoPath,
                         dstPath = outputClipPath,
@@ -76,8 +76,8 @@ internal interface VideoProcessor {
                 }
                 videoProcessorListener?.onVideoClipsReady(
                     videoClips = clipsResult,
-                    videoDir = outputDir,
-                    jsonFile = createJsonFileByParts(clipsResult, outputDir, sessionStartMillis)
+                    videoDir = outputPath,
+                    jsonFile = createJsonFileByParts(clipsResult, outputPath, sessionStartMillis)
                 )
             }
         }
