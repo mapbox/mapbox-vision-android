@@ -124,6 +124,7 @@ object VisionManager : BaseVisionManager {
      * No-op if called while SDK is created already.
      */
     @JvmStatic
+    @JvmOverloads
     fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
         delegate = DelegateVisionManager.Impl()
 
