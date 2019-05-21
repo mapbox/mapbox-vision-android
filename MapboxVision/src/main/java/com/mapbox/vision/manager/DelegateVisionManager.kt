@@ -140,8 +140,7 @@ internal interface DelegateVisionManager : BaseVisionManager {
             )
             telemetrySyncManager = TelemetrySyncManager.Impl(
                 mapboxTelemetry = mapboxTelemetry,
-                context = VisionManager.application,
-                rootTelemetryDir = rootTelemetryDir
+                context = VisionManager.application
             )
         }
 

@@ -27,40 +27,23 @@ class FileVideoSource(
 
     private val yuvToRgba = ScriptIntrinsicYuvToRGB.create(renderscript, Element.U8_4(renderscript))
 
-    // FIXME dynamic, depends on video
-    private var width = 1280
-    private var height = 720
-    private val imageSize = ImageSize(
-        imageWidth = width,
-        imageHeight = height
-    )
-    private var yuvSize = (width * height * 1.5).toInt()
+    private var width = 0
+    private var height = 0
+    private var yuvSize = 0
     private var videoProgress = -1L
 
-    private val sourceAllocation = Allocation.createTyped(
-        renderscript,
-        Type.Builder(renderscript, Element.U8(renderscript))
-            .setX(yuvSize)
-            .create(),
-        Allocation.USAGE_SCRIPT
-    )
+    private lateinit var sourceAllocation: Allocation
+    private lateinit var destinationAllocation: Allocation
 
-    private val destinationAllocation = Allocation.createTyped(
-        renderscript,
-        Type.Builder(renderscript, Element.RGBA_8888(renderscript))
-            .setX(width)
-            .setY(height)
-            .create(),
-        Allocation.USAGE_SCRIPT
-    )
+    private lateinit var videoDecoder: FileVideoDecoder
+    private lateinit var dstBuffer: ByteArray
+    private lateinit var rgbaBytes: ByteArray
 
-    private var rgbaBytes: ByteArray = ByteArray(width * height * 4)
     private val handler = WorkThreadHandler()
     private val responseHandler = WorkThreadHandler()
 
     private var videoSourceListener: VideoSourceListener? = null
 
-    private lateinit var videoDecoder: FileVideoDecoder
 
     private var currentVideo = -1
 
@@ -100,18 +83,16 @@ class FileVideoSource(
         responseHandler.stop()
     }
 
-    private val dstBuffer = ByteArray(yuvSize)
-
     private fun onFrameDecoded(image: Image) {
         try {
             videoProgress = videoDecoder.getProgress()
-            val array = yuv420ImageToNv21(image, dstBuffer)
+            readYuv420ImageToNv21DstBuffer(image)
             responseHandler.post {
-                sourceAllocation.copyFrom(array)
+                sourceAllocation.copyFrom(dstBuffer)
                 yuvToRgba.setInput(sourceAllocation)
                 yuvToRgba.forEach(destinationAllocation)
                 destinationAllocation.copyTo(rgbaBytes)
-                videoSourceListener?.onNewFrame(rgbaBytes, ImageFormat.RGBA, imageSize)
+                videoSourceListener?.onNewFrame(rgbaBytes, ImageFormat.RGBA, ImageSize(width, height))
             }
 
             image.close()
@@ -131,11 +112,12 @@ class FileVideoSource(
         }
     }
 
-    // TODO use RS for optimal conversion
-    private fun yuv420ImageToNv21(srcImage: Image, dstBuffer: ByteArray): ByteArray {
+    // TODO use Renderscript
+    private fun readYuv420ImageToNv21DstBuffer(srcImage: Image) {
         val crop = srcImage.cropRect
         val width = crop.width()
         val height = crop.height()
+        setSize(width, height)
         val planes = srcImage.planes
         val rowData = ByteArray(planes[0].rowStride)
 
@@ -184,6 +166,30 @@ class FileVideoSource(
                 }
             }
         }
-        return dstBuffer
+    }
+
+    private fun setSize(width: Int, height: Int) {
+        if (this.width != width || this.height != height) {
+            this.width = width
+            this.height = height
+            yuvSize = (width * height * 1.5).toInt()
+            dstBuffer = ByteArray(yuvSize)
+            rgbaBytes = ByteArray(width * height * 4)
+            sourceAllocation = Allocation.createTyped(
+                renderscript,
+                Type.Builder(renderscript, Element.U8(renderscript))
+                    .setX(yuvSize)
+                    .create(),
+                Allocation.USAGE_SCRIPT
+            )
+            destinationAllocation = Allocation.createTyped(
+                renderscript,
+                Type.Builder(renderscript, Element.RGBA_8888(renderscript))
+                    .setX(width)
+                    .setY(height)
+                    .create(),
+                Allocation.USAGE_SCRIPT
+            )
+        }
     }
 }
