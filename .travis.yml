@@ -1,0 +1,49 @@
+git:
+  depth: 10
+
+notifications:
+  email: false
+
+branches:
+  only:
+    - master
+    - dev
+    - /^release.*$/
+    - /^epic\/.*/
+
+stages:
+  - test
+
+env:
+  global:
+    - BUILD_CORE_FROM_SOURCE=false
+
+jobs:
+  include:
+    - &android
+      stage: test
+      os: linux
+      language: android
+      name: MapboxVision / Android
+      jdk: oraclejdk8
+      android:
+        components:
+          - build-tools-26.0.1
+          - android-26
+          - tools
+        licenses:
+          - 'android-sdk-license-.+'
+      before_install:
+        - echo y | sdkmanager "platforms;android-28"
+        - echo y | sdkmanager 'cmake;3.10.2.4988404'
+      install:
+        - source scripts/ci/install.sh
+      script: scripts/ci/build.sh
+      before_cache:
+        - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      cache:
+        directories:
+          - $HOME/.gradle/caches/
+          - $HOME/.gradle/wrapper/
+          - $HOME/.android/build-cache

@@ -12,5 +12,6 @@ interface ThreadHandler {
 
     fun removeAllTasks()
 
-    fun isStarted() : Boolean
+    fun isStarted(): Boolean
 }
+

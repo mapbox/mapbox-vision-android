@@ -81,6 +81,7 @@ dependencies {
         implementation "com.mapbox.vision:mapbox-android-vision:$vision"
         implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision_ar"
         implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision_safety"
+        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_safety"
     }
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
