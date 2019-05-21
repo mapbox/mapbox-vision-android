@@ -152,6 +152,14 @@ internal interface DelegateVisionManager : BaseVisionManager {
             isStarted = true
 
             telemetrySyncManager.start()
+            File(rootTelemetryDir).listFiles()?.forEach {
+                if (it.list().isEmpty()) {
+                    it.delete()
+                } else {
+                    telemetrySyncManager.syncSessionDir(it.absolutePath)
+                }
+            }
+
             nativeVisionManagerBase.start(object : VisionEventsListener by visionEventsListener {
                 override fun onCountryUpdated(country: Country) {
                     println("VMBase : start, country is $country")

@@ -22,8 +22,7 @@ internal interface TelemetrySyncManager {
 
     class Impl(
         private val mapboxTelemetry: MapboxTelemetry,
-        context: Context,
-        private val rootTelemetryDir: String
+        context: Context
     ) : TelemetrySyncManager, AttachmentListener {
 
         private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
@@ -57,14 +56,6 @@ internal interface TelemetrySyncManager {
             threadHandler.start()
             uploadInProgress.set(false)
             uuidUtil.start()
-
-            File(rootTelemetryDir).listFiles()?.forEach {
-                if (it.list().isEmpty()) {
-                    it.delete()
-                } else {
-                    syncSessionDir(it.absolutePath)
-                }
-            }
         }
 
         override fun stop() {

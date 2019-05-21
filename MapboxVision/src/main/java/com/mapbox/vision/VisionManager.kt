@@ -177,12 +177,6 @@ object VisionManager : BaseVisionManager {
             videoProcessorListener
         )
 
-        sessionManager.start()
-
-        sensorsManager.attach(sensorsListener)
-        locationEngine.attach(nativeVisionManager)
-        videoSource.attach(videoSourceListener)
-
         delegate.start(
             visionEventsListener
         ) { country ->
@@ -191,15 +185,18 @@ object VisionManager : BaseVisionManager {
                     Country.China -> {
                         sessionManager.stop()
                     }
-                    Country.USA, Country.Other -> {
-                        sessionManager.start()
-                    }
-                    Country.Unknown -> {
+                    Country.Unknown, Country.USA, Country.Other -> {
                         sessionManager.start()
                     }
                 }
             }
         }
+
+        sessionManager.start()
+
+        sensorsManager.attach(sensorsListener)
+        locationEngine.attach(nativeVisionManager)
+        videoSource.attach(videoSourceListener)
     }
 
     @JvmStatic
