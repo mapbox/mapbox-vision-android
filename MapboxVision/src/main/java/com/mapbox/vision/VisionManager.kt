@@ -78,8 +78,7 @@ object VisionManager {
                 screenOrientation = deviceMotionData.screenOrientation,
                 userAccelerationRelativeToGravity = deviceMotionData.userAccelerationRelativeToGravity,
                 gravity = deviceMotionData.gravity,
-                heading = deviceMotionData.heading,
-                attitude = deviceMotionData.attitude
+                heading = deviceMotionData.heading
             )
         }
 

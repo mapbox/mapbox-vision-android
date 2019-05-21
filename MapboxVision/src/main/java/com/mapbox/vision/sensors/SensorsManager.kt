@@ -11,7 +11,6 @@ import android.os.Handler
 import android.view.WindowManager
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
 import com.mapbox.vision.mobile.core.models.HeadingData
-import com.mapbox.vision.mobile.core.models.referenceFrame.Attitude
 import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
 import java.util.concurrent.TimeUnit
 
@@ -135,8 +134,7 @@ internal class SensorsManager(application: Application) : SensorEventListener {
                             (value - gravity[index]) / SensorManager.GRAVITY_EARTH
                         }
                         .toFloatArray(),
-                    heading = headingGeomagnetic.toFloat(),
-                    attitude = Attitude.Attitude_XMagneticNorthZVertical
+                    heading = headingGeomagnetic.toFloat()
                 )
             )
 
