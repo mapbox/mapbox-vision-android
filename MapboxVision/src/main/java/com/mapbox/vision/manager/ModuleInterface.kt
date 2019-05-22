@@ -1,4 +1,4 @@
-package com.mapbox.vision
+package com.mapbox.vision.manager
 
 interface ModuleInterface {
 

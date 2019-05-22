@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import com.mapbox.vision.mobile.core.models.detection.Detection
 
 class DetectionDrawerImpl : DetectionDrawer {
@@ -29,27 +30,37 @@ class DetectionDrawerImpl : DetectionDrawer {
 
     override fun draw(bitmap: Bitmap, detections: Array<Detection>) {
         val bitmapCanvas = Canvas(bitmap)
+        val bitmapWidth = bitmap.width
+        val bitmapHeight = bitmap.height
 
         for (detection in detections) {
             val typeModel = TypeModel.values()[detection.detectionClass.ordinal]
 
-            val bbox = detection.boundingBox
+            val bbox = detection.boundingBox.absoluteCoordinate(bitmapWidth, bitmapHeight)
 
             rectPaint.color = typeModel.color
             bitmapCanvas.drawRect(bbox, rectPaint)
 
             textPaint.color = textBgColor
             bitmapCanvas.drawRect(
-                (bbox.left - textMargin).toFloat(), bbox.top - textOffset + fontMetrics.top - textMargin,
-                bbox.left + textPaint.measureText(typeModel.typeName) + textMargin, (bbox.top + textMargin).toFloat(),
+                (bbox.left - textMargin), bbox.top - textOffset + fontMetrics.top - textMargin,
+                bbox.left + textPaint.measureText(typeModel.typeName) + textMargin, (bbox.top + textMargin),
                 textPaint
             )
 
             textPaint.color = typeModel.color
-            bitmapCanvas.drawText(typeModel.typeName, bbox.left.toFloat(), (bbox.top - textOffset).toFloat(), textPaint)
+            bitmapCanvas.drawText(typeModel.typeName, bbox.left, (bbox.top - textOffset), textPaint)
 
         }
     }
+
+    private fun RectF.absoluteCoordinate(width: Int, height: Int): RectF =
+        RectF(
+            left * width,
+            top * height,
+            right * width,
+            bottom * height
+        )
 
     private enum class TypeModel(val color: Int, val typeName: String) {
         Car(

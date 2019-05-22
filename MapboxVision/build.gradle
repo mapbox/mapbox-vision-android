@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: "de.mannodermaus.android-junit5"
 
 def envVarOrLocalProperty(String name) {
     if (System.getenv(name) != null) {
@@ -84,7 +85,7 @@ android {
         versionCode project.property('versionCode').toInteger()
         versionName project.property('versionName')
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -93,9 +94,32 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+
+    testOptions {
+        junitPlatform {
+            filters {
+                engines {
+                    include 'spek2'
+                }
+            }
+        }
+    }
 }
 
 dependencies {
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_5_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit_5_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {

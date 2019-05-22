@@ -40,7 +40,7 @@ android {
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets {
@@ -61,14 +61,14 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation "com.android.support:appcompat-v7:27.1.1"
-    implementation "com.android.support.constraint:constraint-layout:1.1.3"
+    implementation "androidx.appcompat:appcompat:$android_x_appcompat"
+    implementation "androidx.constraintlayout:constraintlayout:$android_x_constraint_layout"
 
-    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:6.6.1"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:0.22.0"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.22.0"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.8.2"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-core:0.2.1"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapbox_sdk"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:$mapbox_navigation"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:$mapbox_navigation"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:$mapbox_location_layer"
+    implementation "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
 
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')?.toBoolean()) {
         implementation project(path: ':Vision')
@@ -81,6 +81,7 @@ dependencies {
         implementation "com.mapbox.vision:mapbox-android-vision:$vision"
         implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision_ar"
         implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision_safety"
+        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_safety"
     }
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

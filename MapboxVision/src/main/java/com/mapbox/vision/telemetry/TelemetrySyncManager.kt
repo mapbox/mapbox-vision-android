@@ -22,8 +22,7 @@ internal interface TelemetrySyncManager {
 
     class Impl(
         private val mapboxTelemetry: MapboxTelemetry,
-        context: Context,
-        private val rootTelemetryDir: String
+        context: Context
     ) : TelemetrySyncManager, AttachmentListener {
 
         private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
@@ -38,7 +37,7 @@ internal interface TelemetrySyncManager {
         @Suppress("DEPRECATION")
         private val language = context.resources.configuration.locale.language
         @Suppress("DEPRECATION")
-        private val locale = context.resources.configuration.locale.toString()
+        private val country = context.resources.configuration.locale.country
 
         private val uploadInProgress = AtomicBoolean(false)
 
@@ -57,14 +56,6 @@ internal interface TelemetrySyncManager {
             threadHandler.start()
             uploadInProgress.set(false)
             uuidUtil.start()
-
-            File(rootTelemetryDir).listFiles()?.forEach {
-                if (it.list().isEmpty()) {
-                    it.delete()
-                } else {
-                    syncSessionDir(it.absolutePath)
-                }
-            }
         }
 
         override fun stop() {
@@ -165,7 +156,7 @@ internal interface TelemetrySyncManager {
                 absolutePath,
                 AttachmentMetadata(
                     name, "$fileId/$name", format, type,
-                    "${fileId}_${language}_${locale}_${uuidUtil.uniqueId}_Android"
+                    "${fileId}_${language}_${country}_${uuidUtil.uniqueId}_Android"
                 ),
                 mediaType
             )

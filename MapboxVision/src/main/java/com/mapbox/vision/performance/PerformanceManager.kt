@@ -1,6 +1,6 @@
 package com.mapbox.vision.performance
 
-import com.mapbox.vision.mobile.core.NativeVisionManager
+import com.mapbox.vision.mobile.core.NativeVisionManagerBase
 import com.mapbox.vision.mobile.core.utils.SystemInfoUtils
 import com.mapbox.vision.mobile.core.utils.snapdragon.SupportedSnapdragonBoards
 
@@ -9,10 +9,10 @@ internal interface PerformanceManager {
     fun setModelConfig(modelConfig: ModelPerformanceConfig)
 
     companion object {
-        fun getPerformanceManager(nativeVisionManager: NativeVisionManager): PerformanceManager {
+        fun getPerformanceManager(nativeVisionManagerBase: NativeVisionManagerBase): PerformanceManager {
             val board = SystemInfoUtils.getSnpeSupportedBoard()
             if (board.isNotBlank()) {
-                return PerformanceManager.SnapdragonImpl(nativeVisionManager, board)
+                return PerformanceManager.SnapdragonImpl(nativeVisionManagerBase, board)
             } else {
                 throw IllegalStateException("Device does not support SNPE! Vision SDK does not work with this device yet.")
             }
@@ -20,7 +20,7 @@ internal interface PerformanceManager {
     }
 
     class SnapdragonImpl(
-        private val nativeVisionManager: NativeVisionManager,
+        private val nativeVisionManagerBase: NativeVisionManagerBase,
         private val boardName: String
     ) : PerformanceManager {
 
@@ -149,7 +149,7 @@ internal interface PerformanceManager {
         override fun setModelConfig(modelConfig: ModelPerformanceConfig) {
             when (modelConfig) {
                 is ModelPerformanceConfig.Merged -> {
-                    nativeVisionManager.setUseMergedModel(true)
+                    nativeVisionManagerBase.setUseMergedModel(true)
                     setDetectionPerformance(
                         modelConfig.performance,
                         minFps = snpeBoard.getMinWorkingFps().mergedFpsRange,
@@ -164,7 +164,7 @@ internal interface PerformanceManager {
                     )
                 }
                 is ModelPerformanceConfig.Separate -> {
-                    nativeVisionManager.setUseMergedModel(false)
+                    nativeVisionManagerBase.setUseMergedModel(false)
                     setDetectionPerformance(
                         modelConfig.detectionPerformance,
                         minFps = snpeBoard.getMinWorkingFps().detectionFps,
@@ -191,15 +191,15 @@ internal interface PerformanceManager {
                 is ModelPerformance.On -> {
                     when (modelPerformance.mode) {
                         ModelPerformanceMode.FIXED -> {
-                            nativeVisionManager.setDetectionFixedFps(maxFps.value)
+                            nativeVisionManagerBase.setDetectionFixedFps(maxFps.value)
                         }
                         ModelPerformanceMode.DYNAMIC -> {
-                            nativeVisionManager.setDetectionDynamicFps(minFps.value, maxFps.value)
+                            nativeVisionManagerBase.setDetectionDynamicFps(minFps.value, maxFps.value)
                         }
                     }
                 }
                 ModelPerformance.Off -> {
-                    nativeVisionManager.setDetectionFixedFps(backgroundFps.value)
+                    nativeVisionManagerBase.setDetectionFixedFps(backgroundFps.value)
                 }
             }
         }
@@ -214,10 +214,10 @@ internal interface PerformanceManager {
                 is ModelPerformance.On -> {
                     when (modelPerformance.mode) {
                         ModelPerformanceMode.FIXED -> {
-                            nativeVisionManager.setSegmentationFixedFps(maxFps.value)
+                            nativeVisionManagerBase.setSegmentationFixedFps(maxFps.value)
                         }
                         ModelPerformanceMode.DYNAMIC -> {
-                            nativeVisionManager.setSegmentationDynamicFps(
+                            nativeVisionManagerBase.setSegmentationDynamicFps(
                                 fpsMin = minFps.value,
                                 fpsMax = maxFps.value
                             )
@@ -225,7 +225,7 @@ internal interface PerformanceManager {
                     }
                 }
                 ModelPerformance.Off -> {
-                    nativeVisionManager.setSegmentationFixedFps(backgroundFps.value)
+                    nativeVisionManagerBase.setSegmentationFixedFps(backgroundFps.value)
                 }
             }
         }
