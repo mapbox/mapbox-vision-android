@@ -29,7 +29,7 @@ Some of devices that will work with VisionSDK:
 - HTC U11, U11+ // U12, U12+
 - OnePlus 5 // 6
 
-You can also check more details at [Vison SDK FAQ](https://vision.mapbox.com/faq).
+You can also check more details at [Vison SDK FAQ](https://vision.mapbox.com/#faq).
 
 ## Installation and setup
 
