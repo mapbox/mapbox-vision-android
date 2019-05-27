@@ -11,13 +11,16 @@ for your car. In doing so, the Vision SDK enables the following user-facing feat
 - Distance detection that indicates spacing to lead vehicle
 
 #### Components of the Vision SDK
-There are three components to the Vision SDK: VisionCore, VisionSDK, and VisionAR.
+There are three components to the Vision SDK: Vision, VisionAr, and VisionSafety.
 
-VisionCore is the core logic of the system, including all machine learning models; it exists as compiled library for each platform with a user-facing API.
+[Vision](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVision) is the primary SDK, needed for any application of Mapbox Vision. 
+Its components enable camera configuration, display of classification, detection, and segmentation layers, lane feature extraction, and other interfaces. 
+Vision accesses real-time inference running in VisionCore.
 
-[VisionSDK](https://github.com/mapbox/mapbox-vision-android) is a framework written in native language (Kotlin for Android, Swift for iOS) that encapsulates core utilization and platform-dependent tasks. It calls VisionCore.
+[Vision Ar](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVisionAR) is an add-on module for Vision used to create customizable augmented reality experiences. 
+It allows configuration of the user’s route visualization: lane material (shaders, textures), lane geometry, occlusion, custom objects, and more. 
 
-[VisionAR](https://github.com/mapbox/mapbox-vision-ar-android) is a native framework with dependency on the Mapbox Navigation SDK. It takes information from the specified navigation route, transfers it to VisionCore via VisionSDK, receives instructions on displaying the route, and then finally renders it on top of camera frame using native instruments.
+[Vision Safety](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVisionSafety) is an add-on module for Vision used to create customizable alerts for speeding, nearby vehicles, cyclists, pedestrians, lane departures, and more. 
 
 #### Hardware requirements
 
@@ -29,8 +32,9 @@ Some of devices that will work with VisionSDK:
 - HTC U11, U11+ // U12, U12+
 - OnePlus 5 // 6
 
-You can also check more details at [Vison SDK FAQ](https://vision.mapbox.com/#faq).
+You can also check more details at [Vision SDK FAQ](https://vision.mapbox.com/#faq).
 
 ## Installation and setup
 
-The Vision SDK is currently in limited public beta. Contact our team to [request access](https://vision.mapbox.com/#application) and receive installation instructions.
+Follow [installation instructions](https://vision.mapbox.com/install/) to install Vision.
+Check [the rest of documentation](https://docs.mapbox.com/android/vision/overview/).
