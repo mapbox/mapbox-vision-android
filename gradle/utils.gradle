@@ -1,0 +1,20 @@
+ext.projectOrLocalProperty = { name ->
+    if (project.properties[name] != null) {
+        return project.properties[name]
+    }
+
+    Properties properties = new Properties()
+    def file = project.rootProject.file('local.properties')
+    if (file.exists()) {
+        properties.load(file.newDataInputStream())
+        def localProperty = properties.getProperty(name)
+        if (localProperty != null) {
+            return localProperty
+        }
+    }
+    return null
+}
+
+ext.booleanProjectOrLocalProperty = { name ->
+    return projectOrLocalProperty(name)?.toBoolean()
+}
