@@ -2,6 +2,12 @@ package com.mapbox.vision
 
 import android.app.Application
 import android.content.ContentValues.TAG
+import com.mapbox.vision.VisionManager.create
+import com.mapbox.vision.VisionManager.destroy
+import com.mapbox.vision.VisionManager.start
+import com.mapbox.vision.VisionManager.startRecording
+import com.mapbox.vision.VisionManager.stop
+import com.mapbox.vision.VisionManager.stopRecording
 import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
@@ -31,6 +37,18 @@ import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
 import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
 
+/**
+ * The main object for registering for events from the SDK, starting and stopping their delivery.
+ * It also provides some useful functions for performance configuration and data conversion.
+ * 
+ * Lifecycle of VisionManager :
+ * 1. [create]
+ * 2. [start]
+ * 3. [startRecording] (optional)
+ * 4. [stopRecording] (optional)
+ * 5. [stop], then lifecycle may proceed with [destroy] or [start]
+ * 6. [destroy]
+ */
 object VisionManager : BaseVisionManager {
 
     lateinit var application: Application
@@ -119,8 +137,10 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Initialize SDK. Creates core services and allocates necessary resources.
-     * No-op if called while SDK is created already.
+     * Method for creating a [VisionManager] instance.
+     * It's only allowed to have one living instance of [VisionManager] or [VisionReplayManager].
+     * To create [VisionManager] with different configuration call [destroy] on existing instance or release all references to it.
+     * @param videoSource: Video source which will be utilized by [VisionManager].
      */
     @JvmStatic
     @JvmOverloads
@@ -155,9 +175,11 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Start delivering events from SDK.
+     * Start delivering events from [VisionManager].
      * Should be called with all permission granted, and after [create] is called.
-     * No-op if called while SDK is started already.
+     * Do NOT call this method more than once or after [destroy] is called.
+     *
+     * @param visionEventsListener: listener for [VisionManager]. Is held as a strong reference until [stop] is called.
      */
     @JvmStatic
     fun start(visionEventsListener: VisionEventsListener) {
@@ -199,6 +221,15 @@ object VisionManager : BaseVisionManager {
         videoSource.attach(videoSourceListener)
     }
 
+    /**
+     * Start recording a session.
+     * Do NOT call this method more than once or before [start] or after [stop] is called.
+     * During the session full telemetry and video are recorded to specified path.
+     * You may use resulted directory to replay the recorded session with [VisionReplayManager].
+     * Important: Method serves debugging purposes.
+     * Do NOT use session recording in production applications.
+     * @param path: Path to directory where you'd like session to be recorded.
+     */
     @JvmStatic
     fun startRecording(path: String) {
         if (isRecording) {
@@ -218,6 +249,12 @@ object VisionManager : BaseVisionManager {
         sessionManager.start()
     }
 
+    /**
+     * Stop recording a session.
+     * Do NOT call this method more than once or before [startRecording] or after [stop] is called.
+     * Important: Method serves debugging purposes.
+     * Do NOT use session recording in production applications.
+     */
     @JvmStatic
     fun stopRecording() {
         if (!isRecording) {
@@ -242,10 +279,10 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Stop delivering events from SDK.
-     * Stops ML processing and video source.
+     * Stop delivering events from [VisionManager].
+     * Do NOT call this method more than once or before [start] or after [destroy] is called.
      * To resume call [start] again.
-     * No-op if called while SDK is not created or started.
+     * Call this method after [start] and before [destroy].
      */
     @JvmStatic
     fun stop() {
@@ -264,8 +301,8 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Releases all resources.
-     * No-op if called while SDK is not created.
+     * Clean up the state and resources of [VisionManager].
+     * Do NOT call this method more than once.
      */
     @JvmStatic
     fun destroy() {
@@ -288,21 +325,33 @@ object VisionManager : BaseVisionManager {
         delegate.setModelPerformanceConfig(modelPerformanceConfig)
     }
 
+    /**
+     * Converts the location of the point from a world coordinate to a screen coordinate.
+     */
     @JvmStatic
     fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate {
         return delegate.worldToPixel(worldCoordinate)
     }
 
+    /**
+     * Converts the location of the point from a screen coordinate to a world coordinate.
+     */
     @JvmStatic
     fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
+    /**
+     * Converts the location of the point in a world coordinate to a geographical coordinate.
+     */
     @JvmStatic
     fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate {
         return delegate.worldToGeo(worldCoordinate)
     }
 
+    /**
+     * Converts the location of the point from a geographical coordinate to a world coordinate.
+     */
     @JvmStatic
     fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate {
         return delegate.geoToWorld(geoCoordinate)
