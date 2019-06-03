@@ -329,7 +329,7 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a world coordinate to a screen coordinate.
      */
     @JvmStatic
-    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate {
+    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
         return delegate.worldToPixel(worldCoordinate)
     }
 
@@ -337,7 +337,7 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a screen coordinate to a world coordinate.
      */
     @JvmStatic
-    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate {
+    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
