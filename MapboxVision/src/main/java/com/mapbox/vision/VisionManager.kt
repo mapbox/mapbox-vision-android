@@ -327,6 +327,7 @@ object VisionManager : BaseVisionManager {
 
     /**
      * Converts the location of the point from a world coordinate to a screen coordinate.
+     * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
     @JvmStatic
     fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
@@ -335,6 +336,7 @@ object VisionManager : BaseVisionManager {
 
     /**
      * Converts the location of the point from a screen coordinate to a world coordinate.
+     * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
     @JvmStatic
     fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
