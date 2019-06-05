@@ -21,6 +21,7 @@ import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
+import com.mapbox.vision.mobile.core.utils.preferences.PreferencesManager
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.sensors.SensorsListener
@@ -134,6 +135,7 @@ object VisionManager : BaseVisionManager {
     fun init(application: Application, mapboxToken: String) {
         this.application = application
         this.mapboxToken = mapboxToken
+        PreferencesManager.appContext = application
     }
 
     /**
