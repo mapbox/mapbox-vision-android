@@ -48,7 +48,7 @@ constructor(
             bitmap = Bitmap.createBitmap(
                 imageSize.imageWidth,
                 imageSize.imageHeight,
-                android.graphics.Bitmap.Config.ARGB_8888
+                Bitmap.Config.ARGB_8888
             )
         }
 

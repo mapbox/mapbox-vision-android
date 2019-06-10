@@ -1,10 +1,10 @@
 package com.mapbox.vision.video.videosource.file
 
 import android.app.Application
-import android.media.Image
 import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
+import android.renderscript.ScriptGroup
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.renderscript.Type
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
@@ -14,10 +14,12 @@ import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.io.File
+import java.nio.ByteBuffer
 
 /**
  * Plays list of [videoFiles] sequentially.
  */
+@Suppress("DEPRECATION")
 class FileVideoSource(
     private val application: Application,
     private val videoFiles: Collection<File>,
@@ -29,19 +31,26 @@ class FileVideoSource(
         RenderScript.create(application)
     }
 
-    private val yuvToRgba = ScriptIntrinsicYuvToRGB.create(renderscript, Element.U8_4(renderscript))
+    // Image from MediaCodec arrive in NV12 format, while ScriptIntrinsicYuvToRGB processes NV21,
+    // which results in BGR format in the output.
+    private val intrinsicYuvToRgb = ScriptIntrinsicYuvToRGB.create(renderscript, Element.U8_4(renderscript))
+    // So we use additional renderscript, that swaps BGR to RGB.
+    private val bgrToRgb = ScriptC_bgr_to_rgb(renderscript)
+    // Scripts are used as ScriptGroup to use single memory for conversion.
+    private lateinit var scriptGroup: ScriptGroup
+
+    private var isInitialized: Boolean = false
 
     private var width = 0
     private var height = 0
-    private var yuvSize = 0
     private var videoProgress = -1L
 
     private lateinit var sourceAllocation: Allocation
     private lateinit var destinationAllocation: Allocation
 
     private lateinit var videoDecoder: FileVideoDecoder
-    private lateinit var dstBuffer: ByteArray
-    private lateinit var rgbaBytes: ByteArray
+    private lateinit var yuvArray: ByteArray
+    private lateinit var rgbaArray: ByteArray
 
     private val handler = WorkThreadHandler()
     private val responseHandler = WorkThreadHandler()
@@ -56,6 +65,18 @@ class FileVideoSource(
         }
     }
 
+    override fun pause() {
+        handler.post {
+            videoDecoder.pause()
+        }
+    }
+
+    override fun resume() {
+        handler.post {
+            videoDecoder.resume()
+        }
+    }
+
     override fun getProgress(): Long = videoProgress
 
     override fun attach(videoSourceListener: VideoSourceListener) {
@@ -67,7 +88,8 @@ class FileVideoSource(
             videoDecoder = try {
                 FileVideoDecoder(
                     this::onFrameDecoded,
-                    this::playNextVideo
+                    this::playNextVideo,
+                    this::onFrameFormatChanged
                 )
             } catch (e: Exception) {
                 VisionLogger.e(e, "FileVideoSource")
@@ -86,19 +108,24 @@ class FileVideoSource(
         responseHandler.stop()
     }
 
-    private fun onFrameDecoded(image: Image) {
+    private fun onFrameDecoded(byteBuffer: ByteBuffer, videoProgress: Long) {
         try {
-            videoProgress = videoDecoder.getProgress()
-            readYuv420ImageToNv21DstBuffer(image)
-            responseHandler.post {
-                sourceAllocation.copyFrom(dstBuffer)
-                yuvToRgba.setInput(sourceAllocation)
-                yuvToRgba.forEach(destinationAllocation)
-                destinationAllocation.copyTo(rgbaBytes)
-                videoSourceListener?.onNewFrame(rgbaBytes, ImageFormat.RGBA, ImageSize(width, height))
+            if (!isInitialized) {
+                return
             }
+            this.videoProgress = videoProgress
 
-            image.close()
+            byteBuffer.get(yuvArray)
+            responseHandler.post {
+                try {
+                    sourceAllocation.copyFrom(yuvArray)
+                    scriptGroup.execute()
+                    destinationAllocation.copyTo(rgbaArray)
+                    videoSourceListener?.onNewFrame(rgbaArray, ImageFormat.RGBA, ImageSize(width, height))
+                } catch (e: Exception) {
+                    VisionLogger.e(e, "FileVideoSource")
+                }
+            }
         } catch (e: Exception) {
             VisionLogger.e(e, "FileVideoSource")
         }
@@ -115,76 +142,22 @@ class FileVideoSource(
         }
     }
 
-    // TODO use Renderscript
-    private fun readYuv420ImageToNv21DstBuffer(srcImage: Image) {
-        val crop = srcImage.cropRect
-        val width = crop.width()
-        val height = crop.height()
-        setSize(width, height)
-        val planes = srcImage.planes
-        val rowData = ByteArray(planes[0].rowStride)
+    private fun onFrameFormatChanged(width: Int, height: Int) {
+        if (this.width != width || this.height != height || !isInitialized) {
+            isInitialized = true
 
-        var channelOffset = 0
-        var outputStride = 1
-        for (i in planes.indices) {
-            when (i) {
-                0 -> {
-                    channelOffset = 0
-                    outputStride = 1
-                }
-                1 -> {
-                    channelOffset = width * height + 1
-                    outputStride = 2
-                }
-                2 -> {
-                    channelOffset = width * height
-                    outputStride = 2
-                }
-            }
-
-            val buffer = planes[i].buffer
-            val rowStride = planes[i].rowStride
-            val pixelStride = planes[i].pixelStride
-
-            val shift = if (i == 0) 0 else 1
-            val w = width shr shift
-            val h = height shr shift
-            buffer.position(rowStride * (crop.top shr shift) + pixelStride * (crop.left shr shift))
-            for (row in 0 until h) {
-                val length: Int
-                if (pixelStride == 1 && outputStride == 1) {
-                    length = w
-                    buffer.get(dstBuffer, channelOffset, length)
-                    channelOffset += length
-                } else {
-                    length = (w - 1) * pixelStride + 1
-                    buffer.get(rowData, 0, length)
-                    for (col in 0 until w) {
-                        dstBuffer[channelOffset] = rowData[col * pixelStride]
-                        channelOffset += outputStride
-                    }
-                }
-                if (row < h - 1) {
-                    buffer.position(buffer.position() + rowStride - length)
-                }
-            }
-        }
-    }
-
-    private fun setSize(width: Int, height: Int) {
-        if (this.width != width || this.height != height) {
             this.width = width
             this.height = height
-            yuvSize = (width * height * 1.5).toInt()
-            dstBuffer = ByteArray(yuvSize)
-            rgbaBytes = ByteArray(width * height * 4)
-            sourceAllocation = Allocation.createTyped(
+            val pixelNum = width * height
+            yuvArray = ByteArray(pixelNum * 3 / 2)
+            rgbaArray = ByteArray(pixelNum * 4)
+
+            sourceAllocation = Allocation.createSized(
                 renderscript,
-                Type.Builder(renderscript, Element.U8(renderscript))
-                    .setX(yuvSize)
-                    .create(),
-                Allocation.USAGE_SCRIPT
+                Element.U8(renderscript),
+                yuvArray.size
             )
+
             destinationAllocation = Allocation.createTyped(
                 renderscript,
                 Type.Builder(renderscript, Element.RGBA_8888(renderscript))
@@ -193,6 +166,23 @@ class FileVideoSource(
                     .create(),
                 Allocation.USAGE_SCRIPT
             )
+
+            ScriptGroup.Builder(renderscript).run {
+                addKernel(intrinsicYuvToRgb.kernelID)
+                addKernel(bgrToRgb.kernelID_bgrToRgb)
+
+                addConnection(
+                    destinationAllocation.type,
+                    intrinsicYuvToRgb.kernelID,
+                    bgrToRgb.kernelID_bgrToRgb
+                )
+
+                scriptGroup = create()
+
+                scriptGroup.setOutput(bgrToRgb.kernelID_bgrToRgb, destinationAllocation)
+
+                intrinsicYuvToRgb.setInput(sourceAllocation)
+            }
         }
     }
 }
