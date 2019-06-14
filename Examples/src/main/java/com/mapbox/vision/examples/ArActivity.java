@@ -279,8 +279,8 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
                         if (intersections != null) {
                             for (StepIntersection intersection : intersections) {
                                 point = new RoutePoint((new GeoCoordinate(
-                                        step.maneuver().location().latitude(),
-                                        step.maneuver().location().longitude()
+                                        intersection.location().latitude(),
+                                        intersection.location().longitude()
                                 )));
 
                                 routePoints.add(point);
