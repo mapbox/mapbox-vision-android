@@ -1,5 +1,7 @@
 git:
   depth: 10
+  
+dist : trusty
 
 notifications:
   email: false
