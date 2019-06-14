@@ -5,7 +5,7 @@ import android.location.Location
 import com.mapbox.android.core.location.LocationEngine
 import com.mapbox.geojson.Point
 
-class FakeLocationEngine: LocationEngine() {
+class FakeLocationEngine : LocationEngine() {
 
     private val location: Location = Location("fake_location")
 

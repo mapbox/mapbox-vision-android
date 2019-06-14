@@ -1,4 +1,4 @@
-package com.mapbox.vision.examples.view
+package com.mapbox.vision.examples.view.gl
 
 import android.content.Context
 import android.graphics.PixelFormat
@@ -7,11 +7,9 @@ import android.util.AttributeSet
 import com.mapbox.vision.ar.core.VisionArEventsListener
 import com.mapbox.vision.ar.core.models.ArCamera
 import com.mapbox.vision.ar.core.models.ArLane
-import com.mapbox.vision.examples.view.gl.CustomArGlRender
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
-import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.video.videosource.VideoSourceListener
 
 class CustomArViewKt
@@ -44,7 +42,6 @@ constructor(
     }
 
     override fun onNewCameraParameters(cameraParameters: CameraParameters) {
-
     }
     // \ VideoSourceListener
 
@@ -55,8 +52,6 @@ constructor(
 
     override fun onArLaneUpdated(arLane: ArLane) {
         render.arLane = arLane
-
     }
     // \ VisionArEventsListener
-
 }

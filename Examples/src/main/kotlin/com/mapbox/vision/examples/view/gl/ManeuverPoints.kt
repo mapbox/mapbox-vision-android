@@ -75,7 +75,6 @@ class ManeuverPoints {
             }
         """.trimIndent()
 
-
         private val FRAGMENT_SHADER = """
             varying vec3 vTexCoords;
 
@@ -131,7 +130,7 @@ class ManeuverPoints {
             indexArray[index++] = (elm + halfVertexNum).toShort()
         }
 
-        indexBuffer = directByteBufferOf(capacity = indexArray.size * 2).asShortBuffer() //ShortBuffer.wrap(indexArray)
+        indexBuffer = directByteBufferOf(capacity = indexArray.size * 2).asShortBuffer() // ShortBuffer.wrap(indexArray)
         indexBuffer.put(indexArray).position(0)
 
         vertexBuffer = directByteBufferOf(capacity = vertexArray.size * 4).asFloatBuffer()
@@ -145,12 +144,12 @@ class ManeuverPoints {
         glCompileShader(vertexShader)
         glCompileShader(fragmentShader)
 
-        mProgram = glCreateProgram()             // create empty OpenGL Program
-        glAttachShader(mProgram, vertexShader)   // add the vertex shader to program
+        mProgram = glCreateProgram() // create empty OpenGL Program
+        glAttachShader(mProgram, vertexShader) // add the vertex shader to program
         glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
-        glLinkProgram(mProgram)                  // create OpenGL program executables
+        glLinkProgram(mProgram) // create OpenGL program executables
         glCheckError("ManeuverPoints -> mProgram")
-    
+
         glGenBuffers(1, vbo, 0)
         glCheckError("ManeuverPoints -> glGenBuffers vbo")
         glGenBuffers(1, ibo, 0)
@@ -195,7 +194,7 @@ class ManeuverPoints {
         glVertexAttribPointer(aTexHandle, 3, GL_FLOAT, false, 24, 12)
         glCheckError("ManeuverPoints -> aTexHandle")
 
-        /// Uniforms
+        // / Uniforms
 
         uMVPMatrixHandle = glGetUniformLocation(mProgram, "uMVPMatrix")
         glUniformMatrix4fv(uMVPMatrixHandle, 1, false, vpMatrix.toFloatArray(), 0)
@@ -224,6 +223,5 @@ class ManeuverPoints {
 
         // Disable vertex array
         glDisableVertexAttribArray(aPositionHandle)
-
     }
 }

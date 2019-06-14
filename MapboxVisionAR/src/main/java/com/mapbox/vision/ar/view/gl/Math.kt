@@ -5,15 +5,15 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class Rotation(
-        var pitch: Float,
-        var roll: Float,
-        var yaw: Float
+    var pitch: Float,
+    var roll: Float,
+    var yaw: Float
 )
 
 class Vector3(
-        val x: Float = 0f,
-        val y: Float = 0f,
-        val z: Float = 0f
+    val x: Float = 0f,
+    val y: Float = 0f,
+    val z: Float = 0f
 )
 
 class Matrix3 {
@@ -159,4 +159,3 @@ class Matrix4 {
 }
 
 fun directByteBufferOf(capacity: Int) = ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder())
-

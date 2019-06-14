@@ -40,10 +40,10 @@ import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
 
-class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineListener, OffRouteListener,
+class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineListener, OffRouteListener,
     ProgressChangeListener {
 
-    private val modelPerfomanceConfig = ModelPerformanceConfig.Merged(
+    private val modelPerformanceConfig = ModelPerformanceConfig.Merged(
         ModelPerformance.On(
             ModelPerformanceMode.FIXED,
             ModelPerformanceRate.LOW
@@ -83,10 +83,10 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
     // source and target locations.
     private val ROUTE_ORIGIN = Point.fromLngLat(27.648624, 53.933623)
     private val ROUTE_DESTINATION = Point.fromLngLat(27.689324, 53.945274)
+    // Path to the recorded session
+    private val REPLAY_PATH = "${Environment.getExternalStorageDirectory().path}/Telemetry/Replays/"
 
-    // use VisionReplayManager instead VisionManager
     private val isReplaying = true
-    private val replayPath = "${Environment.getExternalStorageDirectory().path}/Telemetry/Replays/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,8 +108,8 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
 
         if (isReplaying) {
             // Create and start VisionReplayManager.
-            VisionReplayManager.create(replayPath)
-            VisionReplayManager.setModelPerformanceConfig(modelPerfomanceConfig)
+            VisionReplayManager.create(REPLAY_PATH)
+            VisionReplayManager.setModelPerformanceConfig(modelPerformanceConfig)
             VisionReplayManager.start(visionEventsListener = object : VisionEventsListener {
                 override fun onVehicleStateUpdated(vehicleState: VehicleState) {
                     (arLocationEngine as FakeLocationEngine)
@@ -124,11 +124,10 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
             VisionReplayManager.setVideoSourceListener(custom_ar_view)
 
             VisionArManager.create(VisionReplayManager, custom_ar_view)
-
         } else {
             // Create and start VisionManager.
             VisionManager.create()
-            VisionManager.setModelPerformanceConfig(modelPerfomanceConfig)
+            VisionManager.setModelPerformanceConfig(modelPerformanceConfig)
             VisionManager.start(visionEventsListener = object : VisionEventsListener {})
             VisionManager.setVideoSourceListener(custom_ar_view)
 
@@ -201,7 +200,7 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
         directionsRoute = response.routes()[0]
         setRoute(directionsRoute)
     }
-    //\ RouteListener
+    // \ RouteListener
 
     private fun setRoute(route: DirectionsRoute) {
         mapboxNavigation.startNavigation(route)
@@ -216,21 +215,21 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
         )
     }
 
-    //LocationEngineListener
+    // LocationEngineListener
     override fun onLocationChanged(location: Location?) = Unit
 
     @SuppressLint("MissingPermission")
     override fun onConnected() {
         arLocationEngine.requestLocationUpdates()
     }
-    //\LocationEngineListener
+    // \LocationEngineListener
 
-    //OffRouteListener \
+    // OffRouteListener \
     override fun userOffRoute(location: Location?) {
         routeFetcher.findRouteFromRouteProgress(location, lastRouteProgress)
     }
 
-    //ProgressChangeListener \
+    // ProgressChangeListener \
     override fun onProgressChange(location: Location?, routeProgress: RouteProgress) {
         lastRouteProgress = routeProgress
     }
@@ -248,11 +247,11 @@ class CustomArActivityKt : AppCompatActivity(), RouteListener, LocationEngineLis
                 routePoints.add(maneuverPoint)
 
                 step.intersections()
-                    ?.map {
+                    ?.map { intersection ->
                         RoutePoint(
                             GeoCoordinate(
-                                latitude = step.maneuver().location().latitude(),
-                                longitude = step.maneuver().location().longitude()
+                                latitude = intersection.location().latitude(),
+                                longitude = intersection.location().longitude()
                             )
                         )
                     }

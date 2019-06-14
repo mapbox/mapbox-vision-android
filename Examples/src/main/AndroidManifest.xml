@@ -40,7 +40,13 @@
         <activity android:name=".SafetyActivity"
                   android:screenOrientation="landscape"/>
 
-        <activity android:name=".CustomArActivityKt"
+        <activity android:name=".ArActivityKt"
+                  android:screenOrientation="landscape"/>
+
+        <activity android:name=".ArLanesActivityKt"
+                  android:screenOrientation="landscape"/>
+
+        <activity android:name=".ArManeuverActivityKt"
             android:screenOrientation="landscape">
 
             <intent-filter>
@@ -48,11 +54,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-
-        <activity android:name=".ArActivityKt"
-                  android:screenOrientation="landscape">
-
         </activity>
 
         <activity android:name=".ArActivity"

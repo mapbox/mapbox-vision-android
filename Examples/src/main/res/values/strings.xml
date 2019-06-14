@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Vision Examples</string>
+    <string name="can_not_calculate_new_route">Cannot calculate new route</string>
 </resources>

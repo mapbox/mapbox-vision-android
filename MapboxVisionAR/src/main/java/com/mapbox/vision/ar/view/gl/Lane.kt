@@ -141,10 +141,10 @@ class Lane(context: Context) : GlRender.Renderer {
         val vertexShader = glLoadShader(GL_VERTEX_SHADER, VERTEX_SHADER)
         val fragmentShader = glLoadShader(GL_FRAGMENT_SHADER, FRAGMENT_SHADER)
 
-        mProgram = glCreateProgram()             // create empty OpenGL Program
-        glAttachShader(mProgram, vertexShader)   // add the vertex shader to program
+        mProgram = glCreateProgram() // create empty OpenGL Program
+        glAttachShader(mProgram, vertexShader) // add the vertex shader to program
         glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
-        glLinkProgram(mProgram)                  // create OpenGL program executables
+        glLinkProgram(mProgram) // create OpenGL program executables
         glCheckError("ArLane -> mProgram")
     }
 

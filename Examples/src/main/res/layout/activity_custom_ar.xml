@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.mapbox.vision.examples.view.CustomArViewKt
+    <com.mapbox.vision.examples.view.gl.CustomArViewKt
         android:id="@+id/custom_ar_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
