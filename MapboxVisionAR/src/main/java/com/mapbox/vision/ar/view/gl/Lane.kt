@@ -2,15 +2,11 @@ package com.mapbox.vision.ar.view.gl
 
 import android.content.Context
 import android.opengl.GLES20.*
-import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.R
 import com.mapbox.vision.ar.view.gl.GlUtils.glCheckError
 import com.mapbox.vision.ar.view.gl.GlUtils.glLoadShader
 import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
-import de.javagl.obj.ObjData
-import de.javagl.obj.ObjReader
-import de.javagl.obj.ObjUtils
 import java.nio.FloatBuffer
 
 class Lane(context: Context) : GlRender.Renderer {
