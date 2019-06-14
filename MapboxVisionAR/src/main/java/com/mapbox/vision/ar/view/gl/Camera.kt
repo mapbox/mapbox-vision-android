@@ -2,12 +2,12 @@ package com.mapbox.vision.ar.view.gl
 
 import android.opengl.Matrix
 
-internal class Camera(
-    private val aspectRatio: Float,
-    private val viewAspectRatio: Float,
-    private val verticalFOVRadians: Float,
-    private val rotation: Rotation,
-    private val translate: Vector3
+class Camera(
+        private val aspectRatio: Float,
+        private val viewAspectRatio: Float,
+        private val verticalFOVRadians: Float,
+        private val rotation: Rotation,
+        private val translate: Vector3
 ) {
     private val nearClipPlane: Float = 1f
     private val farClipPlane: Float = 1000f

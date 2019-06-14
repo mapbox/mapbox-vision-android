@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.mapbox.vision.examples">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.mapbox.vision.examples">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -24,7 +25,8 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
 
         <activity android:name=".ExternalCameraSource"
                   android:screenOrientation="landscape"/>
@@ -38,16 +40,23 @@
         <activity android:name=".SafetyActivity"
                   android:screenOrientation="landscape"/>
 
-        <activity android:name=".ArActivityKt"
-                  android:screenOrientation="landscape"/>
+        <activity android:name=".CustomArActivityKt"
+            android:screenOrientation="landscape">
 
-        <activity android:name=".ArActivity"
-                  android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+
+        <activity android:name=".ArActivityKt"
+                  android:screenOrientation="landscape">
+
+        </activity>
+
+        <activity android:name=".ArActivity"
+                  android:screenOrientation="landscape">
 
         </activity>
 

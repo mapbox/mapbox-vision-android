@@ -193,7 +193,7 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
                         // Set route progress.
                         VisionArManager.setRoute(new Route(
                                 getRoutePoints(route),
-                                directionsRoute.duration().floatValue(),
+                                directionsRoute != null ? directionsRoute.duration().floatValue() : 0,
                                 "",
                                 ""
                         ));

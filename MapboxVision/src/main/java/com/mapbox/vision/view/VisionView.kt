@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.AttributeSet
 import android.widget.ImageView
-import com.mapbox.vision.R
 import com.mapbox.vision.manager.BaseVisionManager
+import com.mapbox.vision.R
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections

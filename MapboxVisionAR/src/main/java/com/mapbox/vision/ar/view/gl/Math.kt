@@ -4,19 +4,19 @@ import android.opengl.Matrix
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-internal class Rotation(
-    var pitch: Float,
-    var roll: Float,
-    var yaw: Float
+class Rotation(
+        var pitch: Float,
+        var roll: Float,
+        var yaw: Float
 )
 
-internal class Vector3(
-    val x: Float = 0f,
-    val y: Float = 0f,
-    val z: Float = 0f
+class Vector3(
+        val x: Float = 0f,
+        val y: Float = 0f,
+        val z: Float = 0f
 )
 
-internal class Matrix3 {
+class Matrix3 {
     private val data: FloatArray
 
     constructor() {
@@ -99,7 +99,7 @@ internal class Matrix3 {
     }
 }
 
-internal class Matrix4 {
+class Matrix4 {
     private val data: FloatArray
 
     constructor() {
@@ -158,4 +158,5 @@ internal class Matrix4 {
     }
 }
 
-internal fun directByteBufferOf(capacity: Int) = ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder())
+fun directByteBufferOf(capacity: Int) = ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder())
+
