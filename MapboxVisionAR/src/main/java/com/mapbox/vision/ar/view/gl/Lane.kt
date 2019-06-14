@@ -7,6 +7,7 @@ import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.R
 import com.mapbox.vision.ar.view.gl.GlUtils.glCheckError
 import com.mapbox.vision.ar.view.gl.GlUtils.glLoadShader
+import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
 import de.javagl.obj.ObjData
 import de.javagl.obj.ObjReader
 import de.javagl.obj.ObjUtils
@@ -171,11 +172,8 @@ class Lane(context: Context) : GlRender.Renderer {
             laneLightColor[2] = laneVisualParams.lightColor.b
         }
 
-        // TODO convert to opengl coordinates?
         laneVisualParams.light?.let { light ->
-            laneLightPosition[0] = light.x.toFloat()
-            laneLightPosition[1] = light.y.toFloat()
-            laneLightPosition[2] = light.z.toFloat()
+            laneLightPosition.copyFrom(light.toGlCoordinate())
         }
 
         if (LaneVisualParams.isValid(laneVisualParams.width)) {
