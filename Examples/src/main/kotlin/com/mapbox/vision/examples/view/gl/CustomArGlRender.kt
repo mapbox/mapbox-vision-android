@@ -4,11 +4,7 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import com.mapbox.vision.ar.core.models.ArCamera
 import com.mapbox.vision.ar.core.models.ArLane
-import com.mapbox.vision.ar.view.gl.Background
-import com.mapbox.vision.ar.view.gl.Camera
-import com.mapbox.vision.ar.view.gl.Matrix4
-import com.mapbox.vision.ar.view.gl.Rotation
-import com.mapbox.vision.ar.view.gl.Vector3
+import com.mapbox.vision.ar.view.gl.*
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -32,7 +28,7 @@ class CustomArGlRender(
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glDepthFunc(GLES20.GL_LEQUAL)
 
-        background.onSurfaceChanged()
+        background.onSurfaceCreated()
         maneuverPoints.onSurfaceChanged()
     }
 
@@ -76,9 +72,8 @@ class CustomArGlRender(
 
         val viewProjMatrix = camera.getViewProjectionMatrix()
         val modelMatrix = Matrix4()
-        val normMatrix = modelMatrix.toMatrix3()
 
-        maneuverPoints.draw(viewProjMatrix, modelMatrix, normMatrix, laneParams)
+        maneuverPoints.draw(viewProjMatrix, modelMatrix, laneParams)
     }
 
     private fun FloatArray.addPointToLaneParams(index: Int, worldCoordinate: WorldCoordinate) {

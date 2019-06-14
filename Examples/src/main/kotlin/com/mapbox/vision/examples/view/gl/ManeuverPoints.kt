@@ -3,7 +3,6 @@ package com.mapbox.vision.examples.view.gl
 import android.opengl.GLES20.*
 import com.mapbox.vision.ar.view.gl.GlUtils.glCheckError
 import com.mapbox.vision.ar.view.gl.GlUtils.glLoadShader
-import com.mapbox.vision.ar.view.gl.Matrix3
 import com.mapbox.vision.ar.view.gl.Matrix4
 import com.mapbox.vision.ar.view.gl.directByteBufferOf
 import java.nio.FloatBuffer
@@ -176,7 +175,7 @@ class ManeuverPoints {
         glCheckError("ManeuverPoints -> glBindBuffer enable")
     }
 
-    fun draw(vpMatrix: Matrix4, modelMatrix: Matrix4, normMatrix: Matrix3, routePoint: FloatArray) {
+    fun draw(vpMatrix: Matrix4, modelMatrix: Matrix4, routePoints: FloatArray) {
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo[0])
         glCheckError("ManeuverPoints glBindBuffer vbo")
@@ -207,7 +206,7 @@ class ManeuverPoints {
         glCheckError("ManeuverPoints -> uModelMatrixHandle")
 
         uRoutePointHandle = glGetUniformLocation(mProgram, "uLaneParams")
-        glUniform3fv(uRoutePointHandle, 4, routePoint, 0)
+        glUniform3fv(uRoutePointHandle, 4, routePoints, 0)
         glCheckError("ManeuverPoints -> uRoutePointHandle")
 
         glCullFace(GL_FRONT_AND_BACK)
