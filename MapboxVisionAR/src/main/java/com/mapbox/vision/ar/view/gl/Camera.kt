@@ -22,6 +22,7 @@ class Camera(
                 nearClipPlane,
                 farClipPlane
         )
+
         return Matrix4(projMatrix)
     }
 
@@ -32,6 +33,7 @@ class Camera(
                 y = translate.y - Math.cos(rotation.roll.toDouble()).toFloat(),
                 z = -(translate.z + Math.sin(rotation.roll.toDouble()).toFloat() * Math.cos(rotation.pitch.toDouble()).toFloat())
         )
+
         Matrix.setLookAtM(
                 viewMatrix,
                 0,
@@ -42,8 +44,8 @@ class Camera(
                 center.y,
                 center.z,
                 0f,
-                1.0f,
-                0.0f
+                1f,
+                0f
         )
         return Matrix4(viewMatrix)
     }

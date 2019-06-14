@@ -1,14 +1,12 @@
 package com.mapbox.vision.ar.view.gl
 
 import android.content.Context
-import android.opengl.GLES20
+import android.opengl.GLES20.*
 import android.opengl.GLSurfaceView
-import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.core.models.ArCamera
 import com.mapbox.vision.ar.core.models.ArLane
-import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
-import com.mapbox.vision.utils.VisionLogger
+import com.mapbox.vision.mobile.core.utils.extentions.copyFrom
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -18,8 +16,8 @@ class GlRender(
     private val height: Int
 ) : GLSurfaceView.Renderer {
 
-    interface OnSurfaceChangedListener {
-        fun onSurfaceChanged()
+    interface Renderer {
+        fun onSurfaceCreated()
     }
 
     private val lane by lazy(mode = LazyThreadSafetyMode.NONE) { Lane(context) }
@@ -30,37 +28,26 @@ class GlRender(
     var arLane: ArLane? = null
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
-        // Set the background frame color
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0f)
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
-        GLES20.glDepthFunc(GLES20.GL_LEQUAL)
+        glClearColor(0f, 0f, 0f, 0f)
+        glEnable(GL_DEPTH_TEST)
+        glDepthFunc(GL_LEQUAL)
 
-        lane.onSurfaceChanged()
-        background.onSurfaceChanged()
+        lane.onSurfaceCreated()
+        background.onSurfaceCreated()
     }
 
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
-        // Adjust the viewport based on geometry changes, such as screen rotation
-        GLES20.glViewport(0, 0, width, height)
+        glViewport(0, 0, width, height)
         viewAspectRatio = width.toFloat() / height
     }
 
-    private fun FloatArray.addPointToLaneParams(index: Int, worldCoordinate: WorldCoordinate) {
-        // `x` points right
-        set(index * 3, -worldCoordinate.y.toFloat())
-        // `y` points top
-        set(index * 3 + 1, worldCoordinate.z.toFloat())
-        // `z` points back
-        set(index * 3 + 2, -worldCoordinate.x.toFloat())
-    }
-
     override fun onDrawFrame(unused: GL10) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+        glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+        glDisable(GL_DEPTH_TEST)
 
         background.draw()
 
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+        glEnable(GL_DEPTH_TEST)
 
         val arCamera = this.arCamera ?: return
         val arLane = this.arLane ?: return
@@ -80,17 +67,16 @@ class GlRender(
                 z = 0f
             )
         )
+
         val laneParams = FloatArray(4 * 3)
-        laneParams.addPointToLaneParams(0, arLane.bezierCurve.p1)
-        laneParams.addPointToLaneParams(1, arLane.bezierCurve.p2)
-        laneParams.addPointToLaneParams(2, arLane.bezierCurve.p3)
-        laneParams.addPointToLaneParams(3, arLane.bezierCurve.p4)
+        laneParams.copyFrom(arLane.bezierCurve.p1.toGlCoordinate())
+        laneParams.copyFrom(arLane.bezierCurve.p2.toGlCoordinate(), destinationOffset = 3)
+        laneParams.copyFrom(arLane.bezierCurve.p3.toGlCoordinate(), destinationOffset = 6)
+        laneParams.copyFrom(arLane.bezierCurve.p4.toGlCoordinate(), destinationOffset = 9)
 
         val viewProjMatrix = camera.getViewProjectionMatrix()
         val modelMatrix = Matrix4()
-        val normMatrix = modelMatrix.toMatrix3()
-
-        lane.draw(viewProjMatrix, modelMatrix, normMatrix, laneParams)
+        lane.draw(viewProjMatrix, modelMatrix, laneParams)
     }
 
     fun onNewBackground(rgbaArray: ByteArray) {
@@ -99,12 +85,5 @@ class GlRender(
 
     internal fun onNewLaneVisualParams(laneVisualParams: LaneVisualParams) {
         lane.setLaneVisualParams(laneVisualParams)
-    }
-
-    companion object {
-
-        private const val TAG = "GlArRender"
-
-
     }
 }

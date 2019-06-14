@@ -1,96 +1,101 @@
 package com.mapbox.vision.ar.view.gl
 
 import android.content.Context
-import android.opengl.GLES20
+import android.opengl.GLES20.*
+import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.R
+import com.mapbox.vision.ar.view.gl.GlUtils.glCheckError
+import com.mapbox.vision.ar.view.gl.GlUtils.glLoadShader
+import de.javagl.obj.ObjData
+import de.javagl.obj.ObjReader
+import de.javagl.obj.ObjUtils
 import java.nio.FloatBuffer
 
-class Lane(context: Context) : GlRender.OnSurfaceChangedListener {
+class Lane(context: Context) : GlRender.Renderer {
 
     private companion object {
 
         internal const val LANE_DEFAULT_WIDTH = 1.0f // meters
 
         private val VERTEX_SHADER = """
-uniform mat4 uMVPMatrix;
-uniform mat4 uModelMatrix;
-uniform mat3 uNormMatrix;
-uniform vec3 uLaneParams[4];
-uniform float uLaneWidthRatio;
+            uniform mat4 uMVPMatrix;
+            uniform mat4 uModelMatrix;
+            uniform mat3 uNormMatrix;
+            uniform vec3 uLaneParams[4];
+            uniform float uLaneWidthRatio;
 
-attribute vec3 aPosition;
-attribute vec2 aTex;
-attribute vec3 aNormal;
+            attribute vec3 aPosition;
+            attribute vec2 aTex;
+            attribute vec3 aNormal;
 
-varying vec3 vWorldPos;
-varying vec3 vWorldNormal;
-varying vec2 vTexCoords;
+            varying vec3 vWorldPos;
+            varying vec3 vWorldNormal;
+            varying vec2 vTexCoords;
 
-void main()
-{
-    vec3 p0 = uLaneParams[0];
-    vec3 p1 = uLaneParams[1];
-    vec3 p2 = uLaneParams[2];
-    vec3 p3 = uLaneParams[3];
+            void main()
+            {
+                vec3 p0 = uLaneParams[0];
+                vec3 p1 = uLaneParams[1];
+                vec3 p2 = uLaneParams[2];
+                vec3 p3 = uLaneParams[3];
 
-    float t = (1.0 - aTex.y);
-    float t_2 = t * t;
-    float t_3 = t_2 * t;
-    float t1 = 1.0 - t;
-    float t1_2 = t1 * t1;
-    float t1_3 = t1_2 * t1;
+                float t = (1.0 - aTex.y);
+                float t_2 = t * t;
+                float t_3 = t_2 * t;
+                float t1 = 1.0 - t;
+                float t1_2 = t1 * t1;
+                float t1_3 = t1_2 * t1;
 
-    vec3 basePoint = p0 * t1_3 + p1 * (3.0 * t * t1_2) + p2 * (3.0 * t_2 * t1) + p3 * t_3;
-    vec3 baseDirection = 3.0 * (p1 - p0) * t1_2 + 6.0 * (p2 - p1) * t1 * t + 3.0 * (p3 - p2) * t_2;
+                vec3 basePoint = p0 * t1_3 + p1 * (3.0 * t * t1_2) + p2 * (3.0 * t_2 * t1) + p3 * t_3;
+                vec3 baseDirection = 3.0 * (p1 - p0) * t1_2 + 6.0 * (p2 - p1) * t1 * t + 3.0 * (p3 - p2) * t_2;
 
-    vec3 offsetVector = normalize(vec3(baseDirection.z, 0, -baseDirection.x));
-    vec3 smoothedPos = basePoint - offsetVector * aPosition.x;
+                vec3 offsetVector = normalize(vec3(baseDirection.z, 0, -baseDirection.x));
+                vec3 smoothedPos = basePoint - offsetVector * aPosition.x;
 
-    float lineWidth = smoothedPos.x * uLaneWidthRatio; // smoothedPos.x = $LANE_DEFAULT_WIDTH by default
+                float lineWidth = smoothedPos.x * uLaneWidthRatio; // smoothedPos.x = $LANE_DEFAULT_WIDTH by default
 
-    vec4 worldPosition = uModelMatrix * vec4(lineWidth, aPosition.y + basePoint.y, smoothedPos.z, 1);
+                vec4 worldPosition = uModelMatrix * vec4(lineWidth, aPosition.y + basePoint.y, smoothedPos.z, 1);
 
-    vWorldPos = worldPosition.xyz;
-    vWorldNormal = uNormMatrix * aNormal;
-    vTexCoords = aTex;
+                vWorldPos = worldPosition.xyz;
+                vWorldNormal = uNormMatrix * aNormal;
+                vTexCoords = aTex;
 
-    gl_Position = uMVPMatrix * worldPosition;
-}
+                gl_Position = uMVPMatrix * worldPosition;
+            }
             """.trimIndent()
-        val FRAGMENT_SHADER = """
-precision mediump float;
+        private val FRAGMENT_SHADER = """
+            precision mediump float;
 
-uniform vec4 uColor;
-uniform vec4 uSpecularColor;
-uniform vec3 uCameraWorldPos;
-uniform vec3 uLightWorldPos;
-uniform vec3 uAmbientLightColor;
-uniform vec3 uLightColor;
+            uniform vec4 uColor;
+            uniform vec4 uSpecularColor;
+            uniform vec3 uCameraWorldPos;
+            uniform vec3 uLightWorldPos;
+            uniform vec3 uAmbientLightColor;
+            uniform vec3 uLightColor;
 
-varying vec3 vWorldPos;
-varying vec3 vWorldNormal;
-varying vec2 vTexCoords;
+            varying vec3 vWorldPos;
+            varying vec3 vWorldNormal;
+            varying vec2 vTexCoords;
 
+            void main()
+            {
+                vec3 baseColor = uColor.xyz;
 
-void main()
-{
-    vec3 baseColor = uColor.xyz;
+                vec3 N = normalize(vWorldNormal);
+                vec3 V = normalize(uCameraWorldPos - vWorldPos);
 
-    vec3 N = normalize(vWorldNormal);
-    vec3 V = normalize(uCameraWorldPos - vWorldPos);
+                vec3 L = normalize(uLightWorldPos - vWorldPos);
+                float diffuseIntensity = clamp(dot(N, L), 0.0, 1.0);
+                vec3 H = normalize(L + V);
+                float specularBase = clamp(dot(N, H), 0.0, 1.0);
+                float specularIntensity = pow(specularBase, uSpecularColor.w);
+                vec3 finalColor = uAmbientLightColor * baseColor +
+                diffuseIntensity * uLightColor * baseColor +
+                specularIntensity * uLightColor * uSpecularColor.xyz;
 
-    vec3 L = normalize(uLightWorldPos - vWorldPos);
-    float diffuseIntensity = clamp(dot(N, L), 0.0, 1.0);
-    vec3 H = normalize(L + V);
-    float specularBase = clamp(dot(N, H), 0.0, 1.0);
-    float specularIntensity = pow(specularBase, uSpecularColor.w);
-    vec3 finalColor = uAmbientLightColor * baseColor +
-    diffuseIntensity * uLightColor * baseColor +
-    specularIntensity * uLightColor * uSpecularColor.xyz;
-
-    gl_FragColor = vec4(finalColor.xyz, uColor.w * vTexCoords.y);
-}
+                gl_FragColor = vec4(finalColor.xyz, uColor.w * vTexCoords.y);
+            }
             """.trimIndent()
     }
 
@@ -114,7 +119,6 @@ void main()
     private var uMVPMatrixHandle: Int = 0
     private var uModelMatrixHandle: Int = 0
     private var uLaneParamsHandle: Int = 0
-    private var uNormMatrixHandle: Int = 0
     private var uColorHandle: Int = 0
     private var uSpecularColorHandle: Int = 0
     private var uCameraWorldPosHandle: Int = 0
@@ -135,16 +139,16 @@ void main()
         texBuffer = objWrapper.texBuffer
     }
 
-    override fun onSurfaceChanged() {
+    override fun onSurfaceCreated() {
         // prepare shaders and OpenGL program
-        val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER)
-        val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER)
+        val vertexShader = glLoadShader(GL_VERTEX_SHADER, VERTEX_SHADER)
+        val fragmentShader = glLoadShader(GL_FRAGMENT_SHADER, FRAGMENT_SHADER)
 
-        mProgram = GLES20.glCreateProgram() // create empty OpenGL Program
-        GLES20.glAttachShader(mProgram, vertexShader) // add the vertex shader to program
-        GLES20.glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram)                  // create OpenGL program executables
-        checkGlError("ArLane -> mProgram")
+        mProgram = glCreateProgram()             // create empty OpenGL Program
+        glAttachShader(mProgram, vertexShader)   // add the vertex shader to program
+        glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
+        glLinkProgram(mProgram)                  // create OpenGL program executables
+        glCheckError("ArLane -> mProgram")
     }
 
     fun setLaneVisualParams(laneVisualParams: LaneVisualParams) {
@@ -167,6 +171,7 @@ void main()
             laneLightColor[2] = laneVisualParams.lightColor.b
         }
 
+        // TODO convert to opengl coordinates?
         laneVisualParams.light?.let { light ->
             laneLightPosition[0] = light.x.toFloat()
             laneLightPosition[1] = light.y.toFloat()
@@ -184,85 +189,78 @@ void main()
      * @param mvpMatrix - The Model View Project matrix in which to draw
      * this shape.
      */
-    fun draw(mvpMatrix: Matrix4, modelMatrix: Matrix4, normMatrix: Matrix3, laneParams: FloatArray) {
-        // Add program to OpenGL environment
-        GLES20.glUseProgram(mProgram)
-        checkGlError("ArLane.glUseProgram")
+    fun draw(mvpMatrix: Matrix4, modelMatrix: Matrix4, laneParams: FloatArray) {
+        glUseProgram(mProgram)
+        glCheckError("ArLane -> glUseProgram")
 
-        // get handle to vertex shader's vPosition member
-        aPositionHandle = GLES20.glGetAttribLocation(mProgram, "aPosition")
-        GLES20.glEnableVertexAttribArray(aPositionHandle)
-        GLES20.glVertexAttribPointer(aPositionHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer)
-        checkGlError("ArLane -> aPositionHandle")
+        aPositionHandle = glGetAttribLocation(mProgram, "aPosition")
+        glEnableVertexAttribArray(aPositionHandle)
+        glVertexAttribPointer(aPositionHandle, 3, GL_FLOAT, false, 12, vertexBuffer)
+        glCheckError("ArLane -> aPositionHandle")
 
-        aTexHandle = GLES20.glGetAttribLocation(mProgram, "aTex")
-        GLES20.glEnableVertexAttribArray(aTexHandle)
-        GLES20.glVertexAttribPointer(aTexHandle, 2, GLES20.GL_FLOAT, false, 8, texBuffer)
-        checkGlError("ArLane -> aTex")
+        aTexHandle = glGetAttribLocation(mProgram, "aTex")
+        glEnableVertexAttribArray(aTexHandle)
+        glVertexAttribPointer(aTexHandle, 2, GL_FLOAT, false, 8, texBuffer)
+        glCheckError("ArLane -> aTex")
 
-        aNormalHandle = GLES20.glGetAttribLocation(mProgram, "aNormal")
-        GLES20.glEnableVertexAttribArray(aNormalHandle)
-        GLES20.glVertexAttribPointer(aNormalHandle, 3, GLES20.GL_FLOAT, false, 12, normalsBuffer)
-        checkGlError("ArLane -> aNormal")
+        aNormalHandle = glGetAttribLocation(mProgram, "aNormal")
+        glEnableVertexAttribArray(aNormalHandle)
+        glVertexAttribPointer(aNormalHandle, 3, GL_FLOAT, false, 12, normalsBuffer)
+        glCheckError("ArLane -> aNormal")
 
         // / Uniforms
 
-        // get handle to fragment shader's vColor member
-        uColorHandle = GLES20.glGetUniformLocation(mProgram, "uColor")
-        GLES20.glUniform4fv(uColorHandle, 1, laneColor, 0)
-        checkGlError("ArLane -> uColorHandle")
+        uColorHandle = glGetUniformLocation(mProgram, "uColor")
+        glUniform4fv(uColorHandle, 1, laneColor, 0)
+        glCheckError("ArLane -> uColorHandle")
 
-        uAmbientLightColorHandle = GLES20.glGetUniformLocation(mProgram, "uAmbientLightColor")
-        GLES20.glUniform3fv(uAmbientLightColorHandle, 1, laneAmbientColor, 0)
-        checkGlError("ArLane -> uAmbientLightColorHandle")
+        uAmbientLightColorHandle = glGetUniformLocation(mProgram, "uAmbientLightColor")
+        glUniform3fv(uAmbientLightColorHandle, 1, laneAmbientColor, 0)
+        glCheckError("ArLane -> uAmbientLightColorHandle")
 
-        uSpecularColorHandle = GLES20.glGetUniformLocation(mProgram, "uSpecularColor")
-        GLES20.glUniform4fv(uSpecularColorHandle, 1, laneSpecularColor, 0)
-        checkGlError("ArLane -> uSpecularColorHandle")
+        uSpecularColorHandle = glGetUniformLocation(mProgram, "uSpecularColor")
+        glUniform4fv(uSpecularColorHandle, 1, laneSpecularColor, 0)
+        glCheckError("ArLane -> uSpecularColorHandle")
 
-        uLightColorHandle = GLES20.glGetUniformLocation(mProgram, "uLightColor")
-        GLES20.glUniform3fv(uLightColorHandle, 1, laneLightColor, 0)
-        checkGlError("ArLane -> uLightColorHandle")
+        uLightColorHandle = glGetUniformLocation(mProgram, "uLightColor")
+        glUniform3fv(uLightColorHandle, 1, laneLightColor, 0)
+        glCheckError("ArLane -> uLightColorHandle")
 
-        uCameraWorldPosHandle = GLES20.glGetUniformLocation(mProgram, "uCameraWorldPos")
-        GLES20.glUniform3fv(uCameraWorldPosHandle, 1, cameraPosition, 0)
-        checkGlError("ArLane -> uCameraWorldPosHandle")
+        uCameraWorldPosHandle = glGetUniformLocation(mProgram, "uCameraWorldPos")
+        glUniform3fv(uCameraWorldPosHandle, 1, cameraPosition, 0)
+        glCheckError("ArLane -> uCameraWorldPosHandle")
 
-        uLightWorldPosHandle = GLES20.glGetUniformLocation(mProgram, "uLightWorldPos")
-        GLES20.glUniform3fv(uLightWorldPosHandle, 1, laneLightPosition, 0)
-        checkGlError("ArLane -> uLightWorldPosHandle")
+        uLightWorldPosHandle = glGetUniformLocation(mProgram, "uLightWorldPos")
+        glUniform3fv(uLightWorldPosHandle, 1, laneLightPosition, 0)
+        glCheckError("ArLane -> uLightWorldPosHandle")
 
-        uMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix")
-        GLES20.glUniformMatrix4fv(uMVPMatrixHandle, 1, false, mvpMatrix.toFloatArray(), 0)
-        checkGlError("ArLane -> uMVPMatrixHandle")
+        uMVPMatrixHandle = glGetUniformLocation(mProgram, "uMVPMatrix")
+        glUniformMatrix4fv(uMVPMatrixHandle, 1, false, mvpMatrix.toFloatArray(), 0)
+        glCheckError("ArLane -> uMVPMatrixHandle")
 
-        uModelMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uModelMatrix")
-        GLES20.glUniformMatrix4fv(uModelMatrixHandle, 1, false, modelMatrix.toFloatArray(), 0)
-        checkGlError("ArLane -> uModelMatrixHandle")
+        uModelMatrixHandle = glGetUniformLocation(mProgram, "uModelMatrix")
+        glUniformMatrix4fv(uModelMatrixHandle, 1, false, modelMatrix.toFloatArray(), 0)
+        glCheckError("ArLane -> uModelMatrixHandle")
 
-        uNormMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uNormMatrixHandle")
-        GLES20.glUniformMatrix3fv(uNormMatrixHandle, 1, false, normMatrix.toFloatArray(), 0)
-        checkGlError("ArLane -> uNormMatrixHandle")
+        uLaneParamsHandle = glGetUniformLocation(mProgram, "uLaneParams")
+        glUniform3fv(uLaneParamsHandle, 4, laneParams, 0)
+        glCheckError("ArLane -> uLaneParamsHandle")
 
-        uLaneParamsHandle = GLES20.glGetUniformLocation(mProgram, "uLaneParams")
-        GLES20.glUniform3fv(uLaneParamsHandle, 4, laneParams, 0)
-        checkGlError("ArLane -> uLaneParamsHandle")
+        uLaneWidthHandler = glGetUniformLocation(mProgram, "uLaneWidthRatio")
+        glUniform1f(uLaneWidthHandler, laneWidthRatio)
+        glCheckError("ArLane -> uLaneWidthHandler")
 
-        uLaneWidthHandler = GLES20.glGetUniformLocation(mProgram, "uLaneWidthRatio")
-        GLES20.glUniform1f(uLaneWidthHandler, laneWidthRatio)
-        checkGlError("ArLane -> uLaneWidthHandler")
-
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         // Draw the triangle
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, trianglesNum * 3)
+        glDrawArrays(GL_TRIANGLES, 0, trianglesNum * 3)
 
         // Disable vertex array
-        GLES20.glDisableVertexAttribArray(aPositionHandle)
-        GLES20.glDisableVertexAttribArray(aTexHandle)
-        GLES20.glDisableVertexAttribArray(aNormalHandle)
+        glDisableVertexAttribArray(aPositionHandle)
+        glDisableVertexAttribArray(aTexHandle)
+        glDisableVertexAttribArray(aNormalHandle)
 
-        GLES20.glDisable(GLES20.GL_BLEND)
+        glDisable(GL_BLEND)
     }
 }
