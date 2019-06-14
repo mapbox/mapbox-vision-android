@@ -1,10 +1,6 @@
 package com.mapbox.vision.utils.drawer.detections
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
+import android.graphics.*
 import com.mapbox.vision.mobile.core.models.detection.Detection
 
 class DetectionDrawerImpl : DetectionDrawer {

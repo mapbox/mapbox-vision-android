@@ -68,7 +68,10 @@ internal interface DelegateVisionManager : BaseVisionManager {
         override lateinit var mapboxTelemetry: MapboxTelemetry
         override lateinit var telemetrySyncManager: TelemetrySyncManager
 
+        @Volatile
         override var isStarted: Boolean = false
+
+        @Volatile
         override var isCreated: Boolean = false
 
         companion object {
@@ -242,7 +245,7 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
         override fun checkManagerStarted() {
             if (!isStarted) {
-                throw IllegalStateException("${javaClass.simpleName} was not started. Call attach() first.")
+                throw IllegalStateException("${javaClass.simpleName} was not started. Call start() first.")
             }
         }
     }

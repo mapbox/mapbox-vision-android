@@ -6,8 +6,8 @@ import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.renderscript.RenderScript
 import android.util.Size
-import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.VideoSource
@@ -200,6 +200,7 @@ class Camera2VideoSourceImpl(
                     .first()
 
                 val physicalSensorSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)!!
+
                 val focalInPixelsX: Float = focalLength * previewSize.imageWidth / physicalSensorSize.width
                 val focalInPixelsY: Float = focalLength * previewSize.imageHeight / physicalSensorSize.height
 
