@@ -23,6 +23,7 @@ ext {
     mapbox_sdk = '6.6.0'
     mapbox_location_layer = '0.8.2'
 
+    ktlint_version = '0.33.0'
     mannodermaus_junit5_version = '1.4.2.0'
     spek_version = '2.0.4'
     junit_5_version = '5.4.2'

@@ -14,4 +14,3 @@ interface ThreadHandler {
 
     fun isStarted(): Boolean
 }
-

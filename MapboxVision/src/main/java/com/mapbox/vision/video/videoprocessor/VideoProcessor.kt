@@ -202,7 +202,6 @@ internal interface VideoProcessor {
                     }
                 }
                 muxer.stop()
-
             } catch (e: IllegalStateException) {
                 VisionLogger.d(TAG, "The source video file is malformed")
                 return VideoClip(0f, 0f)

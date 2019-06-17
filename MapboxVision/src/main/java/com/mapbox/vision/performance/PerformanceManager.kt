@@ -90,7 +90,6 @@ internal interface PerformanceManager {
                                 ModelPerformanceRate.MEDIUM -> average(MINIMUM_SUPPORTED_WORKING_FPS, maxSupportedFps)
                                 ModelPerformanceRate.HIGH -> maxSupportedFps
                             }
-
                         }
                     }
 

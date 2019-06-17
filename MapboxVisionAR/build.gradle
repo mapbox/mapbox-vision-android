@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 apply from: "../gradle/versions.gradle"
 apply from: "../gradle/utils.gradle"
+apply from: "../gradle/ktlint.gradle"
 
 if (booleanProjectOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
     // publishing
@@ -57,6 +58,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    ktlint "com.pinterest:ktlint:$ktlint_version"
 
     if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
         api  project(path: ':CoreSdk')

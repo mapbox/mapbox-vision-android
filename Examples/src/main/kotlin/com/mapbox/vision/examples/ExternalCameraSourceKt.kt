@@ -146,7 +146,6 @@ class ExternalCameraSourceKt : AppCompatActivity() {
             } catch (e: RuntimeException) {
                 e.printStackTrace()
             }
-
         }
     }
 }

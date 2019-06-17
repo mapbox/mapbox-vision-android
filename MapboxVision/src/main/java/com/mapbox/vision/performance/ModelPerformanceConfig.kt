@@ -18,7 +18,7 @@ sealed class ModelPerformanceConfig {
      * Used if segmentation or detection can work with lower performance and power consumption is a concern.
      */
     data class Separate(
-            val segmentationPerformance: ModelPerformance,
-            val detectionPerformance: ModelPerformance
+        val segmentationPerformance: ModelPerformance,
+        val detectionPerformance: ModelPerformance
     ) : ModelPerformanceConfig()
 }

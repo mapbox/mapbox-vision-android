@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android-extensions'
 
 apply from: 'generate-token.gradle'
 
+apply from: "../gradle/ktlint.gradle"
+
 def envVarOrLocalProperty(String name) {
     if (System.getenv(name) != null) {
         return System.getenv(name)
@@ -69,6 +71,8 @@ dependencies {
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:$mapbox_navigation"
     implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:$mapbox_location_layer"
     implementation "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
+
+    ktlint "com.pinterest:ktlint:$ktlint_version"
 
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')?.toBoolean()) {
         implementation project(path: ':Vision')

@@ -41,7 +41,7 @@ import com.mapbox.vision.video.videosource.camera.VideoRecorder
 /**
  * The main object for registering for events from the SDK, starting and stopping their delivery.
  * It also provides some useful functions for performance configuration and data conversion.
- * 
+ *
  * Lifecycle of VisionManager :
  * 1. [create]
  * 2. [start]
@@ -382,4 +382,3 @@ object VisionManager : BaseVisionManager {
         delegate.unregisterModule(moduleInterface)
     }
 }
-
