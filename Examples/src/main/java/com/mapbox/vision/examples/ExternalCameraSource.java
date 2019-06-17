@@ -111,7 +111,7 @@ public class ExternalCameraSource extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        VisionManager.create();
+        VisionManager.create(customVideoSource);
         VisionManager.start(visionEventsListener);
         VisionManager.setVideoSourceListener(visionView);
     }
