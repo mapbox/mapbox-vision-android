@@ -44,7 +44,6 @@ class FileVideoSource(
 
     private var videoSourceListener: VideoSourceListener? = null
 
-
     private var currentVideo = -1
 
     override fun setProgress(timestampMillis: Long) {

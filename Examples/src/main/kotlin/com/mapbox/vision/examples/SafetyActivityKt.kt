@@ -83,7 +83,7 @@ class SafetyActivityKt : AppCompatActivity() {
 
         VisionManager.create()
         VisionManager.start(visionEventsListener)
-        VisionManager.setVideoSourceListener(vision_view);
+        VisionManager.setVideoSourceListener(vision_view)
 
         VisionSafetyManager.create(VisionManager, visionSafetyListener)
     }

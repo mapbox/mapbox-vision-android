@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.AttributeSet
 import android.widget.ImageView
-import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.R
+import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
@@ -42,7 +42,6 @@ constructor(
         typedArray.recycle()
     }
 
-
     private fun updateBitmap(rgbaBytes: ByteArray, imageSize: ImageSize) {
         val btm = bitmap
         if (btm == null || btm.width != imageSize.imageWidth || btm.height != imageSize.imageHeight) {
@@ -61,7 +60,7 @@ constructor(
             return
         }
 
-        val rgbaBytes = baseVisionManager?.getDetectionsImage(frameDetections);
+        val rgbaBytes = baseVisionManager?.getDetectionsImage(frameDetections)
         if (rgbaBytes?.isNotEmpty() == true) {
             updateBitmap(rgbaBytes, frameDetections.frame.image.size)
 
@@ -84,7 +83,7 @@ constructor(
             return
         }
 
-        val rgbaBytes = baseVisionManager?.getSegmentationImage(frameSegmentation);
+        val rgbaBytes = baseVisionManager?.getSegmentationImage(frameSegmentation)
         if (rgbaBytes?.isNotEmpty() == true) {
             updateBitmap(rgbaBytes, frameSegmentation.frame.image.size)
 

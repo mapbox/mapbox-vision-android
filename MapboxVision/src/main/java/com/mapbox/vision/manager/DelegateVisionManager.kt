@@ -247,5 +247,3 @@ internal interface DelegateVisionManager : BaseVisionManager {
         }
     }
 }
-
-
