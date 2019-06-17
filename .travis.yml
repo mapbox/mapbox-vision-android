@@ -29,13 +29,13 @@ jobs:
       jdk: oraclejdk8
       android:
         components:
-          - build-tools-26.0.1
-          - android-26
           - tools
+          - platform-tools
         licenses:
           - 'android-sdk-license-.+'
       before_install:
         - echo y | sdkmanager "platforms;android-28"
+        - echo y | sdkmanager "build-tools;28.0.3"
         - echo y | sdkmanager 'cmake;3.10.2.4988404'
       install:
         - source scripts/ci/install.sh
