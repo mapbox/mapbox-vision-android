@@ -52,4 +52,3 @@ object VisionSafetyManager : ModuleInterface {
         nativeSafetyManager.setCollisionMinSpeed(speed)
     }
 }
-

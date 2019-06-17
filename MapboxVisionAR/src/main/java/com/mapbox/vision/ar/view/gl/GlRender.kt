@@ -32,8 +32,8 @@ internal class GlRender(
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         // Set the background frame color
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0f)
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        GLES20.glDepthFunc(GLES20.GL_LEQUAL);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDepthFunc(GLES20.GL_LEQUAL)
 
         lane.onSurfaceChanged()
         background.onSurfaceChanged()
@@ -123,7 +123,7 @@ internal class GlRender(
         fun checkGlError(glOperation: String) {
             if (BuildConfig.DEBUG) {
                 var error = 0
-                while ({ error = GLES20.glGetError();error }() != GLES20.GL_NO_ERROR) {
+                while ({ error = GLES20.glGetError(); error }() != GLES20.GL_NO_ERROR) {
                     VisionLogger.d(TAG, "$glOperation: glError $error")
                     throw RuntimeException("$glOperation: glError $error")
                 }
