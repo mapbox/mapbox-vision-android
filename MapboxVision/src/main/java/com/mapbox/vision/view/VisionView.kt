@@ -103,7 +103,7 @@ constructor(
         }
 
         updateBitmap(rgbaBytes, imageSize)
-        handler.post {
+        handler?.post {
             setImageBitmap(bitmap)
         }
     }

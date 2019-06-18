@@ -8,6 +8,7 @@ import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import com.mapbox.vision.video.videoprocessor.VideoProcessorListener
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 internal interface SessionManager {
 
@@ -53,7 +54,7 @@ internal interface SessionManager {
 
         companion object {
             private const val VIDEO_BUFFERS_DIR = "Buffers"
-            private const val SESSION_LENGTH_MILLIS = 5 * 60 * 1000L
+            private val SESSION_LENGTH_MILLIS = TimeUnit.MINUTES.toMillis(5)
         }
 
         private val handler = WorkThreadHandler("Session")

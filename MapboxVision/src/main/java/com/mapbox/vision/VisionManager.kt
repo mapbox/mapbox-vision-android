@@ -2,6 +2,8 @@ package com.mapbox.vision
 
 import android.app.Application
 import android.content.ContentValues.TAG
+import android.os.Handler
+import android.os.Looper
 import com.mapbox.vision.VisionManager.create
 import com.mapbox.vision.VisionManager.destroy
 import com.mapbox.vision.VisionManager.start
@@ -14,7 +16,13 @@ import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
-import com.mapbox.vision.mobile.core.models.*
+import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.Country
+import com.mapbox.vision.mobile.core.models.DeviceMotionData
+import com.mapbox.vision.mobile.core.models.FrameSegmentation
+import com.mapbox.vision.mobile.core.models.FrameStatistics
+import com.mapbox.vision.mobile.core.models.HeadingData
+import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
@@ -68,6 +76,11 @@ object VisionManager : BaseVisionManager {
     private lateinit var videoRecorder: VideoRecorder
 
     private var isRecording = false
+
+    private val handlerMain = Handler(Looper.getMainLooper())
+
+    // TODO temporary fix, this should be moved to core
+    private var currentCountry: Country = Country.Unknown
 
     private val sensorsListener = object : SensorsListener {
         override fun onDeviceMotionData(deviceMotionData: DeviceMotionData) {
@@ -204,13 +217,17 @@ object VisionManager : BaseVisionManager {
         delegate.start(
             visionEventsListener
         ) { country ->
-            if (!isRecording) {
-                when (country) {
-                    Country.China -> {
-                        sessionManager.stop()
-                    }
-                    Country.Unknown, Country.USA, Country.Other -> {
-                        sessionManager.start()
+            handlerMain.post {
+                currentCountry = country
+
+                if (!isRecording) {
+                    when (country) {
+                        Country.China -> {
+                            sessionManager.stop()
+                        }
+                        Country.Unknown, Country.USA, Country.Other -> {
+                            sessionManager.start()
+                        }
                     }
                 }
             }
@@ -265,6 +282,12 @@ object VisionManager : BaseVisionManager {
         }
         sessionManager.stop()
 
+        isRecording = false
+
+        if (currentCountry == Country.China) {
+            return
+        }
+
         sessionManager = SessionManager.RotatedBuffersImpl(
             application,
             nativeVisionManager,
@@ -276,8 +299,6 @@ object VisionManager : BaseVisionManager {
         )
 
         sessionManager.start()
-
-        isRecording = false
     }
 
     /**
