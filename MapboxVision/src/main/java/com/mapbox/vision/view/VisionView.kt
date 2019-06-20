@@ -72,9 +72,7 @@ constructor(
                 }
             }
 
-            handler.post {
-                setImageBitmap(bitmapWithDetections)
-            }
+            post { setImageBitmap(bitmapWithDetections) }
         }
     }
 
@@ -87,9 +85,7 @@ constructor(
         if (rgbaBytes?.isNotEmpty() == true) {
             updateBitmap(rgbaBytes, frameSegmentation.frame.image.size)
 
-            handler.post {
-                setImageBitmap(bitmap)
-            }
+            post { setImageBitmap(bitmap) }
         }
     }
 
@@ -103,9 +99,7 @@ constructor(
         }
 
         updateBitmap(rgbaBytes, imageSize)
-        handler?.post {
-            setImageBitmap(bitmap)
-        }
+        post { setImageBitmap(bitmap) }
     }
 
     override fun onNewCameraParameters(cameraParameters: CameraParameters) = Unit
