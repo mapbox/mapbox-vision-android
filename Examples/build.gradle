@@ -4,28 +4,9 @@ apply plugin: 'kotlin-android-extensions'
 
 apply from: 'generate-token.gradle'
 
+apply from: "../gradle/utils.gradle"
+apply from: "../gradle/versions.gradle"
 apply from: "../gradle/ktlint.gradle"
-
-def envVarOrLocalProperty(String name) {
-    if (System.getenv(name) != null) {
-        return System.getenv(name)
-    }
-
-    Properties properties = new Properties()
-    def file = project.rootProject.file('local.properties')
-    if (file.exists()) {
-        properties.load(file.newDataInputStream())
-        def localProperty = properties.getProperty(name)
-        if (localProperty != null) {
-            return localProperty
-        }
-    }
-    return null
-}
-
-if (file("${rootDir}/gradle/versions.gradle").exists()) {
-    apply from: "${rootDir}/gradle/versions.gradle"
-}
 
 android {
     compileSdkVersion 28
@@ -73,7 +54,7 @@ dependencies {
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
-    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')?.toBoolean()) {
+    if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
         implementation project(path: ':Vision')
         implementation project(path: ':VisionAr')
         implementation project(path: ':VisionSafety')
@@ -84,7 +65,6 @@ dependencies {
         implementation "com.mapbox.vision:mapbox-android-vision:$vision"
         implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision_ar"
         implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision_safety"
-        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_safety"
     }
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
