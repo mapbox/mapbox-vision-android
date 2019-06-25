@@ -55,7 +55,6 @@ internal interface TelemetrySyncManager {
             videoQueue.clear()
             threadHandler.start()
             uploadInProgress.set(false)
-            uuidUtil.start()
         }
 
         override fun stop() {
@@ -63,7 +62,6 @@ internal interface TelemetrySyncManager {
                 return
             }
 
-            uuidUtil.stop()
             threadHandler.stop()
         }
 
