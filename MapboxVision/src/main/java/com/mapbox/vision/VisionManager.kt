@@ -15,6 +15,7 @@ import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
+import com.mapbox.vision.mobile.core.metrics.MetricsManager
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.account.AccountManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
@@ -76,6 +77,7 @@ object VisionManager : BaseVisionManager {
     private lateinit var locationEngine: LocationEngine
     private lateinit var sessionManager: SessionManager
     private lateinit var videoRecorder: VideoRecorder
+    private lateinit var metricsManager: MetricsManager
 
     private lateinit var mapboxTelemetry: MapboxTelemetry
 
@@ -152,6 +154,7 @@ object VisionManager : BaseVisionManager {
         this.application = application
         this.mapboxToken = mapboxToken
         PreferencesManager.appContext = application
+        metricsManager = MetricsManager.Impl(application)
     }
 
     /**
@@ -168,6 +171,7 @@ object VisionManager : BaseVisionManager {
         nativeVisionManager = NativeVisionManager(
             mapboxToken,
             AccountManager.Impl,
+            metricsManager,
             application
         )
 
@@ -245,6 +249,7 @@ object VisionManager : BaseVisionManager {
         sensorsManager.attach(sensorsListener)
         locationEngine.attach(nativeVisionManager)
         videoSource.attach(videoSourceListener)
+        metricsManager.attach()
     }
 
     /**
@@ -292,6 +297,7 @@ object VisionManager : BaseVisionManager {
 
         locationEngine.detach()
         sensorsManager.detach()
+        metricsManager.detach()
     }
 
     /**
