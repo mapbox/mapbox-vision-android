@@ -11,25 +11,15 @@ internal interface UuidHolder {
         private const val UUID_KEY = "uuid"
     }
 
-    fun start()
-    fun stop()
-
     class Impl(context: Context) : UuidHolder {
         private val prefs = context.getSharedPreferences(PREFS_UUID, Context.MODE_PRIVATE)
 
-        var uniqueId: String = ""
-            private set
-
-        override fun start() {
-            if (uniqueId.isBlank()) {
-                uniqueId = prefs.getString(UUID_KEY, null) ?: UUID.randomUUID().toString().also { uuid ->
-                    prefs.inTransaction {
-                        putString(UUID_KEY, uuid)
-                    }
+        val uniqueId: String by lazy {
+            prefs.getString(UUID_KEY, null) ?: UUID.randomUUID().toString().also { uuid ->
+                prefs.inTransaction {
+                    putString(UUID_KEY, uuid)
                 }
             }
         }
-
-        override fun stop() = Unit
     }
 }
