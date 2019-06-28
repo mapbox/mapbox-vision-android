@@ -69,10 +69,10 @@ class GlRender(
         )
 
         val laneParams = FloatArray(4 * 3)
-        laneParams.copyFrom(arLane.bezierCurve.p1.toGlCoordinate())
-        laneParams.copyFrom(arLane.bezierCurve.p2.toGlCoordinate(), destinationOffset = 3)
-        laneParams.copyFrom(arLane.bezierCurve.p3.toGlCoordinate(), destinationOffset = 6)
-        laneParams.copyFrom(arLane.bezierCurve.p4.toGlCoordinate(), destinationOffset = 9)
+        laneParams.copyFrom(arLane.bezierCurve.p1.toGlCoordinate(), endIndex = 3)
+        laneParams.copyFrom(arLane.bezierCurve.p2.toGlCoordinate(), destinationOffset = 3, endIndex = 3)
+        laneParams.copyFrom(arLane.bezierCurve.p3.toGlCoordinate(), destinationOffset = 6, endIndex = 3)
+        laneParams.copyFrom(arLane.bezierCurve.p4.toGlCoordinate(), destinationOffset = 9, endIndex = 3)
 
         val viewProjMatrix = camera.getViewProjectionMatrix()
         val modelMatrix = Matrix4()

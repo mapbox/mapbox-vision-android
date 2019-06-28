@@ -1,4 +1,4 @@
-## CustomArActivityKt
+## ArManeuverActivityKt
 
 Activity was create to provide developer experience and sample to create custom ***AR*** objects. 
 

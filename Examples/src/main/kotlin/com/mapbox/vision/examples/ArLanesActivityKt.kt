@@ -29,7 +29,6 @@ import kotlinx.android.synthetic.main.activity_ar_navigation.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.concurrent.TimeUnit
 
 class ArLanesActivityKt : AppCompatActivity(), RouteListener {
 
@@ -82,7 +81,6 @@ class ArLanesActivityKt : AppCompatActivity(), RouteListener {
             override fun onCameraUpdated(camera: Camera) {
             }
         })
-        VisionReplayManager.setProgress(TimeUnit.SECONDS.toMillis(30))
         VisionReplayManager.setModelPerformanceConfig(
             ModelPerformanceConfig.Merged(
                 performance = ModelPerformance.On(ModelPerformanceMode.FIXED, ModelPerformanceRate.LOW)
