@@ -11,7 +11,7 @@ Notes:
 - *isReplaying* flag defines in which mode Activity works
 - *replayPath* is a part of recorded telemetry(make sure it has right path otherwise application will crash). Should be
   filled when *isReplaying=true*
-- *ROUTE_DESTINATION* and *ROUTE_DESTINATION* are dummy point that should be filled by real coordinates.
+- *ROUTE_ORIGIN* and *ROUTE_DESTINATION* are dummy point that should be filled by real coordinates.
 - *FakeLocationEngine* is mocked LocationEngine for Replaying mode
   
 ## CustomArGlRender
