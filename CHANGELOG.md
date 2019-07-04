@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.1
+
+### Vision
+- Changed behaviour on simultaneous `VisionManager`
+ and `VisionReplayManager` instances creation to throwing an exception
+- Fixed wrong `CameraParams` in replay mode (reason for incorrect AR lane display)
+- Fixed possible crash on `VisionSafetyManager`/`VisionArManager` _create_/_destroy_
+
 ## v0.4.0
 
 ### Vision
