@@ -50,8 +50,8 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
     fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate?
     fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate?
-    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate
-    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate
+    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate?
+    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate?
 
     fun getFrameStatistics(): FrameStatistics
 
@@ -201,12 +201,12 @@ internal interface DelegateVisionManager : BaseVisionManager {
             return nativeVisionManagerBase.pixelToWorld(pixelCoordinate)
         }
 
-        override fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate {
+        override fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
             checkManagerStarted()
             return nativeVisionManagerBase.worldToGeo(worldCoordinate)
         }
 
-        override fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate {
+        override fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
             checkManagerStarted()
             return nativeVisionManagerBase.geoToWorld(geoCoordinate)
         }
