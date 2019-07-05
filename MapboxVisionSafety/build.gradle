@@ -81,8 +81,8 @@ dependencies {
         api project(path: ':Vision')
         api project(path: ':CoreSafety')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision:$vision_native"
-        implementation "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_native"
+        api "com.mapbox.vision:mapbox-android-vision:$vision_native"
+        api "com.mapbox.vision:mapbox-android-vision-safety-native:$vision_native"
     }
 }
 

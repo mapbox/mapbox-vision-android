@@ -79,10 +79,10 @@ dependencies {
     if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
         api  project(path: ':CoreSdk')
         api  project(path: ':Vision')
-        implementation  project(path: ':CoreAr')
+        api  project(path: ':CoreAr')
     } else {
         api "com.mapbox.vision:mapbox-android-vision:$vision_native"
-        api "com.mapbox.vision:mapbox-android-vision-ar-native:$vision_native"
+        api "com.mapbox.vision:mapbox-android-vision-ar-native:$vision_ar"
     }
 }
 
