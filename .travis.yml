@@ -24,6 +24,7 @@ jobs:
       stage: test
       os: linux
       language: android
+      dist: trusty
       name: MapboxVision / Android
       jdk: oraclejdk8
       android:
