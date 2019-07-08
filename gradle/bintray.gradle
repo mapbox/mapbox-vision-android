@@ -44,6 +44,14 @@ install {
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+    if (user == null || user.empty) {
+        throw new Exception("Bitnray user name is null or empty")
+    }
+    if (key == null || key.empty) {
+        throw new Exception("Bitnray apiKey is null or empry")
+    }
+
     configurations = ['archives']
 
     dryRun = project.hasProperty('bintrayDryRun') ? project.property('bintrayDryRun') : false // Whether to run this as dry-run, without deploying
