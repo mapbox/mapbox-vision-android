@@ -21,6 +21,7 @@ import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.Camera
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.position.VehicleState
+import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
@@ -63,16 +64,16 @@ class ArLanesActivityKt : AppCompatActivity(), RouteListener {
                 lanes_view.post {
                     lanes_view.setPoints(
                         leftLaneStart = VisionReplayManager.worldToPixel(
-                            VisionReplayManager.geoToWorld(LEFT_START)
+                            VisionReplayManager.geoToWorld(LEFT_START) ?: WorldCoordinate(.0, .0, .0)
                         ),
                         leftLaneEnd = VisionReplayManager.worldToPixel(
-                            VisionReplayManager.geoToWorld(LEFT_END)
+                            VisionReplayManager.geoToWorld(LEFT_END) ?: WorldCoordinate(.0, .0, .0)
                         ),
                         rightLaneStart = VisionReplayManager.worldToPixel(
-                            VisionReplayManager.geoToWorld(RIGHT_START)
+                            VisionReplayManager.geoToWorld(RIGHT_START) ?: WorldCoordinate(.0, .0, .0)
                         ),
                         rightLaneEnd = VisionReplayManager.worldToPixel(
-                            VisionReplayManager.geoToWorld(RIGHT_END)
+                            VisionReplayManager.geoToWorld(RIGHT_END) ?: WorldCoordinate(.0, .0, .0)
                         )
                     )
                 }
