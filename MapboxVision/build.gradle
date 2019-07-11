@@ -82,7 +82,6 @@ android {
     defaultConfig {
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
-        versionCode project.property('versionCode').toInteger()
         versionName project.property('versionName')
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
