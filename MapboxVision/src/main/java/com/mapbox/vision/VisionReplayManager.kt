@@ -30,7 +30,7 @@ import java.io.File
 
 /**
  * [VisionReplayManager] is a counterpart of [VisionManager] that uses recorded video and telemetry instead of realtime data.
- * Use it to debug and test functions that use Vision in a development environment before testing in a vehicle.
+ * Use it to debug and test functions that use Vision in a development environment before testing on a road.
  * Use it in the same workflow you use [VisionManager] after creating it with specific recorded session.
  *
  * Important : use this class only for debugging purposes.
@@ -186,7 +186,7 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Converts the location of the point from a world coordinate to a screen coordinate.
+     * Converts the location of the point from a world coordinate to a frame coordinate.
      * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
     @JvmStatic
@@ -195,7 +195,7 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Converts the location of the point from a screen coordinate to a world coordinate.
+     * Converts the location of the point from a frame coordinate to a world coordinate.
      * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
     @JvmStatic

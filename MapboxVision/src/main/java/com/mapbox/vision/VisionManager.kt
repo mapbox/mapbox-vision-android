@@ -349,7 +349,7 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Converts the location of the point from a world coordinate to a screen coordinate.
+     * Converts the location of the point from a world coordinate to a frame coordinate.
      * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
     @JvmStatic
@@ -358,7 +358,7 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Converts the location of the point from a screen coordinate to a world coordinate.
+     * Converts the location of the point from a frame coordinate to a world coordinate.
      * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
     @JvmStatic
