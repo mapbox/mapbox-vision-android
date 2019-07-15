@@ -1,15 +1,22 @@
 package com.mapbox.vision.examples;
 
-import android.annotation.SuppressLint;
 import android.location.Location;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.mapbox.android.core.location.LocationEngine;
-import com.mapbox.android.core.location.LocationEngineListener;
-import com.mapbox.android.core.location.LocationEnginePriority;
+import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
-import com.mapbox.api.directions.v5.models.*;
+import com.mapbox.android.core.location.LocationEngineRequest;
+import com.mapbox.android.core.location.LocationEngineResult;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
+import com.mapbox.api.directions.v5.models.LegStep;
+import com.mapbox.api.directions.v5.models.RouteLeg;
+import com.mapbox.api.directions.v5.models.StepIntersection;
 import com.mapbox.geojson.Point;
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOptions;
@@ -39,19 +46,22 @@ import com.mapbox.vision.performance.ModelPerformance.On;
 import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
+
 import org.jetbrains.annotations.NotNull;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import timber.log.Timber;
 
 /**
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
-public class ArActivity extends AppCompatActivity implements LocationEngineListener, RouteListener, ProgressChangeListener, OffRouteListener {
+public class ArActivity extends AppCompatActivity implements RouteListener, ProgressChangeListener, OffRouteListener {
 
     // Handles navigation.
     private MapboxNavigation mapboxNavigation;
@@ -60,6 +70,8 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
     private RouteProgress lastRouteProgress;
     private DirectionsRoute directionsRoute;
     private LocationEngine arLocationEngine;
+    private LocationEngineRequest arLocationEngineRequest;
+    private LocationEngineCallback<LocationEngineResult> locationCallback;
 
     // This dummy points will be used to build route. For real world test this needs to be changed to real values for
     // source and target locations.
@@ -75,25 +87,37 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         mapboxNavigation = new MapboxNavigation(
                 this,
                 getString(R.string.mapbox_access_token),
-                MapboxNavigationOptions.builder().enableOffRouteDetection(true).build()
+                MapboxNavigationOptions.builder().build()
         );
 
         // Initialize route fetcher with your Mapbox access token.
         routeFetcher = new RouteFetcher(this, getString(R.string.mapbox_access_token));
         routeFetcher.addRouteListener(this);
 
-        LocationEngineProvider provider = new LocationEngineProvider(this);
-        arLocationEngine = provider.obtainBestLocationEngineAvailable();
-        arLocationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
-        arLocationEngine.setInterval(0);
-        arLocationEngine.setFastestInterval(1000);
+        arLocationEngine = LocationEngineProvider.getBestLocationEngine(this);
+        arLocationEngineRequest = new LocationEngineRequest.Builder(0)
+                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                .setFastestInterval(1000)
+                .build();
+        locationCallback = new LocationEngineCallback<LocationEngineResult>() {
+            @Override
+            public void onSuccess(LocationEngineResult result) {}
+
+            @Override
+            public void onFailure(@NonNull Exception exception) {}
+        };
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        arLocationEngine.activate();
-        arLocationEngine.addLocationEngineListener(this);
+
+        try {
+            arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, getMainLooper());
+        } catch (SecurityException se) {
+            Timber.d(se.toString());
+        }
 
         initDirectionsRoute();
 
@@ -185,22 +209,11 @@ public class ArActivity extends AppCompatActivity implements LocationEngineListe
         VisionManager.stop();
         VisionManager.destroy();
 
-        arLocationEngine.removeLocationUpdates();
-        arLocationEngine.removeLocationEngineListener((LocationEngineListener) this);
-        arLocationEngine.deactivate();
+        arLocationEngine.removeLocationUpdates(locationCallback);
 
         mapboxNavigation.removeProgressChangeListener(this);
         mapboxNavigation.removeOffRouteListener(this);
         mapboxNavigation.stopNavigation();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {}
-
-    @Override
-    @SuppressLint({"MissingPermission"})
-    public void onConnected() {
-        arLocationEngine.requestLocationUpdates();
     }
 
     @Override
