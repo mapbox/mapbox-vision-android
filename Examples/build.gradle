@@ -69,7 +69,6 @@ dependencies {
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapbox_sdk"
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:$mapbox_navigation"
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation-ui:$mapbox_navigation"
-    implementation "com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:$mapbox_location_layer"
     implementation "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
