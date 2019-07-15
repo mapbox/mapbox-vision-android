@@ -46,6 +46,7 @@ import com.mapbox.vision.performance.ModelPerformance.On;
 import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
+import com.mapbox.vision.utils.VisionLogger;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -55,13 +56,14 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import timber.log.Timber;
 
 /**
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
 public class ArActivity extends AppCompatActivity implements RouteListener, ProgressChangeListener, OffRouteListener {
+
+    private static final String TAG = ArActivity.class.getSimpleName();
 
     // Handles navigation.
     private MapboxNavigation mapboxNavigation;
@@ -116,7 +118,7 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
         try {
             arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, getMainLooper());
         } catch (SecurityException se) {
-            Timber.d(se.toString());
+            VisionLogger.Companion.e(TAG, se.toString());
         }
 
         initDirectionsRoute();

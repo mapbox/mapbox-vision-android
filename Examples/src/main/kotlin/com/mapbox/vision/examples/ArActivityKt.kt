@@ -29,17 +29,21 @@ import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
+import com.mapbox.vision.utils.VisionLogger
 import kotlinx.android.synthetic.main.activity_ar_navigation.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import timber.log.Timber
 
 /**
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
 class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
+
+    companion object {
+        private var TAG = ArActivityKt::class.java.simpleName
+    }
 
     // Handles navigation.
     private lateinit var mapboxNavigation: MapboxNavigation
@@ -93,7 +97,7 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
         try {
             arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, mainLooper)
         } catch (se: SecurityException) {
-            Timber.d(se.toString())
+            VisionLogger.e(TAG, se.toString())
         }
 
         initDirectionsRoute()
