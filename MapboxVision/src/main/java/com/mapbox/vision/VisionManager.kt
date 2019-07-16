@@ -1,7 +1,6 @@
 package com.mapbox.vision
 
 import android.app.Application
-import android.content.ContentValues.TAG
 import android.os.Handler
 import android.os.Looper
 import com.mapbox.vision.VisionManager.create
@@ -29,6 +28,7 @@ import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
+import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
 import com.mapbox.vision.mobile.core.utils.preferences.PreferencesManager
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
@@ -105,6 +105,9 @@ object VisionManager : BaseVisionManager {
     }
 
     private val videoSourceListener = object : VideoSourceListener {
+
+        private var cachedCameraParameters: CameraParameters? = null
+
         override fun onNewFrame(
             rgbaBytes: ByteArray,
             imageFormat: ImageFormat,
@@ -116,10 +119,19 @@ object VisionManager : BaseVisionManager {
                 width = imageSize.imageWidth,
                 height = imageSize.imageHeight
             )
+            cachedCameraParameters?.let { camParam ->
+                nativeVisionManager.setCameraParameters(
+                    width = camParam.width,
+                    height = camParam.height,
+                    focalXPixels = camParam.focalInPixelsX,
+                    focalYPixels = camParam.focalInPixelsY
+                )
+            }
             delegate.externalVideoSourceListener?.onNewFrame(rgbaBytes, imageFormat, imageSize)
         }
 
         override fun onNewCameraParameters(cameraParameters: CameraParameters) {
+            cachedCameraParameters = cameraParameters
             nativeVisionManager.setCameraParameters(
                 width = cameraParameters.width,
                 height = cameraParameters.height,
@@ -200,7 +212,7 @@ object VisionManager : BaseVisionManager {
     fun start(visionEventsListener: VisionEventsListener) {
         delegate.checkManagerCreated()
         if (delegate.isStarted) {
-            VisionLogger.e(TAG, "VisionManager was already started.")
+            VisionLogger.e(TAG_CLASS, "VisionManager was already started.")
             return
         }
 
@@ -252,7 +264,7 @@ object VisionManager : BaseVisionManager {
     @JvmStatic
     fun startRecording(path: String) {
         if (isRecording) {
-            VisionLogger.e(TAG, "Recording was already started.")
+            VisionLogger.e(TAG_CLASS, "Recording was already started.")
             return
         }
         isRecording = true
@@ -277,7 +289,7 @@ object VisionManager : BaseVisionManager {
     @JvmStatic
     fun stopRecording() {
         if (!isRecording) {
-            VisionLogger.e(TAG, "Recording was not started.")
+            VisionLogger.e(TAG_CLASS, "Recording was not started.")
             return
         }
         sessionManager.stop()
@@ -310,7 +322,7 @@ object VisionManager : BaseVisionManager {
     @JvmStatic
     fun stop() {
         if (!delegate.isCreated || !delegate.isStarted) {
-            VisionLogger.e(TAG, "VisionManager was not created yet.")
+            VisionLogger.e(TAG_CLASS, "VisionManager was not created yet.")
             return
         }
         sessionManager.stop()
@@ -330,7 +342,7 @@ object VisionManager : BaseVisionManager {
     @JvmStatic
     fun destroy() {
         if (!delegate.isCreated) {
-            VisionLogger.e(TAG, "VisionManager wasn't created, nothing to destroy.")
+            VisionLogger.e(TAG_CLASS, "VisionManager wasn't created, nothing to destroy.")
             return
         }
 
