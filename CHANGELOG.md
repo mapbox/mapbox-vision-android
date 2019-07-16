@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.4.2
+
 - Fixed wrong objects' location send to server
 
 ## v0.4.1
