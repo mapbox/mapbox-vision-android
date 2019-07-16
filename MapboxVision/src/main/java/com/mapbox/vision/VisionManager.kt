@@ -119,27 +119,25 @@ object VisionManager : BaseVisionManager {
                 width = imageSize.imageWidth,
                 height = imageSize.imageHeight
             )
-            cachedCameraParameters?.let { camParam ->
+            cachedCameraParameters?.let {
                 nativeVisionManager.setCameraParameters(
-                    width = camParam.width,
-                    height = camParam.height,
-                    focalXPixels = camParam.focalInPixelsX,
-                    focalYPixels = camParam.focalInPixelsY
+                    width = it.width,
+                    height = it.height,
+                    focalXPixels = it.focalInPixelsX,
+                    focalYPixels = it.focalInPixelsY
                 )
             }
             delegate.externalVideoSourceListener?.onNewFrame(rgbaBytes, imageFormat, imageSize)
         }
 
         override fun onNewCameraParameters(cameraParameters: CameraParameters) {
-            with(cameraParameters){
-                cachedCameraParameters = this
-                nativeVisionManager.setCameraParameters(
-                    width = width,
-                    height = height,
-                    focalXPixels = focalInPixelsX,
-                    focalYPixels = focalInPixelsY
-                )
-            }
+            cachedCameraParameters = cameraParameters
+            nativeVisionManager.setCameraParameters(
+                width = cameraParameters.width,
+                height = cameraParameters.height,
+                focalXPixels = cameraParameters.focalInPixelsX,
+                focalYPixels = cameraParameters.focalInPixelsY
+            )
             delegate.externalVideoSourceListener?.onNewCameraParameters(cameraParameters)
         }
     }
