@@ -4,12 +4,13 @@ import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
 import android.os.Environment
+import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.mapbox.android.core.location.LocationEngine
-import com.mapbox.android.core.location.LocationEngineListener
-import com.mapbox.android.core.location.LocationEnginePriority
+import com.mapbox.android.core.location.LocationEngineCallback
 import com.mapbox.android.core.location.LocationEngineProvider
+import com.mapbox.android.core.location.LocationEngineRequest
+import com.mapbox.android.core.location.LocationEngineResult
 import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.Point
@@ -40,7 +41,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import timber.log.Timber
 
-class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineListener, OffRouteListener,
+@SuppressLint("MissingPermission")
+class ArManeuverActivityKt : AppCompatActivity(), RouteListener/*, LocationEngineListener*/, OffRouteListener,
     ProgressChangeListener {
 
     private val modelPerformanceConfig = ModelPerformanceConfig.Merged(
@@ -55,7 +57,7 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
         MapboxNavigation(
             this,
             getString(R.string.mapbox_access_token),
-            MapboxNavigationOptions.builder().enableOffRouteDetection(true).build(),
+            MapboxNavigationOptions.builder().enableRefreshRoute(true).build(),
             arLocationEngine
         )
     }
@@ -64,18 +66,22 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
         RouteFetcher(this, getString(R.string.mapbox_access_token))
     }
 
-    private val arLocationEngine: LocationEngine by lazy(LazyThreadSafetyMode.NONE) {
+    private val arLocationEngine by lazy(LazyThreadSafetyMode.NONE) {
         if (isReplaying) {
             FakeLocationEngine()
         } else {
-            val provider = LocationEngineProvider(this)
-            provider.obtainBestLocationEngineAvailable().also {
-                it.priority = LocationEnginePriority.HIGH_ACCURACY
-                it.interval = 0
-                it.fastestInterval = 1000
-            }
+            LocationEngineProvider.getBestLocationEngine(this)
         }
     }
+
+    private val locationCallback by lazy {
+        object : LocationEngineCallback<LocationEngineResult> {
+            override fun onSuccess(result: LocationEngineResult?) {}
+
+            override fun onFailure(exception: Exception) {}
+        }
+    }
+
     private lateinit var directionsRoute: DirectionsRoute
     private lateinit var lastRouteProgress: RouteProgress
 
@@ -86,7 +92,7 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
     // Path to the recorded session
     private val REPLAY_PATH = "${Environment.getExternalStorageDirectory().path}/Telemetry/Replays/"
 
-    private val isReplaying = true
+    private val isReplaying = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,8 +101,6 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
 
     override fun onResume() {
         super.onResume()
-
-        arLocationEngine.addLocationEngineListener(this)
 
         initDirectionsRoute()
 
@@ -125,6 +129,15 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
 
             VisionArManager.create(VisionReplayManager, custom_ar_view)
         } else {
+
+            arLocationEngine.requestLocationUpdates(
+                LocationEngineRequest.Builder(0)
+                    .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                    .setFastestInterval(1000)
+                    .build(),
+                locationCallback,
+                Looper.getMainLooper()
+            )
             // Create and start VisionManager.
             VisionManager.create()
             VisionManager.setModelPerformanceConfig(modelPerformanceConfig)
@@ -169,9 +182,8 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
             VisionManager.destroy()
         }
 
-        arLocationEngine.removeLocationUpdates()
-        arLocationEngine.removeLocationEngineListener(this)
-        arLocationEngine.deactivate()
+        // arLocationEngine.requestLocationUpdates()
+        arLocationEngine.removeLocationUpdates(locationCallback)
 
         mapboxNavigation.removeProgressChangeListener(this)
         mapboxNavigation.removeOffRouteListener(this)
@@ -216,12 +228,12 @@ class ArManeuverActivityKt : AppCompatActivity(), RouteListener, LocationEngineL
     }
 
     // LocationEngineListener
-    override fun onLocationChanged(location: Location?) = Unit
-
-    @SuppressLint("MissingPermission")
-    override fun onConnected() {
-        arLocationEngine.requestLocationUpdates()
-    }
+    // override fun onLocationChanged(location: Location?) = Unit
+    //
+    // @SuppressLint("MissingPermission")
+    // override fun onConnected() {
+    //     arLocationEngine.requestLocationUpdates()
+    // }
     // \LocationEngineListener
 
     // OffRouteListener \
