@@ -131,13 +131,15 @@ object VisionManager : BaseVisionManager {
         }
 
         override fun onNewCameraParameters(cameraParameters: CameraParameters) {
-            cachedCameraParameters = cameraParameters
-            nativeVisionManager.setCameraParameters(
-                width = cameraParameters.width,
-                height = cameraParameters.height,
-                focalXPixels = cameraParameters.focalInPixelsX,
-                focalYPixels = cameraParameters.focalInPixelsY
-            )
+            with(cameraParameters){
+                cachedCameraParameters = this
+                nativeVisionManager.setCameraParameters(
+                    width = width,
+                    height = height,
+                    focalXPixels = focalInPixelsX,
+                    focalYPixels = focalInPixelsY
+                )
+            }
             delegate.externalVideoSourceListener?.onNewCameraParameters(cameraParameters)
         }
     }
