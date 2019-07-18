@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0
+
+### Vision
+- Added support for UK country
+- Added method _Lane.contains(worldCoordinate: WorldCoordinate)_
+- Added methods _WorldDescription.getObjectsInLane(lane: Lane)_ and _getObjectsOfClass(detectionClass: DetectionClass)_
+- Changed implementation of lane detector: it has better quality and improved energy efficiency. Only one ego lane is detected right now
+- Changed World-Pixel transformation methods to return optional values
+- Changed World-Geo transformation methods to return optional values
+- Fixed session recording bug when camera parameters where not recorded. 
+
 ## v0.4.2
 
 - Fixed wrong objects' location send to server
