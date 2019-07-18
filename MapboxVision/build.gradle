@@ -105,9 +105,9 @@ dependencies {
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
     if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        implementation project(path: ':CoreSdk')
+        api project(path: ':CoreSdk')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
+        api "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
     }
 
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"

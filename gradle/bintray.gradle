@@ -54,9 +54,9 @@ bintray {
 
     configurations = ['archives']
 
-    dryRun = project.hasProperty('bintrayDryRun') ? project.property('bintrayDryRun') : false // Whether to run this as dry-run, without deploying
-    publish = project.hasProperty('bintrayPublish') ? project.property('bintrayPublish') : false // Whether version should be auto published after an upload
-    override = project.hasProperty('bintrayOverride') ? project.property('bintrayOverride') : false // Whether to override version artifacts already published
+    dryRun = project.hasProperty('bintrayDryRun') ? project.property('bintrayDryRun').toBoolean() : true // run as dry-run, without deploying
+    publish = project.hasProperty('bintrayPublish') ? project.property('bintrayPublish').toBoolean() : false // auto publish after an upload
+    override = project.hasProperty('bintrayOverride') ? project.property('bintrayOverride').toBoolean() : false // override published versions
 
     pkg {
         userOrg = project.property('mapboxArtifactUserOrg')
