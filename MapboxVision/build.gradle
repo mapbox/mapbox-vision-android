@@ -2,26 +2,16 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: "de.mannodermaus.android-junit5"
 
-def envVarOrLocalProperty(String name) {
-    if (System.getenv(name) != null) {
-        return System.getenv(name).toBoolean()
-    }
+apply from: "../gradle/versions.gradle"
+apply from: "../gradle/utils.gradle"
+apply from: "../gradle/ktlint.gradle"
 
-    Properties properties = new Properties()
-    def file = project.rootProject.file('local.properties')
-    if (file.exists()) {
-        properties.load(file.newDataInputStream())
-        def isLocalDevelopment = properties.getProperty(name)
-        if (isLocalDevelopment != null) {
-            return isLocalDevelopment.toBoolean()
-        }
-    }
-    return false
-}
+if (booleanProjectOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
+    // publishing
+    apply from: "../gradle/bintray.gradle"
 
-if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
+    // documentation
     apply plugin: 'org.jetbrains.dokka-android'
-
     dokka {
         moduleName = 'mapbox-vision'
         outputDirectory = "$buildDir/javadoc"
@@ -63,16 +53,6 @@ if (envVarOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
             suppress = false
         }
     }
-}
-
-if (file("${rootDir}/gradle/versions.gradle").exists()) {
-    apply from: "${rootDir}/gradle/versions.gradle"
-}
-if (file("${rootDir}/gradle/maven-settings.gradle").exists()) {
-    apply from: "${rootDir}/gradle/maven-settings.gradle"
-}
-if (file("${rootDir}/gradle/bintray.gradle").exists()) {
-    apply from: "${rootDir}/gradle/bintray.gradle"
 }
 
 android {
@@ -122,10 +102,12 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    if (envVarOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        implementation project(path: ':CoreSdk')
+    ktlint "com.pinterest:ktlint:$ktlint_version"
+
+    if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
+        api project(path: ':CoreSdk')
     } else {
-        implementation "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
+        api "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
     }
 
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"

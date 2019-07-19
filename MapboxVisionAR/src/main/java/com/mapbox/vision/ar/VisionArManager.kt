@@ -45,4 +45,3 @@ object VisionArManager : ModuleInterface {
         nativeArManager.setLaneLength(laneLength)
     }
 }
-

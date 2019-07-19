@@ -50,7 +50,6 @@ class DetectionDrawerImpl : DetectionDrawer {
 
             textPaint.color = typeModel.color
             bitmapCanvas.drawText(typeModel.typeName, bbox.left, (bbox.top - textOffset), textPaint)
-
         }
     }
 

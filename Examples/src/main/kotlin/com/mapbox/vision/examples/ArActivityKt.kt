@@ -1,14 +1,13 @@
 package com.mapbox.vision.examples
 
-import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
-import com.mapbox.android.core.location.LocationEngine
-import com.mapbox.android.core.location.LocationEngineListener
-import com.mapbox.android.core.location.LocationEnginePriority
+import androidx.appcompat.app.AppCompatActivity
+import com.mapbox.android.core.location.LocationEngineCallback
 import com.mapbox.android.core.location.LocationEngineProvider
+import com.mapbox.android.core.location.LocationEngineRequest
+import com.mapbox.android.core.location.LocationEngineResult
 import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.Point
@@ -30,6 +29,7 @@ import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
+import com.mapbox.vision.utils.VisionLogger
 import kotlinx.android.synthetic.main.activity_ar_navigation.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -39,8 +39,11 @@ import retrofit2.Response
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
-class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener, ProgressChangeListener,
-    OffRouteListener {
+class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
+
+    companion object {
+        private var TAG = ArActivityKt::class.java.simpleName
+    }
 
     // Handles navigation.
     private lateinit var mapboxNavigation: MapboxNavigation
@@ -48,7 +51,25 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
     private lateinit var routeFetcher: RouteFetcher
     private lateinit var lastRouteProgress: RouteProgress
     private lateinit var directionsRoute: DirectionsRoute
-    private lateinit var arLocationEngine: LocationEngine
+
+    private val arLocationEngine by lazy {
+        LocationEngineProvider.getBestLocationEngine(this)
+    }
+
+    private val arLocationEngineRequest by lazy {
+        LocationEngineRequest.Builder(0)
+                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                .setFastestInterval(1000)
+                .build()
+    }
+
+    private val locationCallback by lazy {
+        object : LocationEngineCallback<LocationEngineResult> {
+            override fun onSuccess(result: LocationEngineResult?) {}
+
+            override fun onFailure(exception: Exception) {}
+        }
+    }
 
     // This dummy points will be used to build route. For real world test this needs to be changed to real values for
     // source and target locations.
@@ -61,25 +82,23 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
 
         // Initialize navigation with your Mapbox access token.
         mapboxNavigation = MapboxNavigation(
-            this,
-            getString(R.string.mapbox_access_token),
-            MapboxNavigationOptions.builder().enableOffRouteDetection(true).build()
+                this,
+                getString(R.string.mapbox_access_token),
+                MapboxNavigationOptions.builder().build()
         )
 
         // Initialize route fetcher with your Mapbox access token.
         routeFetcher = RouteFetcher(this, getString(R.string.mapbox_access_token))
         routeFetcher.addRouteListener(this)
-
-        val provider = LocationEngineProvider(this)
-        arLocationEngine = provider.obtainBestLocationEngineAvailable()
-        arLocationEngine.priority = LocationEnginePriority.HIGH_ACCURACY
-        arLocationEngine.interval = 0
-        arLocationEngine.fastestInterval = 1000
     }
 
     override fun onResume() {
         super.onResume()
-        arLocationEngine.addLocationEngineListener(this)
+        try {
+            arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, mainLooper)
+        } catch (se: SecurityException) {
+            VisionLogger.e(TAG, se.toString())
+        }
 
         initDirectionsRoute()
 
@@ -143,20 +162,11 @@ class ArActivityKt : AppCompatActivity(), LocationEngineListener, RouteListener,
         VisionManager.stop()
         VisionManager.destroy()
 
-        arLocationEngine.removeLocationUpdates()
-        arLocationEngine.removeLocationEngineListener(this as LocationEngineListener)
-        arLocationEngine.deactivate()
+        arLocationEngine.removeLocationUpdates(locationCallback)
 
         mapboxNavigation.removeProgressChangeListener(this)
         mapboxNavigation.removeOffRouteListener(this)
         mapboxNavigation.stopNavigation()
-    }
-
-    override fun onLocationChanged(location: Location) {}
-
-    @SuppressLint("MissingPermission")
-    override fun onConnected() {
-        arLocationEngine.requestLocationUpdates()
     }
 
     override fun onErrorReceived(throwable: Throwable?) {

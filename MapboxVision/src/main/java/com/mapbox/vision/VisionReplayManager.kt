@@ -1,6 +1,10 @@
 package com.mapbox.vision
 
 import android.content.ContentValues.TAG
+import com.mapbox.vision.VisionReplayManager.create
+import com.mapbox.vision.VisionReplayManager.destroy
+import com.mapbox.vision.VisionReplayManager.start
+import com.mapbox.vision.VisionReplayManager.stop
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
@@ -24,6 +28,20 @@ import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.file.FileVideoSource
 import java.io.File
 
+/**
+ * [VisionReplayManager] is a counterpart of [VisionManager] that uses recorded video and telemetry instead of realtime data.
+ * Use it to debug and test functions that use Vision in a development environment before testing on a road.
+ * Use it in the same workflow you use [VisionManager] after creating it with specific recorded session.
+ *
+ * Important : use this class only for debugging purposes.
+ * Do NOT use session replay in production application.
+ *
+ * Lifecycle of VisionReplayManager :
+ * 1. [create]
+ * 2. [start]
+ * 5. [stop], then lifecycle may proceed with [destroy] or [start]
+ * 6. [destroy]
+ */
 object VisionReplayManager : BaseVisionManager {
 
     object DummyImageSaver : TelemetryImageSaver {
@@ -69,8 +87,11 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Initialize SDK. Creates core services and allocates necessary resources.
-     * No-op if called while SDK is created already.
+     * Fabric method for creating a [VisionReplayManager] instance.
+     * Do NOT call this method more than once.
+     * It's only allowed to have one living instance of [VisionReplayManager] or [VisionManager].
+     * To create [VisionReplayManager] with a different configuration call [destroy] on existing instance or release all references to it.
+     * @param path: Path where session was recorded with [startRecording].
      */
     @JvmStatic
     fun create(path: String) {
@@ -108,9 +129,9 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Start delivering events from SDK.
-     * Should be called with all permission granted, and after [create] is called.
-     * No-op if called while SDK is started already.
+     * Start delivering events from [VisionReplayManager].
+     * Do NOT call this method more than once or after [destroy] is called.
+     * @param visionEventsListener: listener for [VisionReplayManager].
      */
     @JvmStatic
     fun start(visionEventsListener: VisionEventsListener) {
@@ -125,10 +146,8 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Stop delivering events from SDK.
-     * Stops ML processing and video source.
-     * To resume call [start] again.
-     * No-op if called while SDK is not created or started.
+     * Stop delivering events from [VisionReplayManager].
+     * Do NOT call this method more than once or before [start] or after [destroy] is called.
      */
     @JvmStatic
     fun stop() {
@@ -142,8 +161,8 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Releases all resources.
-     * No-op if called while SDK is not created.
+     * Clean up the state and resources of [VisionReplayManager].
+     * Do NOT call this method more than once.
      */
     @JvmStatic
     fun destroy() {
@@ -166,23 +185,37 @@ object VisionReplayManager : BaseVisionManager {
         delegate.setModelPerformanceConfig(modelPerformanceConfig)
     }
 
+    /**
+     * Converts the location of the point from a world coordinate to a frame coordinate.
+     * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
+     */
     @JvmStatic
-    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate {
+    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
         return delegate.worldToPixel(worldCoordinate)
     }
 
+    /**
+     * Converts the location of the point from a frame coordinate to a world coordinate.
+     * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
+     */
     @JvmStatic
-    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate {
+    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
+    /**
+     * Converts the location of the point in a world coordinate to a geographical coordinate.
+     */
     @JvmStatic
-    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate {
+    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
         return delegate.worldToGeo(worldCoordinate)
     }
 
+    /**
+     * Converts the location of the point from a geographical coordinate to a world coordinate.
+     */
     @JvmStatic
-    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate {
+    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
         return delegate.geoToWorld(geoCoordinate)
     }
 
@@ -207,4 +240,3 @@ object VisionReplayManager : BaseVisionManager {
         delegate.unregisterModule(moduleInterface)
     }
 }
-

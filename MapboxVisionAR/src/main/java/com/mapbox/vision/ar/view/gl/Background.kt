@@ -6,8 +6,8 @@ import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 
 internal class Background(
-        private val texWidth: Int,
-        private val texHeight: Int
+    private val texWidth: Int,
+    private val texHeight: Int
 ) : GlRender.OnSurfaceChangedListener {
 
     companion object {
@@ -73,10 +73,10 @@ void main()
         val vertexShader = GlRender.loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER)
         val fragmentShader = GlRender.loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER)
 
-        mProgram = GLES20.glCreateProgram()             // create empty OpenGL Program
-        GLES20.glAttachShader(mProgram, vertexShader)   // add the vertex shader to program
+        mProgram = GLES20.glCreateProgram() // create empty OpenGL Program
+        GLES20.glAttachShader(mProgram, vertexShader) // add the vertex shader to program
         GLES20.glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram)                  // create OpenGL program executables
+        GLES20.glLinkProgram(mProgram) // create OpenGL program executables
         GlRender.checkGlError("ArBackground -> mProgram")
 
         textureHandler = createTexture()
@@ -132,7 +132,7 @@ void main()
 
         updateTexture()
 
-        val uTextureHandle = GLES20.glGetUniformLocation(mProgram, "uTexture");
+        val uTextureHandle = GLES20.glGetUniformLocation(mProgram, "uTexture")
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandler)
         GLES20.glUniform1i(uTextureHandle, 0)

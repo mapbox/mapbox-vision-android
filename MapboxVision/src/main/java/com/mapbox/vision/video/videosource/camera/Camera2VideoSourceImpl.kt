@@ -251,6 +251,5 @@ class Camera2VideoSourceImpl(
 
             return ImageSize(size.width, size.height)
         }
-
     }
 }

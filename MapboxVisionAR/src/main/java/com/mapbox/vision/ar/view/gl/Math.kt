@@ -5,15 +5,15 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 internal class Rotation(
-        var pitch: Float,
-        var roll: Float,
-        var yaw: Float
+    var pitch: Float,
+    var roll: Float,
+    var yaw: Float
 )
 
 internal class Vector3(
-        val x: Float = 0f,
-        val y: Float = 0f,
-        val z: Float = 0f
+    val x: Float = 0f,
+    val y: Float = 0f,
+    val z: Float = 0f
 )
 
 internal class Matrix3 {
@@ -55,9 +55,9 @@ internal class Matrix3 {
         val fDet = m[0, 0] * rkInverse[0, 0] + m[0, 1] * rkInverse[1, 0] + m[0, 2] * rkInverse[2, 0]
 
         if (Math.abs(fDet) <= 1e-06)
-            return m;
+            return m
 
-        val fInvDet = 1.0f / 1e-06;
+        val fInvDet = 1.0f / 1e-06
         for (iRow in 0 until 3) {
             for (iCol in 0 until 3)
                 rkInverse[iRow, iCol] = rkInverse[iRow, iCol] * fInvDet.toFloat()
@@ -159,4 +159,3 @@ internal class Matrix4 {
 }
 
 internal fun directByteBufferOf(capacity: Int) = ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder())
-

@@ -87,7 +87,7 @@ class ExternalCameraSourceKt : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        VisionManager.create()
+        VisionManager.create(customVideoSource)
         VisionManager.start(visionEventsListener)
         VisionManager.setVideoSourceListener(vision_view)
     }
@@ -146,7 +146,6 @@ class ExternalCameraSourceKt : AppCompatActivity() {
             } catch (e: RuntimeException) {
                 e.printStackTrace()
             }
-
         }
     }
 }

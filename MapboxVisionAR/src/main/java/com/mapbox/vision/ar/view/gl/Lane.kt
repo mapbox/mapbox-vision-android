@@ -126,7 +126,7 @@ void main()
     private var uLightColorHandle: Int = 0
     private var uLaneWidthHandler: Int = 0
 
-    private var cameraPosition: FloatArray = floatArrayOf(0f, 0f, 0f);
+    private var cameraPosition: FloatArray = floatArrayOf(0f, 0f, 0f)
 
     init {
         val stream = context.resources.openRawResource(R.raw.lane)
@@ -179,10 +179,10 @@ void main()
         val vertexShader = GlRender.loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER)
         val fragmentShader = GlRender.loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER)
 
-        mProgram = GLES20.glCreateProgram()             // create empty OpenGL Program
-        GLES20.glAttachShader(mProgram, vertexShader)   // add the vertex shader to program
+        mProgram = GLES20.glCreateProgram() // create empty OpenGL Program
+        GLES20.glAttachShader(mProgram, vertexShader) // add the vertex shader to program
         GLES20.glAttachShader(mProgram, fragmentShader) // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram)                  // create OpenGL program executables
+        GLES20.glLinkProgram(mProgram) // create OpenGL program executables
         GlRender.checkGlError("ArLane -> mProgram")
     }
 
@@ -244,7 +244,7 @@ void main()
         GLES20.glVertexAttribPointer(aNormalHandle, 3, GLES20.GL_FLOAT, false, 12, normalsBuffer)
         GlRender.checkGlError("ArLane -> aNormal")
 
-        /// Uniforms
+        // / Uniforms
 
         // get handle to fragment shader's vColor member
         uColorHandle = GLES20.glGetUniformLocation(mProgram, "uColor")

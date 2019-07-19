@@ -31,7 +31,7 @@ internal class MapboxTelemetryEventManager(
         mapboxTelemetry.push(
             VisionObjectDetectionEvent(paramsMap["created"].toString()).apply {
                 objectLatitude = paramsMap["object_lat"] as? Double ?: .0
-                objectLongitude = paramsMap["object_lat"] as? Double ?: .0
+                objectLongitude = paramsMap["object_lon"] as? Double ?: .0
 
                 vehicleLatitude = paramsMap["vehicle_lat"] as? Double ?: .0
                 vehicleLongitude = paramsMap["vehicle_lon"] as? Double ?: .0

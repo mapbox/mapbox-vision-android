@@ -113,7 +113,6 @@ internal interface SensorsManager {
                     }
                     else -> Unit
                 }
-
             }
         }
 
@@ -159,7 +158,5 @@ internal interface SensorsManager {
             private const val SENSOR_DELAY_MICROS = 20 * 1000
             private const val LISTENER_UPDATE_DELAY_MILLIS = 33L
         }
-
     }
-
 }

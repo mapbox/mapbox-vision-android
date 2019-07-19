@@ -81,5 +81,4 @@ internal interface LocationEngine {
             private const val TAG = "AndroidLocationEngine"
         }
     }
-
 }
