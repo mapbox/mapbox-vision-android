@@ -102,7 +102,7 @@ object VisionReplayManager : BaseVisionManager {
 
         nativeVisionManager = NativeVisionReplayManager(
             VisionManager.mapboxToken,
-            AccountManager.AccountManagerImpl,
+            AccountManager.Impl,
             VisionManager.application
         )
         nativeVisionManager.create(

@@ -177,7 +177,7 @@ object VisionManager : BaseVisionManager {
 
         nativeVisionManager = NativeVisionManager(
             mapboxToken,
-            AccountManager.AccountManagerImpl,
+            AccountManager.Impl,
             application
         )
 
