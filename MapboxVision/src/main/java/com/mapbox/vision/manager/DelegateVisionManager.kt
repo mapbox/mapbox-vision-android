@@ -7,6 +7,7 @@ import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.NativeVisionManagerBase
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.Country
+import com.mapbox.vision.mobile.core.models.Country.*
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.FrameStatistics
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
@@ -81,7 +82,7 @@ internal interface DelegateVisionManager : BaseVisionManager {
         // TODO factor out
         private var isTurnstileEventSent = false
 
-        private var country: Country = Country.Unknown
+        private var country: Country = Unknown
 
         // TODO factor out
         internal fun setCountry(country: Country) {
@@ -90,19 +91,15 @@ internal interface DelegateVisionManager : BaseVisionManager {
             }
 
             when (country) {
-                Country.China -> {
+                China -> {
                     telemetrySyncManager.stop()
                     File(rootTelemetryDir).apply {
                         deleteRecursively()
                         mkdirs()
                     }
                 }
-                Country.USA, Country.Other -> {
-                    telemetrySyncManager.start()
-                }
-                Country.Unknown -> {
-                    telemetrySyncManager.stop()
-                }
+                USA, UK, Other -> telemetrySyncManager.start()
+                Unknown ->  telemetrySyncManager.stop()
             }
 
             this.country = country
