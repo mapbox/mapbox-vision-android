@@ -10,8 +10,9 @@ import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.mobile.core.NativeVisionReplayManager
 import com.mapbox.vision.mobile.core.account.AccountManager
+import com.mapbox.vision.mobile.core.base.Attachable
+import com.mapbox.vision.mobile.core.interfaces.PerformanceProvider
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
-import com.mapbox.vision.mobile.core.metrics.MetricsManager
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.FrameStatistics
@@ -66,7 +67,9 @@ object VisionReplayManager : BaseVisionManager {
     private lateinit var nativeVisionManager: NativeVisionReplayManager
     private lateinit var path: String
     private lateinit var videoSource: FileVideoSource
-    private lateinit var metricsManager: MetricsManager
+    private lateinit var performanceProvider: PerformanceProvider
+
+    private val attachedModules = ArrayList<Attachable>()
 
     private val videoSourceListener = object : VideoSourceListener {
         override fun onNewFrame(
@@ -101,13 +104,13 @@ object VisionReplayManager : BaseVisionManager {
         this.path = path
         this.delegate = DelegateVisionManager.Impl()
 
-        metricsManager = MetricsManager.Impl(VisionManager.application)
+        performanceProvider = PerformanceProvider.Impl(VisionManager.application).also(attachedModules::add)
         // TODO lifecycle
 
         nativeVisionManager = NativeVisionReplayManager(
             VisionManager.mapboxToken,
             AccountManager.Impl,
-            metricsManager,
+            performanceProvider,
             VisionManager.application
         )
         nativeVisionManager.create(
@@ -151,7 +154,7 @@ object VisionReplayManager : BaseVisionManager {
         delegate.start(visionEventsListener)
         videoSource.attach(videoSourceListener)
 
-        metricsManager.attach()
+        attachedModules.forEach { it.attach() }
     }
 
     /**
@@ -168,7 +171,7 @@ object VisionReplayManager : BaseVisionManager {
         delegate.stop()
         videoSource.detach()
 
-        metricsManager.detach()
+        attachedModules.forEach { it.detach() }
     }
 
     /**
