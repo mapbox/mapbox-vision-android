@@ -24,6 +24,7 @@ import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.mobile.core.telemetry.TelemetryEventManager
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
+import com.mapbox.vision.mobile.core.utils.extentions.addTo
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.utils.VisionLogger
@@ -104,7 +105,7 @@ object VisionReplayManager : BaseVisionManager {
         this.path = path
         this.delegate = DelegateVisionManager.Impl()
 
-        performanceProvider = PerformanceProvider.Impl(VisionManager.application).also(attachedModules::add)
+        performanceProvider = PerformanceProvider.Impl(VisionManager.application).addTo(attachedModules)
         // TODO lifecycle
 
         nativeVisionManager = NativeVisionReplayManager(
@@ -168,10 +169,10 @@ object VisionReplayManager : BaseVisionManager {
             return
         }
 
-        delegate.stop()
-        videoSource.detach()
-
         attachedModules.forEach { it.detach() }
+
+        videoSource.detach()
+        delegate.stop()
     }
 
     /**

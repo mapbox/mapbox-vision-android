@@ -32,6 +32,7 @@ import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
+import com.mapbox.vision.mobile.core.utils.extentions.addTo
 import com.mapbox.vision.mobile.core.utils.preferences.PreferencesManager
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
@@ -157,7 +158,6 @@ object VisionManager : BaseVisionManager {
         this.application = application
         this.mapboxToken = mapboxToken
         PreferencesManager.appContext = application
-        performanceProvider = PerformanceProvider.Impl(application).also(attachedModules::add)
     }
 
     /**
@@ -170,6 +170,8 @@ object VisionManager : BaseVisionManager {
     @JvmOverloads
     fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
         delegate = DelegateVisionManager.Impl()
+
+        performanceProvider = PerformanceProvider.Impl(application).addTo(attachedModules)
 
         nativeVisionManager = NativeVisionManager(
             mapboxToken,

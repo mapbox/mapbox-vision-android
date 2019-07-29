@@ -141,7 +141,6 @@ class TotalBytesCounterTest {
             )
             testCases.forEach { (requestTime, expectedValue) ->
 
-
                 When("Get millisToNextSession for $requestTime ms") {
                     every { mockedTime.millis() }.returns(CURRENT_TIME + requestTime)
                     val actualValue = totalBytesCounter10Min10kBytes.millisToNextSession()
