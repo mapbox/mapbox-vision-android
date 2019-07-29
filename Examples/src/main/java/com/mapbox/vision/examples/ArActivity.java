@@ -70,7 +70,6 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
     // Fetches route from points.
     private RouteFetcher routeFetcher;
     private RouteProgress lastRouteProgress;
-    private DirectionsRoute directionsRoute;
     private LocationEngine arLocationEngine;
     private LocationEngineRequest arLocationEngineRequest;
     private LocationEngineCallback<LocationEngineResult> locationCallback;
@@ -193,7 +192,7 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
                         // Set route progress.
                         VisionArManager.setRoute(new Route(
                                 getRoutePoints(route),
-                                directionsRoute.duration().floatValue(),
+                                route.duration().floatValue(),
                                 "",
                                 ""
                         ));
