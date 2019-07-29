@@ -251,7 +251,7 @@ internal interface SessionManager {
         private fun generateSessionPath(
             cachedTelemetryPath: String,
             currentCountryTelemetryPath: String
-        ) : String {
+        ): String {
             val cachedPath = File(cachedTelemetryPath)
             return "$currentCountryTelemetryPath/${cachedPath.name}"
         }
@@ -266,7 +266,8 @@ internal interface SessionManager {
             }
         }
 
-        private fun getVideoBuffersDir() = FileUtils.getAppRelativeDir(application, VIDEO_BUFFERS_DIR)
+        private fun getVideoBuffersDir() =
+            FileUtils.getAppRelativeDir(application, VIDEO_BUFFERS_DIR)
 
         private fun getCacheDir() = FileUtils.getAppRelativeDir(application, CACHE_DIR)
     }
