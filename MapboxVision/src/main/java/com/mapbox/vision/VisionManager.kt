@@ -15,9 +15,10 @@ import com.mapbox.vision.location.LocationEngine
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
-import com.mapbox.vision.mobile.core.metrics.MetricsManager
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.account.AccountManager
+import com.mapbox.vision.mobile.core.base.Attachable
+import com.mapbox.vision.mobile.core.interfaces.PerformanceProvider
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
@@ -77,7 +78,9 @@ object VisionManager : BaseVisionManager {
     private lateinit var locationEngine: LocationEngine
     private lateinit var sessionManager: SessionManager
     private lateinit var videoRecorder: VideoRecorder
-    private lateinit var metricsManager: MetricsManager
+    private lateinit var performanceProvider: PerformanceProvider
+
+    private val attachedModules = ArrayList<Attachable>()
 
     private lateinit var mapboxTelemetry: MapboxTelemetry
 
@@ -154,7 +157,7 @@ object VisionManager : BaseVisionManager {
         this.application = application
         this.mapboxToken = mapboxToken
         PreferencesManager.appContext = application
-        metricsManager = MetricsManager.Impl(application)
+        performanceProvider = PerformanceProvider.Impl(application).also(attachedModules::add)
     }
 
     /**
@@ -171,7 +174,7 @@ object VisionManager : BaseVisionManager {
         nativeVisionManager = NativeVisionManager(
             mapboxToken,
             AccountManager.Impl,
-            metricsManager,
+            performanceProvider,
             application
         )
 
@@ -249,7 +252,7 @@ object VisionManager : BaseVisionManager {
         sensorsManager.attach(sensorsListener)
         locationEngine.attach(nativeVisionManager)
         videoSource.attach(videoSourceListener)
-        metricsManager.attach()
+        attachedModules.forEach { it.attach() }
     }
 
     /**
@@ -297,7 +300,7 @@ object VisionManager : BaseVisionManager {
 
         locationEngine.detach()
         sensorsManager.detach()
-        metricsManager.detach()
+        attachedModules.forEach { it.detach() }
     }
 
     /**
