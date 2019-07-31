@@ -14,6 +14,7 @@ import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.mobile.core.NativeVisionManager
+import com.mapbox.vision.mobile.core.account.AccountManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.Country
@@ -176,6 +177,7 @@ object VisionManager : BaseVisionManager {
 
         nativeVisionManager = NativeVisionManager(
             mapboxToken,
+            AccountManager.Impl,
             application
         )
 

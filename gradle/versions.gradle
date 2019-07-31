@@ -18,7 +18,7 @@ ext {
     vision_safety = vision
 
     mapbox_core = '1.3.0'
-    mapbox_telemetry = '4.5.1'
+    mapbox_telemetry = '4.4.1'
     mapbox_navigation = '0.40.0'
     mapbox_sdk = '8.1.0'
 

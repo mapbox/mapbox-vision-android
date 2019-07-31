@@ -111,6 +111,8 @@ dependencies {
     }
 
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
+    // don't use telemetry 4.5.1
+    // https://github.com/mapbox/mapbox-navigation-android/issues/1984
     api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
 }
 
