@@ -9,6 +9,7 @@ import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.DelegateVisionManager
 import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.mobile.core.NativeVisionReplayManager
+import com.mapbox.vision.mobile.core.account.AccountManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
@@ -101,6 +102,7 @@ object VisionReplayManager : BaseVisionManager {
 
         nativeVisionManager = NativeVisionReplayManager(
             VisionManager.mapboxToken,
+            AccountManager.Impl,
             VisionManager.application
         )
         nativeVisionManager.create(
