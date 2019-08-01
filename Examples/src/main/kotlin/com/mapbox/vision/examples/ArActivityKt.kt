@@ -10,7 +10,9 @@ import com.mapbox.android.core.location.LocationEngineRequest
 import com.mapbox.android.core.location.LocationEngineResult
 import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
+import com.mapbox.core.constants.Constants
 import com.mapbox.geojson.Point
+import com.mapbox.geojson.utils.PolylineUtils
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOptions
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute
@@ -207,8 +209,8 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
 
     private fun DirectionsRoute.getRoutePoints(): Array<RoutePoint> {
         val routePoints = arrayListOf<RoutePoint>()
-        legs()?.forEach { it ->
-            it.steps()?.forEach { step ->
+        legs()?.forEach { leg ->
+            leg.steps()?.forEach { step ->
                 val maneuverPoint = RoutePoint(
                     GeoCoordinate(
                         latitude = step.maneuver().location().latitude(),
@@ -217,12 +219,13 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
                 )
                 routePoints.add(maneuverPoint)
 
-                step.intersections()
-                    ?.map {
+                step.geometry()
+                    ?.buildStepPointsFromGeometry()
+                    ?.map { geometryStep ->
                         RoutePoint(
                             GeoCoordinate(
-                                latitude = step.maneuver().location().latitude(),
-                                longitude = step.maneuver().location().longitude()
+                                latitude = geometryStep.latitude(),
+                                longitude = geometryStep.longitude()
                             )
                         )
                     }
@@ -233,5 +236,9 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
         }
 
         return routePoints.toTypedArray()
+    }
+
+    private fun String.buildStepPointsFromGeometry(): List<Point> {
+        return PolylineUtils.decode(this, Constants.PRECISION_6)
     }
 }

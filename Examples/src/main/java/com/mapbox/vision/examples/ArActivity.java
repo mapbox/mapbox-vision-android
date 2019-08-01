@@ -3,21 +3,13 @@ package com.mapbox.vision.examples;
 import android.location.Location;
 import android.os.Bundle;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.mapbox.android.core.location.LocationEngine;
-import com.mapbox.android.core.location.LocationEngineCallback;
-import com.mapbox.android.core.location.LocationEngineProvider;
-import com.mapbox.android.core.location.LocationEngineRequest;
-import com.mapbox.android.core.location.LocationEngineResult;
-import com.mapbox.api.directions.v5.models.DirectionsResponse;
-import com.mapbox.api.directions.v5.models.DirectionsRoute;
-import com.mapbox.api.directions.v5.models.LegStep;
-import com.mapbox.api.directions.v5.models.RouteLeg;
-import com.mapbox.api.directions.v5.models.StepIntersection;
+import com.mapbox.android.core.location.*;
+import com.mapbox.api.directions.v5.models.*;
+import com.mapbox.core.constants.Constants;
 import com.mapbox.geojson.Point;
+import com.mapbox.geojson.utils.PolylineUtils;
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOptions;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
@@ -47,15 +39,13 @@ import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
 import com.mapbox.vision.utils.VisionLogger;
-
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
@@ -274,16 +264,14 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
 
                         routePoints.add(point);
 
-                        List<StepIntersection> intersections = step.intersections();
-                        if (intersections != null) {
-                            for (StepIntersection intersection : intersections) {
-                                point = new RoutePoint((new GeoCoordinate(
-                                        step.maneuver().location().latitude(),
-                                        step.maneuver().location().longitude()
-                                )));
+                        List<Point> geometryPoints = buildStepPointsFromGeometry(step.geometry());
+                        for (Point geometryPoint: geometryPoints) {
+                            point = new RoutePoint((new GeoCoordinate(
+                                    geometryPoint.latitude(),
+                                    geometryPoint.longitude()
+                            )));
 
-                                routePoints.add(point);
-                            }
+                            routePoints.add(point);
                         }
                     }
                 }
@@ -291,5 +279,9 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
         }
 
         return routePoints.toArray(new RoutePoint[0]);
+    }
+
+    private List<Point> buildStepPointsFromGeometry(String geometry) {
+        return PolylineUtils.decode(geometry, Constants.PRECISION_6);
     }
 }
