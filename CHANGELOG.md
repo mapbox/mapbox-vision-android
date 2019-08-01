@@ -1,11 +1,17 @@
 # Changelog
 
+## v0.6.0
+
+### Vision
+- Added `currentLaneCenter`, `currentLaneWidth` to `RoadDescription` 
+- Renamed `currentLanePosition` to `relativePositionInLane` in `RoadDescription`
+
 ## v0.5.0
 
 ### Vision
 - Added support for UK country
-- Added method _Lane.contains(worldCoordinate: WorldCoordinate)_
-- Added methods _WorldDescription.getObjectsInLane(lane: Lane)_ and _getObjectsOfClass(detectionClass: DetectionClass)_
+- Added method `Lane.contains(worldCoordinate: WorldCoordinate)`
+- Added methods `WorldDescription.getObjectsInLane(lane: Lane)` and `getObjectsOfClass(detectionClass: DetectionClass)`
 - Changed implementation of lane detector: it has better quality and improved energy efficiency. Only one ego lane is detected right now
 - Changed World-Pixel transformation methods to return optional values
 - Changed World-Geo transformation methods to return optional values
@@ -21,7 +27,7 @@
 - Changed behaviour on simultaneous `VisionManager`
  and `VisionReplayManager` instances creation to throwing an exception
 - Fixed wrong `CameraParams` in replay mode (reason for incorrect AR lane display)
-- Fixed possible crash on `VisionSafetyManager`/`VisionArManager` _create_/_destroy_
+- Fixed possible crash on `VisionSafetyManager`/`VisionArManager` `create`/`destroy`
 
 ## v0.4.0
 
