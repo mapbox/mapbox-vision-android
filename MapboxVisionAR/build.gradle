@@ -6,7 +6,7 @@ apply from: "../gradle/versions.gradle"
 apply from: "../gradle/utils.gradle"
 apply from: "../gradle/ktlint.gradle"
 
-if (booleanProjectOrLocalProperty('IS_LOCAL_DEVELOPMENT')) {
+if (booleanProjectOrLocalProperty('PUBLISH_CORE')) {
     // publishing
     apply from: "../gradle/bintray.gradle"
 
