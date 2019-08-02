@@ -68,6 +68,8 @@ internal interface VideoProcessor {
                         endMillis = relativeClipEndMillis.toLong(),
                         absoluteSessionStartMillis = coreSessionStartMillis
                     )
+                        .copy(metadata = part.metadata)
+
                     clipsResult[outputClipPath] = videoClip
                 }
                 videoProcessorListener?.onVideoClipsReady(
@@ -170,14 +172,14 @@ internal interface VideoProcessor {
                 muxer.stop()
             } catch (e: IllegalStateException) {
                 VisionLogger.d(TAG, "The source video file is malformed")
-                return VideoClip(0f, 0f)
+                return VideoClip(0f, 0f, null)
             } finally {
                 try {
                     muxer.release()
                 } catch (e: IllegalStateException) {
                     e.printStackTrace()
                     VisionLogger.d(TAG, "Cannot release MediaMuxer. Exception : ${e.message}")
-                    return VideoClip(0f, 0f)
+                    return VideoClip(0f, 0f, null)
                 }
             }
             return VideoClip(
