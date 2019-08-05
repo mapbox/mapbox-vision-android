@@ -21,10 +21,10 @@ import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
-import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import kotlinx.android.synthetic.main.activity_main.*
 
 /**
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any

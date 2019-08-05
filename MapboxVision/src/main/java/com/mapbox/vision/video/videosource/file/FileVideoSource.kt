@@ -2,7 +2,11 @@ package com.mapbox.vision.video.videosource.file
 
 import android.app.Application
 import android.media.Image
-import android.renderscript.*
+import android.renderscript.Allocation
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.renderscript.Type
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.VisionLogger

@@ -1,13 +1,13 @@
 package com.mapbox.vision.telemetry
 
 import com.mapbox.vision.utils.system.Time
+import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
-import java.util.concurrent.TimeUnit
 
 object TotalBytesCounterSpek : Spek({
     group("TotalBytesCounter") {
