@@ -1,7 +1,11 @@
 package com.mapbox.vision.video.videosource.camera
 
 import android.graphics.ImageFormat
-import android.renderscript.*
+import android.renderscript.Allocation
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.renderscript.Type
 import android.view.Surface
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 

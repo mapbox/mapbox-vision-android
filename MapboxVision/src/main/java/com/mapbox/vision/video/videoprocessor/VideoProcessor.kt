@@ -1,19 +1,24 @@
 package com.mapbox.vision.video.videoprocessor
 
 import android.annotation.TargetApi
-import android.media.*
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaFormat
+import android.media.MediaMetadataRetriever
+import android.media.MediaMuxer
 import android.os.Build
 import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.util.*
+import java.util.HashMap
+import java.util.Locale
+import org.json.JSONArray
+import org.json.JSONObject
 
 internal interface VideoProcessor {
 

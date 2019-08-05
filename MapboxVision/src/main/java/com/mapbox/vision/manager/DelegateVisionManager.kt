@@ -7,7 +7,11 @@ import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.NativeVisionManagerBase
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.Country
-import com.mapbox.vision.mobile.core.models.Country.*
+import com.mapbox.vision.mobile.core.models.Country.China
+import com.mapbox.vision.mobile.core.models.Country.Other
+import com.mapbox.vision.mobile.core.models.Country.UK
+import com.mapbox.vision.mobile.core.models.Country.USA
+import com.mapbox.vision.mobile.core.models.Country.Unknown
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.FrameStatistics
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
@@ -38,10 +42,12 @@ internal interface DelegateVisionManager : BaseVisionManager {
         nativeVisionManagerBase: NativeVisionManagerBase,
         performanceManager: PerformanceManager
     )
+
     fun start(
         visionEventsListener: VisionEventsListener,
         onCountrySet: (Country) -> Unit = {}
     )
+
     fun stop()
     fun destroy()
 
@@ -99,7 +105,7 @@ internal interface DelegateVisionManager : BaseVisionManager {
                     }
                 }
                 USA, UK, Other -> telemetrySyncManager.start()
-                Unknown ->  telemetrySyncManager.stop()
+                Unknown -> telemetrySyncManager.stop()
             }
 
             this.country = country
