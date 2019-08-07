@@ -239,7 +239,7 @@ object VisionManager : BaseVisionManager {
                         Country.China -> {
                             sessionManager.stop()
                         }
-                        Country.Unknown, Country.USA, Country.Other -> {
+                        Country.Unknown, Country.UK, Country.USA, Country.Other -> {
                             sessionManager.start()
                         }
                     }
