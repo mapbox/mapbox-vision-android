@@ -3,11 +3,12 @@ package com.mapbox.vision.telemetry
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions.*
+import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.gherkin.Feature
-import java.util.concurrent.TimeUnit
-
 
 object TotalBytesCounterTest : Spek({
 
@@ -45,7 +46,6 @@ object TotalBytesCounterTest : Spek({
             }
         }
 
-
         Scenario("Check default session length") {
             lateinit var totalBytesCounter: TotalBytesCounter
             val mockedTime = mockk<Time>()
@@ -65,7 +65,6 @@ object TotalBytesCounterTest : Spek({
                 assertEquals(TimeUnit.HOURS.toMillis(1), actualValue)
             }
         }
-
 
         Scenario("Check fitInLimit") {
 
@@ -103,13 +102,11 @@ object TotalBytesCounterTest : Spek({
                     actualValue = totalBytesCounter10Min10kBytes.fitInLimit(bytes)
                 }
 
-
                 Then("It should be <$expectedValue>") {
                     assertEquals(expectedValue, actualValue)
                 }
             }
         }
-
 
         Scenario("Check millisToNextSession") {
 
@@ -159,7 +156,6 @@ object TotalBytesCounterTest : Spek({
                 }
             }
         }
-
 
         Scenario("Check trackSentBytes") {
 
