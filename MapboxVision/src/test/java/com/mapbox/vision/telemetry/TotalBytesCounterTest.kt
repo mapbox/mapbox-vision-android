@@ -8,9 +8,10 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.gherkin.Feature
 import java.util.concurrent.TimeUnit
 
-const val DEFAULT_SESSION_MAX_BYTES = 10_000L
-val DEFAULT_SESSION_LENGTH_MS = TimeUnit.MINUTES.toMillis(10)
+const val TEST_SESSION_MAX_BYTES = 10_000L
+val TEST_SESSION_LENGTH_MS = TimeUnit.MINUTES.toMillis(10)
 val CURRENT_TIME = TimeUnit.HOURS.toMillis(20)
+const val DEFAULT_SESSION_SIZE_MB = 30
 
 
 object TotalBytesCounterTest : Spek({
@@ -26,16 +27,16 @@ object TotalBytesCounterTest : Spek({
 
             var actualValue = false
 
-            When("Get fitInLimit for 30MB") {
-                actualValue = totalBytesCounter.fitInLimit(30 * 1024 * 1024L)
+            When("Get fitInLimit for ${DEFAULT_SESSION_SIZE_MB}MB") {
+                actualValue = totalBytesCounter.fitInLimit(DEFAULT_SESSION_SIZE_MB * 1024 * 1024L)
             }
 
             Then("It should be <true>") {
                 assertEquals(true, actualValue)
             }
 
-            When("Get fitInLimit for 30MB and 1 byte") {
-                actualValue = totalBytesCounter.fitInLimit(30 * 1024 * 1024L + 1)
+            When("Get fitInLimit for ${DEFAULT_SESSION_SIZE_MB}MB and 1 byte") {
+                actualValue = totalBytesCounter.fitInLimit(DEFAULT_SESSION_SIZE_MB * 1024 * 1024L + 1)
             }
 
             Then("It should be <false>") {
@@ -88,8 +89,8 @@ object TotalBytesCounterTest : Spek({
 
             Given("TotalBytesCounter with 10 minutes, 10 KBytes params") {
                 totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
-                    sessionLengthMillis = DEFAULT_SESSION_LENGTH_MS,
-                    sessionMaxBytes = DEFAULT_SESSION_MAX_BYTES,
+                    sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                    sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     time = mockedTime
                 )
             }
@@ -177,22 +178,22 @@ object TotalBytesCounterTest : Spek({
                 ),
 
                 listOf(
-                    Pair(DEFAULT_SESSION_MAX_BYTES - 1, true),
+                    Pair(TEST_SESSION_MAX_BYTES - 1, true),
                     Pair(1L, true),
                     Pair(1L, false)
                 ),
 
                 listOf(
-                    Pair(DEFAULT_SESSION_MAX_BYTES, true),
+                    Pair(TEST_SESSION_MAX_BYTES, true),
                     Pair(1L, false)
                 ),
 
                 listOf(
-                    Pair(DEFAULT_SESSION_MAX_BYTES + 1, false)
+                    Pair(TEST_SESSION_MAX_BYTES + 1, false)
                 ),
 
                 listOf(
-                    Pair(DEFAULT_SESSION_MAX_BYTES * 2, false)
+                    Pair(TEST_SESSION_MAX_BYTES * 2, false)
                 )
             )
 
@@ -247,7 +248,7 @@ object TotalBytesCounterTest : Spek({
             }
 
             Then("Move time to the next session") {
-                every { mockedTime.millis() }.returns(CURRENT_TIME + DEFAULT_SESSION_LENGTH_MS)
+                every { mockedTime.millis() }.returns(CURRENT_TIME + TEST_SESSION_LENGTH_MS)
             }
 
             Then("Successfully send sequence of bytes $successfulSequenceOfBytes") {
@@ -262,8 +263,8 @@ object TotalBytesCounterTest : Spek({
 private fun getTotalBytesCounterWithStartedSession(mockedTime: Time): TotalBytesCounter {
 
     val result = TotalBytesCounter.Impl(
-        sessionLengthMillis = DEFAULT_SESSION_LENGTH_MS,
-        sessionMaxBytes = DEFAULT_SESSION_MAX_BYTES,
+        sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+        sessionMaxBytes = TEST_SESSION_MAX_BYTES,
         time = mockedTime
     )
     every { mockedTime.millis() }.returns(CURRENT_TIME)
