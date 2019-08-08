@@ -34,17 +34,12 @@ internal interface TotalBytesCounter {
         override fun trackSentBytes(bytes: Long): Boolean {
             val timestamp = time.millis()
 
+            if (sessionStartMillis + sessionLengthMillis <= timestamp) {
+                sessionStartMillis = timestamp
+                bytesSentPerSession = 0
+            }
+
             return when {
-                sessionStartMillis + sessionLengthMillis <= timestamp -> {
-                    sessionStartMillis = timestamp
-                    bytesSentPerSession = 0
-                    return if (fitInLimit(bytes)) {
-                        bytesSentPerSession = bytes
-                        true
-                    } else {
-                        false
-                    }
-                }
                 fitInLimitCurrentSession(bytes) -> {
                     bytesSentPerSession += bytes
                     true

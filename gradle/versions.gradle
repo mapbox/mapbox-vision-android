@@ -24,7 +24,8 @@ ext {
 
     ktlint_version = '0.34.2'
     mannodermaus_junit5_version = '1.4.2.0'
-    spek_version = '2.0.4'
+    spek_version = '2.0.6'
     junit_5_version = '5.4.2'
     mockito_version = '2.27.0'
+    mockk_version = '1.9.3.kotlin12'
 }
