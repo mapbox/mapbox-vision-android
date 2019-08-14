@@ -1,4 +1,4 @@
-package com.mapbox.vision.telemetry
+package com.mapbox.vision.sync.telemetry
 
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every

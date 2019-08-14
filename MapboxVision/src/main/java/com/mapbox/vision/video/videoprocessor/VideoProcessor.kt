@@ -10,15 +10,10 @@ import android.os.Build
 import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.HashMap
 import java.util.Locale
-import org.json.JSONArray
-import org.json.JSONObject
 
 internal interface VideoProcessor {
 
@@ -82,40 +77,8 @@ internal interface VideoProcessor {
                 videoProcessorListener?.onVideoClipsReady(
                     videoClips = clipsResult,
                     videoDir = outputPath,
-                    jsonFile = createJsonFileByParts(clipsResult, outputPath, sessionStartMillis)
+                    sessionStartMillis = sessionStartMillis
                 )
-            }
-        }
-
-        private fun createJsonFileByParts(
-            videoClipMap: HashMap<String, VideoClip>,
-            saveDirPath: String,
-            startRecordCoreMillis: Long
-        ): String {
-            val arr = JSONArray()
-            for (videoPart in videoClipMap) {
-                val jsonPath = JSONObject()
-                val paths = videoPart.key.split("/")
-                val name = paths[paths.size - 1]
-
-                val startSeconds = startRecordCoreMillis / 1000f + videoPart.value.startSeconds
-                val endSeconds = startRecordCoreMillis / 1000f + videoPart.value.endSeconds
-                jsonPath.put("name", name)
-                jsonPath.put("start", startSeconds)
-                jsonPath.put("end", endSeconds)
-                arr.put(jsonPath)
-            }
-
-            return try {
-                val file = File(saveDirPath, "videos.json")
-                val output = BufferedWriter(FileWriter(file))
-                output.write(arr.toString())
-                output.close()
-
-                file.absolutePath
-            } catch (e: Exception) {
-                VisionLogger.d(TAG, "Can not create Json file : " + e.localizedMessage)
-                ""
             }
         }
 

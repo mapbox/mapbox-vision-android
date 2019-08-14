@@ -1,4 +1,4 @@
-package com.mapbox.vision.telemetry
+package com.mapbox.vision.sync.telemetry
 
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.Event

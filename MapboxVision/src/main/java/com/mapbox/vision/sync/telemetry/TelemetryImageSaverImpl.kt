@@ -1,4 +1,4 @@
-package com.mapbox.vision.telemetry
+package com.mapbox.vision.sync.telemetry
 
 import android.graphics.Bitmap
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
