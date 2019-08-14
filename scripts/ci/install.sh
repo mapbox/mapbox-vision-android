@@ -15,7 +15,7 @@ export ROOT_BOOST_PATH=`pwd`/${BOOST_VERSION}/
 
 echo "> Cloning mapbox-vision"
 git clone git@github.com:mapbox/mapbox-vision.git
-git checkout orgin/dev
+git checkout origin/dev
 
 export MAPBOX_VISION_DIR=`pwd`/mapbox-vision
 
