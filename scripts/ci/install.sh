@@ -21,6 +21,6 @@ export MAPBOX_VISION_DIR=`pwd`/mapbox-vision
 
 echo "> MAPBOX_VISION_DIR=${MAPBOX_VISION_DIR}"
 
-echo "CORE_VISION_SDK=/mapbox-vision/SDK/Platforms/Android/sdk" >> $HOME/.gradle/gradle.properties
-echo "CORE_VISION_SAFETY=/mapbox-vision/SDK/Platforms/Android/safety" >> $HOME/.gradle/gradle.properties
-echo "CORE_VISION_AR=/mapbox-vision/SDK/Platforms/Android/ar" >> $HOME/.gradle/gradle.properties
+echo "CORE_VISION_SDK=${MAPBOX_VISION_DIR}/SDK/Platforms/Android/sdk" >> $HOME/.gradle/gradle.properties
+echo "CORE_VISION_SAFETY=${MAPBOX_VISION_DIR}/SDK/Platforms/Android/safety" >> $HOME/.gradle/gradle.properties
+echo "CORE_VISION_AR=${MAPBOX_VISION_DIR}/SDK/Platforms/Android/ar" >> $HOME/.gradle/gradle.properties
