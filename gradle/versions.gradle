@@ -11,7 +11,7 @@ ext {
     android_x_annotation = '1.0.2'
     android_x_constraint_layout = '1.1.3'
 
-    vision = '0.4.2'
+    vision = '0.6.0'
     vision_native = vision
     vision_sdk = vision
     vision_ar = vision
