@@ -26,7 +26,7 @@ interface VisionLogger {
 
     fun e(tag: String, message: String)
 
-    fun e(t: Throwable, tag: String, message: String = t.localizedMessage)
+    fun e(t: Throwable, tag: String, message: String? = t.localizedMessage)
 
     companion object {
         private var DEFAULT_LOGGER: VisionLogger = VisionLogger.LogcatImpl(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
@@ -71,7 +71,7 @@ interface VisionLogger {
             DEFAULT_LOGGER.e(tag, message)
         }
 
-        fun e(t: Throwable, tag: String, message: String = t.localizedMessage) {
+        fun e(t: Throwable, tag: String, message: String? = t.localizedMessage) {
             DEFAULT_LOGGER.e(t, tag, message)
         }
     }
@@ -147,7 +147,7 @@ interface VisionLogger {
         }
 
         @SuppressLint("LogTagMismatch")
-        override fun e(t: Throwable, tag: String, message: String) {
+        override fun e(t: Throwable, tag: String, message: String?) {
             if (isLoggable(Log.ERROR)) {
                 Log.e(tag, message, t)
             }
@@ -235,7 +235,7 @@ interface VisionLogger {
         }
 
         @SuppressLint("LogTagMismatch")
-        override fun e(t: Throwable, tag: String, message: String) {
+        override fun e(t: Throwable, tag: String, message: String?) {
             if (isLoggable(Log.ERROR)) {
                 fileWriter.appendln("d : $tag : $message")
                 fileWriter.flush()
