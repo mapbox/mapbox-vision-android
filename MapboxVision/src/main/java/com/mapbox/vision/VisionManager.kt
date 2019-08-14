@@ -188,8 +188,8 @@ object VisionManager : BaseVisionManager {
         this.videoRecorder = videoRecorder
 
         mapboxTelemetry = MapboxTelemetry(
-            VisionManager.application,
-            VisionManager.mapboxToken,
+            application,
+            mapboxToken,
             MAPBOX_TELEMETRY_USER_AGENT
         )
 
@@ -212,7 +212,8 @@ object VisionManager : BaseVisionManager {
             application, nativeVisionManager,
             videoRecorder,
             mapboxTelemetry,
-            telemetryImageSaver)
+            telemetryImageSaver
+        )
     }
 
     /**

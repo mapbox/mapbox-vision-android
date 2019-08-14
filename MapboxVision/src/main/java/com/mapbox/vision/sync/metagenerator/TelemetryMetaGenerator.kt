@@ -6,6 +6,7 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.util.HashMap
+import java.util.concurrent.TimeUnit
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -26,8 +27,9 @@ class TelemetryMetaGenerator : MetaGenerator {
             val paths = videoPart.key.split("/")
             val name = paths[paths.size - 1]
 
-            val startSeconds = startRecordCoreMillis / 1000f + videoPart.value.startSeconds
-            val endSeconds = startRecordCoreMillis / 1000f + videoPart.value.endSeconds
+            val startRecordCoreSeconds = TimeUnit.MILLISECONDS.toSeconds(startRecordCoreMillis)
+            val startSeconds = startRecordCoreSeconds + videoPart.value.startSeconds
+            val endSeconds = startRecordCoreSeconds + videoPart.value.endSeconds
             jsonPath.put("name", name)
             jsonPath.put("start", startSeconds)
             jsonPath.put("end", endSeconds)

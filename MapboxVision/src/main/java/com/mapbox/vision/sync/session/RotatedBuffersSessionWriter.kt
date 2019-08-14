@@ -23,33 +23,35 @@ internal class RotatedBuffersSessionWriter(
         private val SESSION_LENGTH_MILLIS = TimeUnit.MINUTES.toMillis(5)
     }
 
-    private val handler = WorkThreadHandler("Session")
+    private val workingHandler = WorkThreadHandler("Session")
     private var sessionCacheDir: String = ""
     private var startRecordCoreMillis = 0L
+    private var sessionTimeMillis = 0L
 
     override fun start() {
-        if (!handler.isStarted()) {
-            handler.start()
-            generateCacheDirForCurrentTime()
+        if (!workingHandler.isStarted()) {
+            workingHandler.start()
             startSession()
         }
     }
 
     override fun stop() {
-        if (handler.isStarted()) {
-            handler.stop()
+        if (workingHandler.isStarted()) {
+            workingHandler.stop()
             stopSession()
         }
     }
 
     private fun startSession() {
+        sessionTimeMillis = System.currentTimeMillis()
+        generateCacheDirForCurrentTime()
         videoRecorder.startRecording(buffers.getBuffer())
         nativeVisionManager.startTelemetrySavingSession(sessionCacheDir)
         telemetryImageSaverImpl.start(sessionCacheDir)
 
-        startRecordCoreMillis = (nativeVisionManager.getCoreTimeSeconds() * 1000).toLong()
+        startRecordCoreMillis = TimeUnit.SECONDS.toMillis(nativeVisionManager.getCoreTimeSeconds().toLong())
 
-        handler.postDelayed({
+        workingHandler.postDelayed({
             stopSession()
             startSession()
         }, SESSION_LENGTH_MILLIS)
@@ -67,13 +69,13 @@ internal class RotatedBuffersSessionWriter(
             clips = clips,
             videoPath = buffers.getBuffer(),
             outputPath = sessionCacheDir,
-            sessionStartMillis = startRecordCoreMillis
+            sessionStartMillis = sessionTimeMillis
         )
         buffers.rotate()
     }
 
     private fun generateCacheDirForCurrentTime() {
         sessionCacheDir =
-            "${FileUtils.getAbsoluteDir(File(rootCacheDir, System.currentTimeMillis().toString()).absolutePath)}/"
+            "${FileUtils.getAbsoluteDir(File(rootCacheDir, sessionTimeMillis.toString()).absolutePath)}/"
     }
 }

@@ -45,20 +45,16 @@ internal interface SessionManager {
         companion object {
             private const val CACHE_DIR = "Cache"
             private const val VIDEO_BUFFERS_DIR = "Buffers"
-            private const val DIR_TELEMETRY = "Telemetry"
+            private const val TELEMETRY_DIR = "Telemetry"
         }
 
         private lateinit var sessionWriter: SessionWriter
         private var currentCountry = Country.Unknown
-
+        private var isRecording = false
         private val videoProcessor: VideoProcessor
-
         private val telemetryEnvironment = TelemetryEnvironment
         private val telemetryMetaGenerator = TelemetryMetaGenerator()
-
         private val telemetrySyncManager: TelemetrySyncManager
-
-        private var isRecording = false
 
         init {
             configMapboxTelemetry()
@@ -92,15 +88,16 @@ internal interface SessionManager {
                 return
             }
 
-            currentCountry = country
-
             if (isRecording) {
+                currentCountry = country
                 return
             }
 
             when {
                 currentCountry == Country.Unknown && country != Country.Unknown -> {
+                    currentCountry = country
                     configMapboxTelemetry()
+                    checkCountryTelemetryDir()
                 }
 
                 currentCountry != Country.Unknown && country != Country.Unknown -> {
@@ -108,7 +105,9 @@ internal interface SessionManager {
                     videoProcessor.detach()
                     sessionWriter.stop()
 
-                    configMapboxTelemetry(currentCountry)
+                    currentCountry = country
+
+                    configMapboxTelemetry()
 
                     telemetrySyncManager.start()
                     checkCountryTelemetryDir()
@@ -118,6 +117,7 @@ internal interface SessionManager {
                 }
 
                 currentCountry != Country.Unknown && country == Country.Unknown -> {
+                    currentCountry = country
                     telemetrySyncManager.stop()
                 }
             }
@@ -184,12 +184,9 @@ internal interface SessionManager {
             videoRecorder = videoRecorder
         )
 
-        private fun configMapboxTelemetry(country: Country? = null) {
+        private fun configMapboxTelemetry() {
             mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-
-            country?.let {
-                mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(it))
-            }
+            mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
         }
 
         private val sessionWriterListener = object : SessionWriterListener {
@@ -204,7 +201,7 @@ internal interface SessionManager {
                     val sessionCountryDir = getCountryTelemetryDir()
 
                     sessionCountryDir?.let { dir ->
-                        val sessionCountryDirWithTimeout = "$dir/$sessionStartMillis/"
+                        val sessionCountryDirWithTimeout = "$dir$sessionStartMillis/"
 
                         moveFromCacheDirToCountryDir(outputPath, sessionCountryDirWithTimeout)
                         videoProcessor.splitVideoClips(
@@ -214,6 +211,9 @@ internal interface SessionManager {
                             sessionStartMillis
                         )
                     }
+                } else {
+                    // delete session because country is unknown
+                    FileUtils.deleteDir(outputPath)
                 }
             }
         }
@@ -232,14 +232,14 @@ internal interface SessionManager {
         }
 
         private fun moveFromCacheDirToCountryDir(fromDirPath: String, toDirPath: String) {
-            FileUtils.moveFilesFromOneDirToAnother(fromDirPath, toDirPath)
+            FileUtils.moveFiles(fromDirPath, toDirPath)
         }
 
         private fun getCountryTelemetryDir(): String? {
             val countryDir = telemetryEnvironment.getBasePath(currentCountry)
 
             return if (countryDir != null) {
-                FileUtils.getAppRelativeDir(application, "$DIR_TELEMETRY/$countryDir/")
+                FileUtils.getAppRelativeDir(application, "$TELEMETRY_DIR/$countryDir/")
             } else {
                 null
             }
