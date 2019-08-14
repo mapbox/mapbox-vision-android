@@ -16,8 +16,8 @@ if (hasProperty("CORE_VISION_AR")) {
 include ':Vision'
 project(':Vision').projectDir = new File(settingsDir, 'MapboxVision')
 
-include ':CoreSafety'
-project(':CoreSafety').projectDir = new File(settingsDir, 'MapboxVisionSafety')
+include ':VisionSafety'
+project(':VisionSafety').projectDir = new File(settingsDir, 'MapboxVisionSafety')
 
 include ':VisionAr'
 project(':VisionAr').projectDir = new File(settingsDir, 'MapboxVisionAr')
