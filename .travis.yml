@@ -16,7 +16,7 @@ stages:
 
 env:
   global:
-    - BUILD_CORE_FROM_SOURCE=false
+    - BUILD_CORE_FROM_SOURCE=true
 
 jobs:
   include:
