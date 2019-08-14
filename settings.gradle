@@ -13,19 +13,13 @@ if (hasProperty("CORE_VISION_AR")) {
     project(':CoreAr').projectDir = new File(CORE_VISION_AR)
 }
 
-if (hasProperty("VISION_SDK")) {
-    include ':Vision'
-    project(':Vision').projectDir = new File(VISION_SDK)
-}
+include ':Vision'
+project(':Vision').projectDir = new File(settingsDir, 'MapboxVision')
 
-if (hasProperty("VISION_AR")) {
-    include ':VisionAr'
-    project(':VisionAr').projectDir = new File(VISION_AR)
-}
+include ':CoreSafety'
+project(':CoreSafety').projectDir = new File(settingsDir, 'MapboxVisionSafety')
 
-if (hasProperty("VISION_SAFETY")) {
-    include ':VisionSafety'
-    project(':VisionSafety').projectDir = new File(VISION_SAFETY)
-}
+include ':VisionAr'
+project(':VisionAr').projectDir = new File(settingsDir, 'MapboxVisionAr')
 
 include ':Examples'
