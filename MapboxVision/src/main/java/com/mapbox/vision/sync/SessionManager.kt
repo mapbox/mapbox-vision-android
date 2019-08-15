@@ -58,7 +58,7 @@ internal interface SessionManager {
         private val telemetrySyncManager: TelemetrySyncManager
 
         init {
-            configMapboxTelemetry()
+            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
 
             videoProcessor = VideoProcessor.Impl()
 
@@ -188,7 +188,6 @@ internal interface SessionManager {
         private fun configMapboxTelemetry() {
             isBaseUrlSet = try {
                 // TODO remove when fix is no more necessary
-                mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
                 mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
                 true
             } catch (e: Exception) {
