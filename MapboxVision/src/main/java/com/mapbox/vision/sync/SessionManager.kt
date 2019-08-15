@@ -205,19 +205,17 @@ internal interface SessionManager {
             ) {
                 if (currentCountry != Country.Unknown) {
 
-                    val sessionCountryDir = getCountryTelemetryDir()
+                    val sessionCountryDir = getCountryTelemetryDir() ?: return
 
-                    sessionCountryDir?.let { dir ->
-                        val sessionCountryDirWithTimeout = "$dir$sessionStartMillis/"
+                    val sessionCountryDirWithTimeout = "$sessionCountryDir$sessionStartMillis/"
 
-                        moveFromCacheDirToCountryDir(outputPath, sessionCountryDirWithTimeout)
-                        videoProcessor.splitVideoClips(
-                            clips,
-                            videoPath,
-                            sessionCountryDirWithTimeout,
-                            sessionStartMillis
-                        )
-                    }
+                    moveFromCacheDirToCountryDir(outputPath, sessionCountryDirWithTimeout)
+                    videoProcessor.splitVideoClips(
+                        clips,
+                        videoPath,
+                        sessionCountryDirWithTimeout,
+                        sessionStartMillis
+                    )
                 } else {
                     // delete session because country is unknown
                     FileUtils.deleteDir(outputPath)
