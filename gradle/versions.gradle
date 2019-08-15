@@ -19,7 +19,7 @@ ext {
 
     mapbox_core = '1.3.0'
     mapbox_telemetry = '4.6.0'
-    mapbox_navigation = '0.40.0'
+    mapbox_navigation = '0.41.0'
     mapbox_sdk = '8.1.0'
 
     ktlint_version = '0.34.2'
