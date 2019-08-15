@@ -209,7 +209,8 @@ object VisionManager : BaseVisionManager {
         )
 
         sessionManager = SessionManager.Impl(
-            application, nativeVisionManager,
+            application,
+            nativeVisionManager,
             videoRecorder,
             mapboxTelemetry,
             telemetryImageSaver
