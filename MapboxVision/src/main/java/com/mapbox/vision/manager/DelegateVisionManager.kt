@@ -1,17 +1,8 @@
 package com.mapbox.vision.manager
 
-import com.mapbox.android.telemetry.AppUserTurnstile
-import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.vision.BuildConfig
-import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.NativeVisionManagerBase
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.Country
-import com.mapbox.vision.mobile.core.models.Country.China
-import com.mapbox.vision.mobile.core.models.Country.Other
-import com.mapbox.vision.mobile.core.models.Country.UK
-import com.mapbox.vision.mobile.core.models.Country.USA
-import com.mapbox.vision.mobile.core.models.Country.Unknown
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.FrameStatistics
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
@@ -20,20 +11,14 @@ import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
-import com.mapbox.vision.telemetry.TelemetrySyncManager
-import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
-import java.io.File
 
 internal interface DelegateVisionManager : BaseVisionManager {
 
     val externalVideoSourceListener: VideoSourceListener?
     val nativeVisionManagerBase: NativeVisionManagerBase
     val performanceManager: PerformanceManager
-    val rootTelemetryDir: String
-    val mapboxTelemetry: MapboxTelemetry
-    val telemetrySyncManager: TelemetrySyncManager
 
     val isStarted: Boolean
     val isCreated: Boolean
@@ -71,45 +56,9 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
         override lateinit var nativeVisionManagerBase: NativeVisionManagerBase
         override lateinit var performanceManager: PerformanceManager
-        override lateinit var rootTelemetryDir: String
-        override lateinit var mapboxTelemetry: MapboxTelemetry
-        override lateinit var telemetrySyncManager: TelemetrySyncManager
 
         override var isStarted: Boolean = false
         override var isCreated: Boolean = false
-
-        companion object {
-            private const val MAPBOX_VISION_IDENTIFIER = "MapboxVision"
-            private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
-
-            private const val DIR_TELEMETRY = "Telemetry"
-        }
-
-        // TODO factor out
-        private var isTurnstileEventSent = false
-
-        private var country: Country = Unknown
-
-        // TODO factor out
-        internal fun setCountry(country: Country) {
-            if (this.country == country) {
-                return
-            }
-
-            when (country) {
-                China -> {
-                    telemetrySyncManager.stop()
-                    File(rootTelemetryDir).apply {
-                        deleteRecursively()
-                        mkdirs()
-                    }
-                }
-                USA, UK, Other -> telemetrySyncManager.start()
-                Unknown -> telemetrySyncManager.stop()
-            }
-
-            this.country = country
-        }
 
         override fun create(
             nativeVisionManagerBase: NativeVisionManagerBase,
@@ -119,32 +68,6 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
             this.nativeVisionManagerBase = nativeVisionManagerBase
             this.performanceManager = performanceManager
-
-            mapboxTelemetry = MapboxTelemetry(
-                VisionManager.application,
-                VisionManager.mapboxToken,
-                MAPBOX_TELEMETRY_USER_AGENT
-            )
-            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-
-            if (!isTurnstileEventSent) {
-                mapboxTelemetry.push(
-                    AppUserTurnstile(
-                        MAPBOX_VISION_IDENTIFIER,
-                        BuildConfig.VERSION_NAME
-                    )
-                )
-                isTurnstileEventSent = true
-            }
-
-            rootTelemetryDir = FileUtils.getAppRelativeDir(
-                VisionManager.application,
-                DIR_TELEMETRY
-            )
-            telemetrySyncManager = TelemetrySyncManager.Impl(
-                mapboxTelemetry = mapboxTelemetry,
-                context = VisionManager.application
-            )
         }
 
         override fun start(
@@ -153,26 +76,15 @@ internal interface DelegateVisionManager : BaseVisionManager {
         ) {
             isStarted = true
 
-            telemetrySyncManager.start()
-            File(rootTelemetryDir).listFiles()?.forEach {
-                if (it.list().isNullOrEmpty()) {
-                    it?.delete()
-                } else {
-                    telemetrySyncManager.syncSessionDir(it.absolutePath)
-                }
-            }
-
             nativeVisionManagerBase.start(object : VisionEventsListener by visionEventsListener {
                 override fun onCountryUpdated(country: Country) {
                     visionEventsListener.onCountryUpdated(country)
-                    setCountry(country)
                     onCountrySet(country)
                 }
             })
         }
 
         override fun stop() {
-            telemetrySyncManager.stop()
             nativeVisionManagerBase.stop()
 
             isStarted = false

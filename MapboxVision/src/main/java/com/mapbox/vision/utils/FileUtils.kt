@@ -34,4 +34,14 @@ internal object FileUtils {
 
         return "${getAbsoluteDir(dir.absolutePath)}/"
     }
+
+    fun moveFiles(fromDirPath: String, toDirPath: String) {
+        val fileFrom = File(fromDirPath)
+        val fileTo = File(toDirPath)
+        fileFrom.renameTo(fileTo)
+    }
+
+    fun deleteDir(path: String) {
+        File(path).deleteRecursively()
+    }
 }

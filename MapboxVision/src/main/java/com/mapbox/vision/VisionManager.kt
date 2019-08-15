@@ -3,6 +3,8 @@ package com.mapbox.vision
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import com.mapbox.android.telemetry.AppUserTurnstile
+import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.VisionManager.create
 import com.mapbox.vision.VisionManager.destroy
 import com.mapbox.vision.VisionManager.start
@@ -17,12 +19,10 @@ import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.account.AccountManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.CameraParameters
-import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.DeviceMotionData
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.FrameStatistics
 import com.mapbox.vision.mobile.core.models.HeadingData
-import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
@@ -35,12 +35,10 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.sensors.SensorsListener
 import com.mapbox.vision.sensors.SensorsManager
-import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
-import com.mapbox.vision.telemetry.SessionManager
-import com.mapbox.vision.telemetry.TelemetryImageSaverImpl
+import com.mapbox.vision.sync.SessionManager
+import com.mapbox.vision.sync.telemetry.MapboxTelemetryEventManager
+import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.utils.VisionLogger
-import com.mapbox.vision.video.videoprocessor.VideoProcessor
-import com.mapbox.vision.video.videoprocessor.VideoProcessorListener
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
@@ -61,6 +59,9 @@ import com.mapbox.vision.video.videosource.camera.VideoRecorder
  */
 object VisionManager : BaseVisionManager {
 
+    private const val MAPBOX_VISION_IDENTIFIER = "MapboxVision"
+    private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
+
     lateinit var application: Application
         private set
     lateinit var mapboxToken: String
@@ -76,12 +77,11 @@ object VisionManager : BaseVisionManager {
     private lateinit var sessionManager: SessionManager
     private lateinit var videoRecorder: VideoRecorder
 
-    private var isRecording = false
+    private lateinit var mapboxTelemetry: MapboxTelemetry
 
     private val handlerMain = Handler(Looper.getMainLooper())
 
-    // TODO temporary fix, this should be moved to core
-    private var currentCountry: Country = Country.Unknown
+    private var isTurnstileEventSent = false
 
     private val sensorsListener = object : SensorsListener {
         override fun onDeviceMotionData(deviceMotionData: DeviceMotionData) {
@@ -143,16 +143,6 @@ object VisionManager : BaseVisionManager {
         }
     }
 
-    private val videoProcessorListener = object : VideoProcessorListener {
-        override fun onVideoClipsReady(
-            videoClips: HashMap<String, VideoClip>,
-            videoDir: String,
-            jsonFile: String
-        ) {
-            delegate.telemetrySyncManager.syncSessionDir(videoDir)
-        }
-    }
-
     /**
      * Initialize SDK with mapbox access token and application instance.
      * Do it once per application session, eg in [android.app.Application.onCreate].
@@ -188,11 +178,6 @@ object VisionManager : BaseVisionManager {
             performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
         )
 
-        nativeVisionManager.create(
-            telemetryEventManager = MapboxTelemetryEventManager(delegate.mapboxTelemetry),
-            telemetryImageSaver = telemetryImageSaver
-        )
-
         sensorsManager = SensorsManager.Impl(application)
         locationEngine = LocationEngine.Impl(application)
 
@@ -201,6 +186,35 @@ object VisionManager : BaseVisionManager {
 
         this.videoSource = videoSource
         this.videoRecorder = videoRecorder
+
+        mapboxTelemetry = MapboxTelemetry(
+            application,
+            mapboxToken,
+            MAPBOX_TELEMETRY_USER_AGENT
+        )
+
+        if (!isTurnstileEventSent) {
+            mapboxTelemetry.push(
+                AppUserTurnstile(
+                    MAPBOX_VISION_IDENTIFIER,
+                    BuildConfig.VERSION_NAME
+                )
+            )
+            isTurnstileEventSent = true
+        }
+
+        nativeVisionManager.create(
+            telemetryEventManager = MapboxTelemetryEventManager(mapboxTelemetry),
+            telemetryImageSaver = telemetryImageSaver
+        )
+
+        sessionManager = SessionManager.Impl(
+            application,
+            nativeVisionManager,
+            videoRecorder,
+            mapboxTelemetry,
+            telemetryImageSaver
+        )
     }
 
     /**
@@ -218,32 +232,11 @@ object VisionManager : BaseVisionManager {
             return
         }
 
-        sessionManager = SessionManager.RotatedBuffersImpl(
-            application,
-            nativeVisionManager,
-            delegate.rootTelemetryDir,
-            videoRecorder,
-            telemetryImageSaver,
-            VideoProcessor.Impl(),
-            videoProcessorListener
-        )
-
         delegate.start(
             visionEventsListener
         ) { country ->
             handlerMain.post {
-                currentCountry = country
-
-                if (!isRecording) {
-                    when (country) {
-                        Country.China -> {
-                            sessionManager.stop()
-                        }
-                        Country.Unknown, Country.UK, Country.USA, Country.Other -> {
-                            sessionManager.start()
-                        }
-                    }
-                }
+                sessionManager.setCountry(country)
             }
         }
 
@@ -265,21 +258,7 @@ object VisionManager : BaseVisionManager {
      */
     @JvmStatic
     fun startRecording(path: String) {
-        if (isRecording) {
-            VisionLogger.e(TAG_CLASS, "Recording was already started.")
-            return
-        }
-        isRecording = true
-
-        sessionManager.stop()
-
-        sessionManager = SessionManager.RecordingImpl(
-            nativeVisionManager,
-            sessionDir = "$path/",
-            videoRecorder = videoRecorder
-        )
-
-        sessionManager.start()
+        sessionManager.startRecording(path)
     }
 
     /**
@@ -290,29 +269,7 @@ object VisionManager : BaseVisionManager {
      */
     @JvmStatic
     fun stopRecording() {
-        if (!isRecording) {
-            VisionLogger.e(TAG_CLASS, "Recording was not started.")
-            return
-        }
-        sessionManager.stop()
-
-        isRecording = false
-
-        if (currentCountry == Country.China) {
-            return
-        }
-
-        sessionManager = SessionManager.RotatedBuffersImpl(
-            application,
-            nativeVisionManager,
-            delegate.rootTelemetryDir,
-            videoRecorder,
-            telemetryImageSaver,
-            VideoProcessor.Impl(),
-            videoProcessorListener
-        )
-
-        sessionManager.start()
+        sessionManager.stopRecording()
     }
 
     /**
