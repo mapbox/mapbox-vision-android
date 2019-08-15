@@ -156,7 +156,7 @@ interface VisionLogger {
 
     private class FileImpl(private val minLogLevel: Int = Log.INFO) : VisionLogger {
 
-        val fileWriter = FileWriter("${Environment.getExternalStorageDirectory()}/vision.log")
+        val fileWriter = FileWriter("${Environment.getExternalStorageDirectory()}/vision-${System.currentTimeMillis()}.log")
 
         private fun isLoggable(logLevel: Int): Boolean {
             return logLevel >= minLogLevel

@@ -199,25 +199,26 @@ internal interface SessionManager {
             override fun onSessionStop(
                 clips: Array<VideoClip>,
                 videoPath: String,
-                outputPath: String,
-                sessionStartMillis: Long
+                cachedTelemetryPath: String,
+                coreSessionStartMillis: Long
             ) {
                 if (currentCountry != Country.Unknown) {
 
-                    val sessionCountryDir = getCountryTelemetryDir() ?: return
-
-                    val sessionCountryDirWithTimeout = "$sessionCountryDir$sessionStartMillis/"
-
-                    moveFromCacheDirToCountryDir(outputPath, sessionCountryDirWithTimeout)
+                    val currentCountryTelemetryPath = getCountryTelemetryDir() ?: return
+                    val newTelemetryPath = generateSessionPath(
+                        cachedTelemetryPath,
+                        currentCountryTelemetryPath
+                    )
+                    FileUtils.moveFiles(cachedTelemetryPath, newTelemetryPath)
                     videoProcessor.splitVideoClips(
-                        clips,
-                        videoPath,
-                        sessionCountryDirWithTimeout,
-                        sessionStartMillis
+                        clips = clips,
+                        videoPath = videoPath,
+                        outputPath = newTelemetryPath,
+                        coreSessionStartMillis = coreSessionStartMillis
                     )
                 } else {
                     // delete session because country is unknown
-                    FileUtils.deleteDir(outputPath)
+                    FileUtils.deleteDir(cachedTelemetryPath)
                 }
             }
         }
@@ -225,11 +226,13 @@ internal interface SessionManager {
         private val videoProcessorListener = object : VideoProcessorListener {
             override fun onVideoClipsReady(
                 videoClips: HashMap<String, VideoClip>,
-                videoDir: String,
-                sessionStartMillis: Long
+                videoDir: String
             ) {
                 if (currentCountry != Country.Unknown) {
-                    telemetryMetaGenerator.generateMeta(videoClips, videoDir, sessionStartMillis)
+                    telemetryMetaGenerator.generateMeta(
+                        videoClipMap = videoClips,
+                        saveDirPath = videoDir
+                    )
                     syncSessionDir(videoDir)
                 }
             }
@@ -240,12 +243,17 @@ internal interface SessionManager {
                 configMapboxTelemetry()
             }
             if (isBaseUrlSet) {
+                mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
                 telemetrySyncManager.syncSessionDir(videoDir)
             }
         }
 
-        private fun moveFromCacheDirToCountryDir(fromDirPath: String, toDirPath: String) {
-            FileUtils.moveFiles(fromDirPath, toDirPath)
+        private fun generateSessionPath(
+            cachedTelemetryPath: String,
+            currentCountryTelemetryPath: String
+        ) : String {
+            val cachedPath = File((cachedTelemetryPath))
+            return "$currentCountryTelemetryPath/${cachedPath.name}"
         }
 
         private fun getCountryTelemetryDir(): String? {

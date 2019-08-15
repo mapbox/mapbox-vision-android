@@ -7,7 +7,7 @@ internal interface SessionWriterListener {
     fun onSessionStop(
         clips: Array<VideoClip>,
         videoPath: String,
-        outputPath: String,
-        sessionStartMillis: Long
+        cachedTelemetryPath: String,
+        coreSessionStartMillis: Long
     )
 }
