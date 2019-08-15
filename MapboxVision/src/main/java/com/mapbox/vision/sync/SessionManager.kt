@@ -51,6 +51,7 @@ internal interface SessionManager {
         private lateinit var sessionWriter: SessionWriter
         private var currentCountry = Country.Unknown
         private var isRecording = false
+        private var isBaseUrlSet = false
         private val videoProcessor: VideoProcessor
         private val telemetryEnvironment = TelemetryEnvironment
         private val telemetryMetaGenerator = TelemetryMetaGenerator()
@@ -162,7 +163,7 @@ internal interface SessionManager {
                     if (it.list().isNullOrEmpty()) {
                         it?.delete()
                     } else {
-                        telemetrySyncManager.syncSessionDir(it.absolutePath)
+                        syncSessionDir(it.absolutePath)
                     }
                 }
             }
@@ -185,8 +186,13 @@ internal interface SessionManager {
         )
 
         private fun configMapboxTelemetry() {
-            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-            mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
+            isBaseUrlSet = try {
+                mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
+                mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
+                true
+            } catch (e: Exception) {
+                false
+            }
         }
 
         private val sessionWriterListener = object : SessionWriterListener {
@@ -226,8 +232,17 @@ internal interface SessionManager {
             ) {
                 if (currentCountry != Country.Unknown) {
                     telemetryMetaGenerator.generateMeta(videoClips, videoDir, sessionStartMillis)
-                    telemetrySyncManager.syncSessionDir(videoDir)
+                    syncSessionDir(videoDir)
                 }
+            }
+        }
+
+        private fun syncSessionDir(videoDir: String) {
+            if (!isBaseUrlSet) {
+                configMapboxTelemetry()
+            }
+            if (isBaseUrlSet) {
+                telemetrySyncManager.syncSessionDir(videoDir)
             }
         }
 
