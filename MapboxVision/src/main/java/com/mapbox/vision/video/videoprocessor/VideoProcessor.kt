@@ -59,7 +59,7 @@ internal interface VideoProcessor {
                     if (relativeClipStartMillis < 0 || relativeClipEndMillis < 0) {
                         continue
                     }
-                    val timespan = "${part.endSeconds.formatSeconds()}_${part.startSeconds.formatSeconds()}"
+                    val timespan = "${part.startSeconds.formatSeconds()}_${part.endSeconds.formatSeconds()}"
                     val outputClipPath = "$outputPath/$timespan.mp4"
                     val videoClip = genVideoUsingMuxer(
                         srcPath = videoPath,

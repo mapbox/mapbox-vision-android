@@ -156,7 +156,7 @@ internal interface SessionManager {
         }
 
         private fun checkCountryTelemetryDir() {
-            val telemetryDir = getCountryTelemetryDir()
+            val telemetryDir = getCurrentCountryTelemetryPath()
 
             telemetryDir?.let { dir ->
                 File(dir).listFiles()?.forEach {
@@ -204,7 +204,7 @@ internal interface SessionManager {
             ) {
                 if (currentCountry != Country.Unknown) {
 
-                    val currentCountryTelemetryPath = getCountryTelemetryDir() ?: return
+                    val currentCountryTelemetryPath = getCurrentCountryTelemetryPath() ?: return
                     val newTelemetryPath = generateSessionPath(
                         cachedTelemetryPath,
                         currentCountryTelemetryPath
@@ -252,11 +252,11 @@ internal interface SessionManager {
             cachedTelemetryPath: String,
             currentCountryTelemetryPath: String
         ) : String {
-            val cachedPath = File((cachedTelemetryPath))
+            val cachedPath = File(cachedTelemetryPath)
             return "$currentCountryTelemetryPath/${cachedPath.name}"
         }
 
-        private fun getCountryTelemetryDir(): String? {
+        private fun getCurrentCountryTelemetryPath(): String? {
             val countryDir = telemetryEnvironment.getBasePath(currentCountry)
 
             return if (countryDir != null) {
