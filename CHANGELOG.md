@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.0
+
+### Vision
+- Improved lane detection
+- Fixed swapped top and bottom coordinates in `Detection.boundingBox`
+- `FrameStatistics` renaming `FPS` -> `Fps`
+- Improve performance of `VisionReplayManager` 
+
 ## v0.6.0
 
 ### Vision
