@@ -8,8 +8,12 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.os.Build
 import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.telemetry.ClipMetadataWriter
+import com.mapbox.vision.telemetry.HandlerSyncMangers
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -17,8 +21,6 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.HashMap
 import java.util.Locale
-import org.json.JSONArray
-import org.json.JSONObject
 
 internal interface VideoProcessor {
 
@@ -29,7 +31,9 @@ internal interface VideoProcessor {
         clips: Array<VideoClip>,
         videoPath: String,
         outputPath: String,
-        sessionStartMillis: Long
+        sessionStartMillis: Long,
+        clipMetadataWriter: ClipMetadataWriter,
+        syncMangerType: HandlerSyncMangers.SyncMangerType
     )
 
     class Impl : VideoProcessor {
@@ -52,8 +56,14 @@ internal interface VideoProcessor {
             clips: Array<VideoClip>,
             videoPath: String,
             outputPath: String,
-            sessionStartMillis: Long
+            sessionStartMillis: Long,
+            clipMetadataWriter: ClipMetadataWriter,
+            syncMangerType: HandlerSyncMangers.SyncMangerType
         ) {
+            if (clips.isEmpty()) {
+                return
+            }
+
             workThreadHandler.post {
                 val clipsResult = HashMap<String, VideoClip>()
                 for (part in clips) {
@@ -77,12 +87,13 @@ internal interface VideoProcessor {
                         startMillis = relativeStartMillis.toLong(),
                         endMillis = relativeEndMillis.toLong()
                     )
-                    clipsResult[outputClipPath] = videoPart
+                    clipsResult[outputClipPath] = videoPart.copy(metadata = part.metadata)
                 }
                 videoProcessorListener?.onVideoClipsReady(
                     videoClips = clipsResult,
                     videoDir = outputPath,
-                    jsonFile = createJsonFileByParts(clipsResult, outputPath, sessionStartMillis)
+                    jsonFile = clipMetadataWriter.createJsonFileByParts(clipsResult, outputPath, sessionStartMillis),
+                    syncMangerType = syncMangerType
                 )
             }
         }
@@ -209,19 +220,20 @@ internal interface VideoProcessor {
                 muxer.stop()
             } catch (e: IllegalStateException) {
                 VisionLogger.d(TAG, "The source video file is malformed")
-                return VideoClip(0f, 0f)
+                return VideoClip(0f, 0f, null)
             } finally {
                 try {
                     muxer.release()
                 } catch (e: IllegalStateException) {
                     e.printStackTrace()
                     VisionLogger.d(TAG, "Cannot release MediaMuxer. Exception : ${e.message}")
-                    return VideoClip(0f, 0f)
+                    return VideoClip(0f, 0f, null)
                 }
             }
             return VideoClip(
                 startSeconds = realStartSeconds,
-                endSeconds = realEndSeconds
+                endSeconds = realEndSeconds,
+                metadata = null
             )
         }
 

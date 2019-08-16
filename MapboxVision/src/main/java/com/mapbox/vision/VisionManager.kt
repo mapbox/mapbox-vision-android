@@ -35,6 +35,7 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.sensors.SensorsListener
 import com.mapbox.vision.sensors.SensorsManager
+import com.mapbox.vision.telemetry.HandlerSyncMangers
 import com.mapbox.vision.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.telemetry.SessionManager
 import com.mapbox.vision.telemetry.TelemetryImageSaverImpl
@@ -147,9 +148,14 @@ object VisionManager : BaseVisionManager {
         override fun onVideoClipsReady(
             videoClips: HashMap<String, VideoClip>,
             videoDir: String,
-            jsonFile: String
+            jsonFile: String,
+            syncMangerType: HandlerSyncMangers.SyncMangerType
         ) {
-            delegate.telemetrySyncManager.syncSessionDir(videoDir)
+            when(syncMangerType){
+                HandlerSyncMangers.SyncMangerType.Telemetry -> delegate.telemetrySyncManager.syncSessionDir(videoDir)
+                HandlerSyncMangers.SyncMangerType.VisionPro -> delegate.visionProSyncManager.syncSessionDir(videoDir)
+            }
+
         }
     }
 
@@ -222,6 +228,7 @@ object VisionManager : BaseVisionManager {
             application,
             nativeVisionManager,
             delegate.rootTelemetryDir,
+            delegate.rootVisionProDir,
             videoRecorder,
             telemetryImageSaver,
             VideoProcessor.Impl(),
@@ -306,6 +313,7 @@ object VisionManager : BaseVisionManager {
             application,
             nativeVisionManager,
             delegate.rootTelemetryDir,
+            delegate.rootVisionProDir,
             videoRecorder,
             telemetryImageSaver,
             VideoProcessor.Impl(),

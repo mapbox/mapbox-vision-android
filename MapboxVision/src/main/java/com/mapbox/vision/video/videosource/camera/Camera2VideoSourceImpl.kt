@@ -14,6 +14,8 @@ import android.util.Size
 import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
+import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
+import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
@@ -231,8 +233,8 @@ class Camera2VideoSourceImpl(
     companion object {
         private const val HANDLE_THREAD_NAME = "CameraBackground"
 
-        private const val DEFAULT_FRAME_WIDTH = 1280
-        private const val DEFAULT_FRAME_HEIGHT = 720
+        private const val DEFAULT_FRAME_WIDTH = 960
+        private const val DEFAULT_FRAME_HEIGHT = 540
 
         private fun chooseOptimalCameraResolution(
             supportedSizes: List<Size>,
@@ -243,7 +245,8 @@ class Camera2VideoSourceImpl(
             val bigEnough = mutableListOf<Size>()
             for (option in supportedSizes) {
                 if (option == desiredSize) {
-                    return ImageSize(desiredSize.width, desiredSize.height)
+
+                    return ImageSize(desiredSize.width, desiredSize.height).also { VisionLogger.d(TAG_CLASS, "Chosen camera size = $it") }
                 }
 
                 if (option.height >= minDimension && option.width >= minDimension) {
@@ -254,7 +257,7 @@ class Camera2VideoSourceImpl(
             // Pick the smallest of those, assuming we found any
             val size = bigEnough.minBy { it.width.toLong() * it.height } ?: supportedSizes.first()
 
-            return ImageSize(size.width, size.height)
+            return ImageSize(size.width, size.height).also { VisionLogger.d(TAG_CLASS, "Chosen camera size = $it") }
         }
     }
 }

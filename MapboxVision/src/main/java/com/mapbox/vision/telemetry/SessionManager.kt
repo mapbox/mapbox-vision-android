@@ -46,6 +46,7 @@ internal interface SessionManager {
         application: Application,
         private val nativeVisionManager: NativeVisionManager,
         private val rootTelemetryDir: String,
+        private val rootVisionProDir: String,
         private val videoRecorder: VideoRecorder,
         private val telemetryImageSaverImpl: TelemetryImageSaverImpl,
         private val videoProcessor: VideoProcessor,
@@ -60,7 +61,11 @@ internal interface SessionManager {
         private val handler = WorkThreadHandler("Session")
         private val buffers = RotatedBuffers(FileUtils.getAppRelativeDir(application, VIDEO_BUFFERS_DIR))
         private var telemetryDir: String = ""
+        private var visionProDynamicDir: String = ""
         private var startRecordCoreMillis = 0L
+
+        private val clipMetadataWriterVisionPro = ClipMetadataWriter.VisionPro()
+        private val clipMetadataWriterTelemetry = ClipMetadataWriter.Telemetry()
 
         override fun start() {
             if (!handler.isStarted()) {
@@ -84,6 +89,9 @@ internal interface SessionManager {
             videoRecorder.startRecording(buffers.getBuffer())
             telemetryDir =
                 "${FileUtils.getAbsoluteDir(File(rootTelemetryDir, System.currentTimeMillis().toString()).absolutePath)}/"
+            visionProDynamicDir =
+                "${FileUtils.getAbsoluteDir(File(rootVisionProDir, System.currentTimeMillis().toString()).absolutePath)}/"
+
             nativeVisionManager.startTelemetrySavingSession(telemetryDir)
 
             startRecordCoreMillis = (nativeVisionManager.getCoreTimeSeconds() * 1000).toLong()
@@ -92,6 +100,7 @@ internal interface SessionManager {
                 stopSession()
                 startSession()
             }, SESSION_LENGTH_MILLIS)
+
         }
 
         private fun stopSession() {
@@ -101,10 +110,20 @@ internal interface SessionManager {
             nativeVisionManager.resetClips()
 
             videoProcessor.splitVideoClips(
-                clips = clips,
+                clips = clips.filter { it.metadata == null }.toTypedArray(),
                 videoPath = buffers.getBuffer(),
                 outputPath = telemetryDir,
-                sessionStartMillis = startRecordCoreMillis
+                sessionStartMillis = startRecordCoreMillis,
+                clipMetadataWriter = clipMetadataWriterTelemetry,
+                syncMangerType = HandlerSyncMangers.SyncMangerType.Telemetry
+            )
+            videoProcessor.splitVideoClips(
+                clips = clips.filter { it.metadata != null }.toTypedArray(),
+                videoPath = buffers.getBuffer(),
+                outputPath = visionProDynamicDir,
+                sessionStartMillis = startRecordCoreMillis,
+                clipMetadataWriter = clipMetadataWriterVisionPro,
+                syncMangerType = HandlerSyncMangers.SyncMangerType.VisionPro
             )
             buffers.rotate()
         }

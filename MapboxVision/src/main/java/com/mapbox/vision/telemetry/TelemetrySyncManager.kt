@@ -15,11 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.MediaType
 
-internal interface TelemetrySyncManager {
-
-    fun start()
-    fun stop()
-    fun syncSessionDir(path: String)
+internal interface TelemetrySyncManager : SyncManager {
 
     class Impl(
         private val mapboxTelemetry: MapboxTelemetry,
@@ -42,6 +38,8 @@ internal interface TelemetrySyncManager {
 
         private val uploadInProgress = AtomicBoolean(false)
 
+        override val syncManagerType = HandlerSyncMangers.SyncMangerType.Telemetry
+        
         init {
             mapboxTelemetry.addAttachmentListener(this)
         }

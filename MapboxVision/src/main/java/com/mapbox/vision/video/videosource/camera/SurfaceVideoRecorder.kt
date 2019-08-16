@@ -80,7 +80,7 @@ internal interface SurfaceVideoRecorder : VideoRecorder {
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setOutputFile(outputFile)
-            setVideoEncodingBitRate(6000000)
+            setVideoEncodingBitRate(6_000_000)
             setVideoFrameRate(30)
             setVideoSize(frameWidth, frameHeight)
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)

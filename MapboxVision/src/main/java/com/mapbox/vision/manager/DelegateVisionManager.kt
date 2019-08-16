@@ -1,5 +1,6 @@
 package com.mapbox.vision.manager
 
+import com.google.gson.Gson
 import com.mapbox.android.telemetry.AppUserTurnstile
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.BuildConfig
@@ -21,6 +22,7 @@ import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.telemetry.TelemetrySyncManager
+import com.mapbox.vision.telemetry.VisionProSyncManager
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
@@ -32,8 +34,10 @@ internal interface DelegateVisionManager : BaseVisionManager {
     val nativeVisionManagerBase: NativeVisionManagerBase
     val performanceManager: PerformanceManager
     val rootTelemetryDir: String
+    val rootVisionProDir: String
     val mapboxTelemetry: MapboxTelemetry
     val telemetrySyncManager: TelemetrySyncManager
+    val visionProSyncManager: VisionProSyncManager
 
     val isStarted: Boolean
     val isCreated: Boolean
@@ -72,17 +76,22 @@ internal interface DelegateVisionManager : BaseVisionManager {
         override lateinit var nativeVisionManagerBase: NativeVisionManagerBase
         override lateinit var performanceManager: PerformanceManager
         override lateinit var rootTelemetryDir: String
+        override lateinit var rootVisionProDir: String
         override lateinit var mapboxTelemetry: MapboxTelemetry
         override lateinit var telemetrySyncManager: TelemetrySyncManager
+        override lateinit var visionProSyncManager: VisionProSyncManager
 
         override var isStarted: Boolean = false
         override var isCreated: Boolean = false
+
+        private val gson = Gson()
 
         companion object {
             private const val MAPBOX_VISION_IDENTIFIER = "MapboxVision"
             private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
 
             private const val DIR_TELEMETRY = "Telemetry"
+            private const val DIR_VISION_PRO = "VisionPro"
         }
 
         // TODO factor out
@@ -141,9 +150,20 @@ internal interface DelegateVisionManager : BaseVisionManager {
                 VisionManager.application,
                 DIR_TELEMETRY
             )
+
+            rootVisionProDir = FileUtils.getAppRelativeDir(
+                VisionManager.application,
+                DIR_VISION_PRO
+            )
+
             telemetrySyncManager = TelemetrySyncManager.Impl(
                 mapboxTelemetry = mapboxTelemetry,
                 context = VisionManager.application
+            )
+
+            visionProSyncManager = VisionProSyncManager.Impl(
+                context = VisionManager.application,
+                gson = gson
             )
         }
 
@@ -154,11 +174,21 @@ internal interface DelegateVisionManager : BaseVisionManager {
             isStarted = true
 
             telemetrySyncManager.start()
+            visionProSyncManager.start()
+
             File(rootTelemetryDir).listFiles()?.forEach {
                 if (it.list().isNullOrEmpty()) {
                     it?.delete()
                 } else {
                     telemetrySyncManager.syncSessionDir(it.absolutePath)
+                }
+            }
+
+            File(rootVisionProDir).listFiles()?.forEach {
+                if (it.list().isNullOrEmpty()) {
+                    it?.delete()
+                } else {
+                    visionProSyncManager.syncSessionDir(it.absolutePath)
                 }
             }
 
@@ -173,6 +203,8 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
         override fun stop() {
             telemetrySyncManager.stop()
+            visionProSyncManager.start()
+
             nativeVisionManagerBase.stop()
 
             isStarted = false
