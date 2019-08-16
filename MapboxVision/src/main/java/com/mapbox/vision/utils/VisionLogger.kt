@@ -29,7 +29,7 @@ interface VisionLogger {
     fun e(t: Throwable, tag: String, message: String? = t.localizedMessage)
 
     companion object {
-        private var DEFAULT_LOGGER: VisionLogger = VisionLogger.LogcatImpl(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
+        private var DEFAULT_LOGGER: VisionLogger = LogcatImpl(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
 
         fun setLogger(visionLogger: VisionLogger) {
             DEFAULT_LOGGER = visionLogger
@@ -156,7 +156,7 @@ interface VisionLogger {
 
     private class FileImpl(private val minLogLevel: Int = Log.INFO) : VisionLogger {
 
-        val fileWriter = FileWriter("${Environment.getExternalStorageDirectory()}/vision.log")
+        val fileWriter = FileWriter("${Environment.getExternalStorageDirectory()}/vision-${System.currentTimeMillis()}.log")
 
         private fun isLoggable(logLevel: Int): Boolean {
             return logLevel >= minLogLevel
@@ -197,7 +197,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun i(tag: String, message: String) {
             if (isLoggable(Log.INFO)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("i : $tag : $message")
                 fileWriter.flush()
             }
         }
@@ -205,7 +205,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun i(t: Throwable, tag: String, message: String) {
             if (isLoggable(Log.INFO)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("i : $tag : $message")
                 fileWriter.flush()
             }
         }
@@ -213,7 +213,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun w(tag: String, message: String) {
             if (isLoggable(Log.WARN)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("w : $tag : $message")
                 fileWriter.flush()
             }
         }
@@ -221,7 +221,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun w(t: Throwable, tag: String, message: String) {
             if (isLoggable(Log.WARN)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("w : $tag : $message")
                 fileWriter.flush()
             }
         }
@@ -229,7 +229,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun e(tag: String, message: String) {
             if (isLoggable(Log.ERROR)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("e : $tag : $message")
                 fileWriter.flush()
             }
         }
@@ -237,7 +237,7 @@ interface VisionLogger {
         @SuppressLint("LogTagMismatch")
         override fun e(t: Throwable, tag: String, message: String?) {
             if (isLoggable(Log.ERROR)) {
-                fileWriter.appendln("d : $tag : $message")
+                fileWriter.appendln("e : $tag : $message")
                 fileWriter.flush()
             }
         }

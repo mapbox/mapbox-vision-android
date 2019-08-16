@@ -9,13 +9,13 @@ import com.mapbox.vision.sync.telemetry.TotalBytesCounter
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import okhttp3.MediaType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.MediaType
 
 class TelemetrySyncManager(
     private val mapboxTelemetry: MapboxTelemetry,

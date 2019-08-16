@@ -18,18 +18,16 @@ class TelemetryMetaGenerator : MetaGenerator {
 
     override fun generateMeta(
         videoClipMap: HashMap<String, VideoClip>,
-        saveDirPath: String,
-        startRecordCoreMillis: Long
+        saveDirPath: String
     ) {
         val arr = JSONArray()
         for (videoPart in videoClipMap) {
             val jsonPath = JSONObject()
             val paths = videoPart.key.split("/")
-            val name = paths[paths.size - 1]
+            val name = paths.last()
 
-            val startRecordCoreSeconds = TimeUnit.MILLISECONDS.toSeconds(startRecordCoreMillis)
-            val startSeconds = startRecordCoreSeconds + videoPart.value.startSeconds
-            val endSeconds = startRecordCoreSeconds + videoPart.value.endSeconds
+            val startSeconds = videoPart.value.startSeconds
+            val endSeconds = videoPart.value.endSeconds
             jsonPath.put("name", name)
             jsonPath.put("start", startSeconds)
             jsonPath.put("end", endSeconds)

@@ -4,5 +4,5 @@ import com.mapbox.vision.mobile.core.models.VideoClip
 
 internal interface VideoProcessorListener {
 
-    fun onVideoClipsReady(videoClips: HashMap<String, VideoClip>, videoDir: String, sessionStartMillis: Long)
+    fun onVideoClipsReady(videoClips: HashMap<String, VideoClip>, videoDir: String)
 }

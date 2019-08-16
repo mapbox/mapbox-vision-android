@@ -24,7 +24,7 @@ internal interface VideoProcessor {
         clips: Array<VideoClip>,
         videoPath: String,
         outputPath: String,
-        sessionStartMillis: Long
+        coreSessionStartMillis: Long
     )
 
     class Impl : VideoProcessor {
@@ -47,40 +47,37 @@ internal interface VideoProcessor {
             clips: Array<VideoClip>,
             videoPath: String,
             outputPath: String,
-            sessionStartMillis: Long
+            coreSessionStartMillis: Long
         ) {
             workThreadHandler.post {
                 val clipsResult = HashMap<String, VideoClip>()
                 for (part in clips) {
-                    val relativeStartMillis = part.startSeconds * 1000 - sessionStartMillis
-                    val relativeEndMillis = part.endSeconds * 1000 - sessionStartMillis
-                    if (relativeStartMillis < 0 || relativeEndMillis < 0) {
-                        VisionLogger.d(
-                            TAG,
-                            "Video clip bounds does not belong to current video, ignoring : $relativeStartMillis - $relativeEndMillis"
-                        )
+                    val absoluteCoreClipStartMillis = part.startSeconds * 1000
+                    val absoluteCoreClipVideoEndMillis = part.endSeconds * 1000
+                    val relativeClipStartMillis = absoluteCoreClipStartMillis - coreSessionStartMillis
+                    val relativeClipEndMillis = absoluteCoreClipVideoEndMillis - coreSessionStartMillis
+                    if (relativeClipStartMillis < 0 || relativeClipEndMillis < 0) {
                         continue
                     }
-                    val timespan = "${"%.2f".format(Locale.ENGLISH, relativeStartMillis / 1000f)}_${"%.2f".format(
-                        Locale.ENGLISH,
-                        relativeEndMillis / 1000f
-                    )}"
+                    val timespan = "${part.startSeconds.formatSeconds()}_${part.endSeconds.formatSeconds()}"
                     val outputClipPath = "$outputPath/$timespan.mp4"
-                    val videoPart = genVideoUsingMuxer(
+                    val videoClip = genVideoUsingMuxer(
                         srcPath = videoPath,
                         dstPath = outputClipPath,
-                        startMillis = relativeStartMillis.toLong(),
-                        endMillis = relativeEndMillis.toLong()
+                        startMillis = relativeClipStartMillis.toLong(),
+                        endMillis = relativeClipEndMillis.toLong(),
+                        absoluteSessionStartMillis = coreSessionStartMillis
                     )
-                    clipsResult[outputClipPath] = videoPart
+                    clipsResult[outputClipPath] = videoClip
                 }
                 videoProcessorListener?.onVideoClipsReady(
                     videoClips = clipsResult,
-                    videoDir = outputPath,
-                    sessionStartMillis = sessionStartMillis
+                    videoDir = outputPath
                 )
             }
         }
+
+        private fun Float.formatSeconds() = "%.2f".format(Locale.ENGLISH, this)
 
         // TODO refactor
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -89,7 +86,8 @@ internal interface VideoProcessor {
             srcPath: String,
             dstPath: String,
             startMillis: Long,
-            endMillis: Long
+            endMillis: Long,
+            absoluteSessionStartMillis: Long
         ): VideoClip {
             val extractor = MediaExtractor()
             extractor.setDataSource(srcPath)
@@ -130,8 +128,8 @@ internal interface VideoProcessor {
                 extractor.seekTo((startMillis * 1000), MediaExtractor.SEEK_TO_CLOSEST_SYNC)
             }
 
-            val realStartSeconds = extractor.sampleTime / 1_000_000f
-            val realEndSeconds: Float
+            val realRelativeStartSeconds = extractor.sampleTime / 1_000_000f
+            val realRelativeEndSeconds: Float
 
             // Copy the samples from MediaExtractor to MediaMuxer. We will loop
             // for copying each sample and stop when we get to the end of the source
@@ -149,13 +147,13 @@ internal interface VideoProcessor {
                     if (bufferInfo.size < 0) {
                         VisionLogger.d(TAG, "Saw input EOS.")
                         bufferInfo.size = 0
-                        realEndSeconds = bufferInfo.presentationTimeUs / 1_000_000f
+                        realRelativeEndSeconds = bufferInfo.presentationTimeUs / 1_000_000f
                         break
                     } else {
                         bufferInfo.presentationTimeUs = extractor.sampleTime
                         if (endMillis > 0 && bufferInfo.presentationTimeUs > endMillis * 1000) {
                             VisionLogger.d(TAG, "The current sample is over the trim end time.")
-                            realEndSeconds = bufferInfo.presentationTimeUs / 1_000_000f
+                            realRelativeEndSeconds = bufferInfo.presentationTimeUs / 1_000_000f
                             break
                         } else {
                             bufferInfo.flags = extractor.sampleFlags
@@ -183,8 +181,8 @@ internal interface VideoProcessor {
                 }
             }
             return VideoClip(
-                startSeconds = realStartSeconds,
-                endSeconds = realEndSeconds
+                startSeconds = realRelativeStartSeconds + absoluteSessionStartMillis / 1000f,
+                endSeconds = realRelativeEndSeconds + absoluteSessionStartMillis / 1000f
             )
         }
 

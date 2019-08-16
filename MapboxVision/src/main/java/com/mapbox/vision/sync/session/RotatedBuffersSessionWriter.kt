@@ -25,8 +25,7 @@ internal class RotatedBuffersSessionWriter(
 
     private val workingHandler = WorkThreadHandler("Session")
     private var sessionCacheDir: String = ""
-    private var startRecordCoreMillis = 0L
-    private var sessionTimeMillis = 0L
+    private var coreSessionStartMillis = 0L
 
     override fun start() {
         if (!workingHandler.isStarted()) {
@@ -43,13 +42,12 @@ internal class RotatedBuffersSessionWriter(
     }
 
     private fun startSession() {
-        sessionTimeMillis = System.currentTimeMillis()
         generateCacheDirForCurrentTime()
         videoRecorder.startRecording(buffers.getBuffer())
         nativeVisionManager.startTelemetrySavingSession(sessionCacheDir)
         telemetryImageSaverImpl.start(sessionCacheDir)
 
-        startRecordCoreMillis = TimeUnit.SECONDS.toMillis(nativeVisionManager.getCoreTimeSeconds().toLong())
+        coreSessionStartMillis = TimeUnit.SECONDS.toMillis(nativeVisionManager.getCoreTimeSeconds().toLong())
 
         workingHandler.postDelayed({
             stopSession()
@@ -68,14 +66,14 @@ internal class RotatedBuffersSessionWriter(
         sessionWriterListener.onSessionStop(
             clips = clips,
             videoPath = buffers.getBuffer(),
-            outputPath = sessionCacheDir,
-            sessionStartMillis = sessionTimeMillis
+            cachedTelemetryPath = sessionCacheDir,
+            coreSessionStartMillis = coreSessionStartMillis
         )
         buffers.rotate()
     }
 
     private fun generateCacheDirForCurrentTime() {
         sessionCacheDir =
-            "${FileUtils.getAbsoluteDir(File(rootCacheDir, sessionTimeMillis.toString()).absolutePath)}/"
+            "${FileUtils.getAbsoluteDir(File(rootCacheDir, System.currentTimeMillis().toString()).absolutePath)}/"
     }
 }

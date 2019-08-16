@@ -7,7 +7,6 @@ interface MetaGenerator {
 
     fun generateMeta(
         videoClipMap: HashMap<String, VideoClip>,
-        saveDirPath: String,
-        startRecordCoreMillis: Long
+        saveDirPath: String
     )
 }
