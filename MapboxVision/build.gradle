@@ -119,6 +119,8 @@ dependencies {
         api "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
     }
 
+    implementation "com.squareup.okhttp3:logging-interceptor:3.13.1"
+
     api "com.mapbox.mapboxsdk:mapbox-android-core:$mapbox_core"
     api "com.mapbox.mapboxsdk:mapbox-android-telemetry:$mapbox_telemetry"
 }

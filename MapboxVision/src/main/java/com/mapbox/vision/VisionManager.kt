@@ -3,6 +3,7 @@ package com.mapbox.vision
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import com.google.gson.Gson
 import com.mapbox.android.telemetry.AppUserTurnstile
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.VisionManager.create
@@ -89,6 +90,8 @@ object VisionManager : BaseVisionManager {
     private val handlerMain = Handler(Looper.getMainLooper())
 
     private var isTurnstileEventSent = false
+
+    private val gson = Gson()
 
     private val sensorsListener = object : SensorsListener {
         override fun onDeviceMotionData(deviceMotionData: DeviceMotionData) {
@@ -229,7 +232,8 @@ object VisionManager : BaseVisionManager {
             nativeVisionManager,
             videoRecorder,
             mapboxTelemetry,
-            telemetryImageSaver
+            telemetryImageSaver,
+            gson
         )
     }
 

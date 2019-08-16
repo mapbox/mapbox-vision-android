@@ -1,6 +1,7 @@
 package com.mapbox.vision.sync
 
 import android.app.Application
+import com.google.gson.Gson
 import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.mobile.core.NativeVisionManager
@@ -9,10 +10,12 @@ import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
 import com.mapbox.vision.sync.metagenerator.TelemetryMetaGenerator
+import com.mapbox.vision.sync.metagenerator.VisionProMetaGenerator
 import com.mapbox.vision.sync.session.RecordingSessionWriter
 import com.mapbox.vision.sync.session.RotatedBuffersSessionWriter
 import com.mapbox.vision.sync.session.SessionWriter
 import com.mapbox.vision.sync.syncmanager.TelemetrySyncManager
+import com.mapbox.vision.sync.syncmanager.VisionProSyncManager
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.VisionLogger
@@ -39,7 +42,8 @@ internal interface SessionManager {
         private val nativeVisionManager: NativeVisionManager,
         private val videoRecorder: VideoRecorder,
         private val mapboxTelemetry: MapboxTelemetry,
-        private val telemetryImageSaver: TelemetryImageSaver
+        private val telemetryImageSaver: TelemetryImageSaver,
+        private val gson: Gson
     ) : SessionManager {
 
         companion object {
@@ -55,7 +59,9 @@ internal interface SessionManager {
         private val videoProcessor: VideoProcessor
         private val telemetryEnvironment = TelemetryEnvironment
         private val telemetryMetaGenerator = TelemetryMetaGenerator()
+        private val visionProMetaGenerator = VisionProMetaGenerator(gson)
         private val telemetrySyncManager: TelemetrySyncManager
+        private val visionProSyncManager: VisionProSyncManager
 
         init {
             mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
@@ -66,6 +72,7 @@ internal interface SessionManager {
                 mapboxTelemetry = mapboxTelemetry,
                 context = application
             )
+            visionProSyncManager = VisionProSyncManager(gson)
         }
 
         override fun start() {
@@ -233,6 +240,10 @@ internal interface SessionManager {
                         videoClipMap = videoClips,
                         saveDirPath = videoDir
                     )
+                    syncSessionDir(videoDir)
+
+                    // TODO not right logic should be separate
+                    visionProMetaGenerator.generateMeta(videoClips, videoDir, sessionStartMillis)
                     syncSessionDir(videoDir)
                 }
             }
