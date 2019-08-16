@@ -1,7 +1,9 @@
 package com.mapbox.vision.sync.telemetry
 
+import com.mapbox.vision.utils.prefs.SessionPrefs
 import com.mapbox.vision.utils.system.Time
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 /**
  * Counts sent bytes and limits bytes sent per session.
@@ -14,6 +16,8 @@ internal interface TotalBytesCounter {
     fun trackSentBytes(bytes: Long): Boolean
 
     fun millisToNextSession(): Long
+
+    fun fitInLimitCurrentSession(bytes: Long): Boolean
 
     fun fitInLimit(bytes: Long): Boolean
 
@@ -28,32 +32,35 @@ internal interface TotalBytesCounter {
             private const val SESSION_MAX_BYTES = 30 * 1024 * 1024L // 30 MB
         }
 
-        private var sessionStartMillis: Long = 0
-        private var bytesSentPerSession: Long = 0
+        private val sessionStartMillis: Long
+            get() = SessionPrefs.sessionStartMillis.get().let {
+                it ?: time.millis().also { SessionPrefs.sessionStartMillis.set(it) }
+            }
+        private val bytesSentPerSession: Long
+            get() = SessionPrefs.bytesSentPerSession.get()
 
         override fun trackSentBytes(bytes: Long): Boolean {
             val timestamp = time.millis()
 
             if (sessionStartMillis + sessionLengthMillis <= timestamp) {
-                sessionStartMillis = timestamp
-                bytesSentPerSession = 0
+                SessionPrefs.sessionStartMillis.set(timestamp)
+                SessionPrefs.bytesSentPerSession.set(0)
             }
 
             return when {
                 fitInLimitCurrentSession(bytes) -> {
-                    bytesSentPerSession += bytes
+                    SessionPrefs.bytesSentPerSession.set(bytes + bytesSentPerSession)
                     true
                 }
                 else -> false
             }
         }
 
-        override fun millisToNextSession(): Long =
-            (sessionStartMillis + sessionLengthMillis - time.millis()).let { sessionRest ->
-                if (sessionRest < 0) 0 else sessionRest
-            }
+        override fun millisToNextSession(): Long {
+            return max(0L, sessionStartMillis + sessionLengthMillis - time.millis())
+        }
 
-        private fun fitInLimitCurrentSession(bytes: Long): Boolean = bytes + bytesSentPerSession <= sessionMaxBytes
+        override fun fitInLimitCurrentSession(bytes: Long): Boolean = bytes + bytesSentPerSession <= sessionMaxBytes
 
         override fun fitInLimit(bytes: Long): Boolean = bytes <= sessionMaxBytes
     }
