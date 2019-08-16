@@ -32,7 +32,7 @@ interface VisionProSyncManager : SyncManager {
             .Builder()
             .build()
 
-        private val totalBytesCounter = TotalBytesCounter.Impl(sessionMaxBytes = 30 * 1024 * 1024 /* 30 Mb */)
+        private val totalBytesCounter = TotalBytesCounter.Impl(sessionMaxBytes = 70 * 1024 * 1024 /* 70 Mb */, counterName = "VisionPro")
 
         private val threadHandler = WorkThreadHandler()
 

@@ -3,12 +3,12 @@ package com.mapbox.vision.telemetry
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
 import io.mockk.mockk
-import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.gherkin.Feature
+import java.util.concurrent.TimeUnit
 
 object TotalBytesCounterTest : Spek({
 
@@ -24,7 +24,7 @@ object TotalBytesCounterTest : Spek({
             val mockedTime = mockk<Time>()
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime)
+                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime, counterName = "test")
             }
 
             var actualValue = false
@@ -52,7 +52,7 @@ object TotalBytesCounterTest : Spek({
             every { mockedTime.millis() }.returns(0)
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime)
+                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime, counterName = "test")
             }
 
             var actualValue = 0L
@@ -91,7 +91,8 @@ object TotalBytesCounterTest : Spek({
                 totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
-                    time = mockedTime
+                    time = mockedTime,
+                    counterName = "test"
                 )
             }
 
@@ -281,7 +282,8 @@ private fun getTotalBytesCounterWithStartedSession(
     val result = TotalBytesCounter.Impl(
         sessionLengthMillis = sessionLengthMillis,
         sessionMaxBytes = sessionMaxBytes,
-        time = mockedTime
+        time = mockedTime,
+        counterName = "test"
     )
     every { mockedTime.millis() }.returns(currentTime)
     assertEquals(result.millisToNextSession(), 0)

@@ -7,13 +7,13 @@ import com.mapbox.android.telemetry.MapboxTelemetry
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import okhttp3.MediaType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.MediaType
 
 internal interface TelemetrySyncManager : SyncManager {
 
@@ -29,7 +29,8 @@ internal interface TelemetrySyncManager : SyncManager {
         private val fileCompressor = ZipFileCompressorImpl()
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
         private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
-        private val bytesTracker = TotalBytesCounter.Impl()
+        private val bytesTracker =
+            TotalBytesCounter.Impl(sessionMaxBytes = 10 * 1024 * 1014 /*10 mb*/, counterName = "Telemetry")
         private val uuidUtil = UuidHolder.Impl(context)
         @Suppress("DEPRECATION")
         private val language = context.resources.configuration.locale.language
@@ -39,7 +40,7 @@ internal interface TelemetrySyncManager : SyncManager {
         private val uploadInProgress = AtomicBoolean(false)
 
         override val syncManagerType = HandlerSyncMangers.SyncMangerType.Telemetry
-        
+
         init {
             mapboxTelemetry.addAttachmentListener(this)
         }
