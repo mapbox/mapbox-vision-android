@@ -24,7 +24,8 @@ internal interface TotalBytesCounter {
     class Impl(
         private val sessionLengthMillis: Long = SESSION_LENGTH_MILLIS,
         private val sessionMaxBytes: Long = SESSION_MAX_BYTES,
-        private val time: Time = Time.SystemImpl
+        private val time: Time = Time.SystemImpl,
+        private val sessionPrefs: SessionPrefs = SessionPrefs.Impl
     ) : TotalBytesCounter {
 
         companion object {
@@ -33,23 +34,23 @@ internal interface TotalBytesCounter {
         }
 
         private val sessionStartMillis: Long
-            get() = SessionPrefs.sessionStartMillis.get().let {
-                it ?: time.millis().also { SessionPrefs.sessionStartMillis.set(it) }
+            get() = sessionPrefs.sessionStartMillis.get().let {
+                it ?: time.millis().also { sessionPrefs.sessionStartMillis.set(it) }
             }
         private val bytesSentPerSession: Long
-            get() = SessionPrefs.bytesSentPerSession.get()
+            get() = sessionPrefs.bytesSentPerSession.get() ?: 0L
 
         override fun trackSentBytes(bytes: Long): Boolean {
             val timestamp = time.millis()
 
             if (sessionStartMillis + sessionLengthMillis <= timestamp) {
-                SessionPrefs.sessionStartMillis.set(timestamp)
-                SessionPrefs.bytesSentPerSession.set(0)
+                sessionPrefs.sessionStartMillis.set(timestamp)
+                sessionPrefs.bytesSentPerSession.set(0)
             }
 
             return when {
                 fitInLimitCurrentSession(bytes) -> {
-                    SessionPrefs.bytesSentPerSession.set(bytes + bytesSentPerSession)
+                    sessionPrefs.bytesSentPerSession.set(bytes + bytesSentPerSession)
                     true
                 }
                 else -> false
