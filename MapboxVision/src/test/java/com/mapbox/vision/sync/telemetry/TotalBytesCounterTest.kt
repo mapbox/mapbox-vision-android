@@ -28,7 +28,7 @@ object TotalBytesCounterTest : Spek({
             lateinit var totalBytesCounter: TotalBytesCounter
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime, sessionPrefs = SessionPrefTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = SessionPrefTestImpl())
             }
 
             var actualValue = false
@@ -56,7 +56,7 @@ object TotalBytesCounterTest : Spek({
             every { mockedTime.millis() }.returns(CURRENT_TIME)
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime, sessionPrefs = SessionPrefTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = SessionPrefTestImpl())
             }
 
             var actualValue = 0L
@@ -96,7 +96,7 @@ object TotalBytesCounterTest : Spek({
                 totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
-                    time = mockedTime,
+                    currentTime = mockedTime,
                     sessionPrefs = SessionPrefTestImpl()
                 )
             }
@@ -412,7 +412,7 @@ private fun getTotalBytesCounterWithStartedSession(
     val result = TotalBytesCounter.Impl(
         sessionLengthMillis = sessionLengthMillis,
         sessionMaxBytes = sessionMaxBytes,
-        time = mockedTime,
+        currentTime = mockedTime,
         sessionPrefs = sessionPrefs
     )
 
@@ -432,11 +432,11 @@ private class TestPreference<T> : Preference<T> {
     private var value: T? = null
 
     override val preferences: SharedPreferences
-        get() = TODO("not implemented")
+        get() = throw Exception("Do nothing")
     override val key: String
-        get() = TODO("not implemented")
+        get() = throw Exception("Do nothing")
     override val adapter: Preference.Adapter<T>
-        get() = TODO("not implemented")
+        get() = throw Exception("Do nothing")
 
     override fun get() = value
     override fun set(value: T) {
