@@ -8,6 +8,7 @@ import com.mapbox.vision.sync.telemetry.AttachmentManager
 import com.mapbox.vision.sync.telemetry.TotalBytesCounter
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
+import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import java.io.File
 import java.text.SimpleDateFormat
@@ -40,7 +41,7 @@ class TelemetrySyncManager(
     private val fileCompressor = ZipFileCompressorImpl()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
     private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
-    private val bytesTracker = TotalBytesCounter.Impl()
+    private val bytesTracker = TotalBytesCounter.Impl(totalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("telemetry"))
     private val uuidUtil = UuidHolder.Impl(context)
     @Suppress("DEPRECATION")
     private val language = context.resources.configuration.locale.language

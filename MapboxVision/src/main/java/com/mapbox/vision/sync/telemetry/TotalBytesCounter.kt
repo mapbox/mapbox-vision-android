@@ -25,7 +25,7 @@ internal interface TotalBytesCounter {
         private val sessionLengthMillis: Long = SESSION_LENGTH_MILLIS,
         private val sessionMaxBytes: Long = SESSION_MAX_BYTES,
         private val currentTime: Time = Time.SystemImpl,
-        private val totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("")
+        private val totalBytesCounterPrefs: TotalBytesCounterPrefs
     ) : TotalBytesCounter {
 
         companion object {
