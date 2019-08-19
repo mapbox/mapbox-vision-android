@@ -1,6 +1,6 @@
 package com.mapbox.vision.sync.telemetry
 
-import com.mapbox.vision.utils.prefs.SessionPrefs
+import com.mapbox.vision.utils.prefs.TotalBytesCounterStorage
 import com.mapbox.vision.utils.system.Time
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -25,7 +25,7 @@ internal interface TotalBytesCounter {
         private val sessionLengthMillis: Long = SESSION_LENGTH_MILLIS,
         private val sessionMaxBytes: Long = SESSION_MAX_BYTES,
         private val currentTime: Time = Time.SystemImpl,
-        private val sessionPrefs: SessionPrefs = SessionPrefs.Impl
+        private val sessionPrefs: TotalBytesCounterStorage = TotalBytesCounterStorage.Impl("")
     ) : TotalBytesCounter {
 
         companion object {

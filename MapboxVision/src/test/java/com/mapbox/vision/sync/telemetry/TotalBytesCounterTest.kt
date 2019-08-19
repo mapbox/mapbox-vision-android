@@ -2,7 +2,7 @@ package com.mapbox.vision.sync.telemetry
 
 import android.content.SharedPreferences
 import com.mapbox.vision.mobile.core.utils.preferences.Preference
-import com.mapbox.vision.utils.prefs.SessionPrefs
+import com.mapbox.vision.utils.prefs.TotalBytesCounterStorage
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
 import io.mockk.mockk
@@ -28,7 +28,7 @@ object TotalBytesCounterTest : Spek({
             lateinit var totalBytesCounter: TotalBytesCounter
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = SessionPrefTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = false
@@ -56,7 +56,7 @@ object TotalBytesCounterTest : Spek({
             every { mockedTime.millis() }.returns(CURRENT_TIME)
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = SessionPrefTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = 0L
@@ -97,7 +97,7 @@ object TotalBytesCounterTest : Spek({
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     currentTime = mockedTime,
-                    sessionPrefs = SessionPrefTestImpl()
+                    sessionPrefs = TotalBytesCounterStorageTestImpl()
                 )
             }
 
@@ -362,7 +362,7 @@ object TotalBytesCounterTest : Spek({
             )
 
             testCases.forEach { persistenceCase ->
-                val sessionPrefs = SessionPrefTestImpl()
+                val sessionPrefs = TotalBytesCounterStorageTestImpl()
 
                 Given("First TotalBytesCounter and already sent ${persistenceCase.sentBytes} bytes") {
                     every { mockedTime.millis() }.returns(CURRENT_TIME)
@@ -406,7 +406,7 @@ private fun getTotalBytesCounterWithStartedSession(
     sessionMaxBytes: Long,
     mockedTime: Time,
     currentTime: Long,
-    sessionPrefs: SessionPrefs = SessionPrefTestImpl()
+    sessionPrefs: TotalBytesCounterStorage = TotalBytesCounterStorageTestImpl()
 ): TotalBytesCounter {
     every { mockedTime.millis() }.returns(currentTime)
     val result = TotalBytesCounter.Impl(
@@ -444,7 +444,7 @@ private class TestPreference<T> : Preference<T> {
     }
 }
 
-private class SessionPrefTestImpl : SessionPrefs {
+private class TotalBytesCounterStorageTestImpl : TotalBytesCounterStorage {
     override val sessionStartMillis = TestPreference<Long>()
     override val bytesSentPerSession = TestPreference<Long>()
 }
