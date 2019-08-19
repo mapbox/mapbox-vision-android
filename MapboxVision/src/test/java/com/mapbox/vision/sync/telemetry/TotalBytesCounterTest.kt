@@ -1,5 +1,8 @@
 package com.mapbox.vision.sync.telemetry
 
+import android.content.SharedPreferences
+import com.mapbox.vision.mobile.core.utils.preferences.Preference
+import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
 import io.mockk.mockk
@@ -20,11 +23,12 @@ object TotalBytesCounterTest : Spek({
     Feature("TotalBytesCounter") {
 
         Scenario("Check default session size") {
-            lateinit var totalBytesCounter: TotalBytesCounter
             val mockedTime = mockk<Time>()
+            every { mockedTime.millis() }.returns(0)
+            lateinit var totalBytesCounter: TotalBytesCounter
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime)
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = false
@@ -49,10 +53,10 @@ object TotalBytesCounterTest : Spek({
         Scenario("Check default session length") {
             lateinit var totalBytesCounter: TotalBytesCounter
             val mockedTime = mockk<Time>()
-            every { mockedTime.millis() }.returns(0)
+            every { mockedTime.millis() }.returns(CURRENT_TIME)
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(time = mockedTime)
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = 0L
@@ -68,8 +72,9 @@ object TotalBytesCounterTest : Spek({
 
         Scenario("Check fitInLimit") {
 
-            lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
             val mockedTime = mockk<Time>()
+            every { mockedTime.millis() }.returns(0)
+            lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
 
             val testCases = mapOf(
                 Long.MIN_VALUE to true,
@@ -91,7 +96,8 @@ object TotalBytesCounterTest : Spek({
                 totalBytesCounter10Min10kBytes = TotalBytesCounter.Impl(
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
-                    time = mockedTime
+                    currentTime = mockedTime,
+                    totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
                 )
             }
 
@@ -110,7 +116,6 @@ object TotalBytesCounterTest : Spek({
 
         Scenario("Check millisToNextSession") {
 
-            lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
             val mockedTime = mockk<Time>()
 
             val testCases = mapOf(
@@ -131,28 +136,94 @@ object TotalBytesCounterTest : Spek({
                 TimeUnit.MINUTES.toMillis(11) to TimeUnit.MINUTES.toMillis(0),
                 TimeUnit.MINUTES.toMillis(25) to TimeUnit.MINUTES.toMillis(0)
             )
-
-            Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
-                totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
-                    sessionLengthMillis = TEST_SESSION_LENGTH_MS,
-                    sessionMaxBytes = TEST_SESSION_MAX_BYTES,
-                    mockedTime = mockedTime,
-                    currentTime = CURRENT_TIME
-                )
-            }
-
             testCases.forEach { (requestTime, expectedValue) ->
+
+                lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
+
+                Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
+                    totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+                        sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                        sessionMaxBytes = TEST_SESSION_MAX_BYTES,
+                        mockedTime = mockedTime,
+                        currentTime = CURRENT_TIME
+                    )
+                }
+
                 var actualValue = 0L
 
                 When("Get millisToNextSession for $requestTime ms") {
-
                     every { mockedTime.millis() }.returns(CURRENT_TIME + requestTime)
-
                     actualValue = totalBytesCounter10Min10kBytes.millisToNextSession()
                 }
 
                 Then("It should be <$expectedValue> ms") {
                     assertEquals(expectedValue, actualValue)
+                }
+            }
+        }
+
+        Scenario("Check fitInLimitCurrentSession") {
+            val mockedTime = mockk<Time>()
+
+            val testCases = listOf(
+                Pair(
+                    0L, mapOf(
+                        0L to true,
+                        TEST_SESSION_MAX_BYTES / 2 to true,
+                        TEST_SESSION_MAX_BYTES to true,
+                        TEST_SESSION_MAX_BYTES + 1 to false,
+                        TEST_SESSION_MAX_BYTES + 2 to false
+                    )
+                ),
+                Pair(
+                    1L, mapOf(
+                        0L to true,
+                        TEST_SESSION_MAX_BYTES / 2 to true,
+                        TEST_SESSION_MAX_BYTES to false,
+                        TEST_SESSION_MAX_BYTES + 1 to false
+                    )
+                ),
+                Pair(
+                    TEST_SESSION_MAX_BYTES / 2, mapOf(
+                        0L to true,
+                        TEST_SESSION_MAX_BYTES / 2 to true,
+                        (TEST_SESSION_MAX_BYTES / 2 + 1) to false,
+                        TEST_SESSION_MAX_BYTES to false
+                    )
+                ),
+                Pair(
+                    TEST_SESSION_MAX_BYTES, mapOf(
+                        0L to true,
+                        1L to false,
+                        TEST_SESSION_MAX_BYTES / 2 to false,
+                        TEST_SESSION_MAX_BYTES to false
+                    )
+                )
+            )
+            testCases.forEach { listOfAlreadySentBytesAndResults ->
+
+                lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
+                Given("Test TotalBytesCounter with already sent ${listOfAlreadySentBytesAndResults.first} bytes") {
+                    totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+                        sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                        sessionMaxBytes = TEST_SESSION_MAX_BYTES,
+                        mockedTime = mockedTime,
+                        currentTime = CURRENT_TIME
+                    )
+                    totalBytesCounter10Min10kBytes.trackSentBytes(listOfAlreadySentBytesAndResults.first)
+                }
+
+                listOfAlreadySentBytesAndResults.second.forEach { (bytes, expectedValue) ->
+
+                    var actualValue = false
+
+                    When("Get fitInLimitCurrentSession for $bytes bytes") {
+                        actualValue = totalBytesCounter10Min10kBytes.fitInLimitCurrentSession(bytes)
+                    }
+
+                    Then("It should be $expectedValue") {
+                        assertEquals(expectedValue, actualValue)
+                    }
                 }
             }
         }
@@ -200,7 +271,6 @@ object TotalBytesCounterTest : Spek({
             )
 
             testCases.forEach { listOfBytesAndResults ->
-
                 lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
 
                 Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
@@ -217,7 +287,6 @@ object TotalBytesCounterTest : Spek({
                 lateinit var actualValue: List<Boolean>
 
                 When("Send track bytes in sequence of bytes $sequenceOfBytes") {
-
                     actualValue = sequenceOfBytes.map { bytes ->
                         totalBytesCounter10Min10kBytes.trackSentBytes(bytes)
                     }
@@ -269,6 +338,66 @@ object TotalBytesCounterTest : Spek({
                 }
             }
         }
+
+        Scenario("Check trackSentBytes persistence") {
+            val mockedTime = mockk<Time>()
+
+            val testCases = listOf(
+                PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(5), 5_000L, true),
+                PersistenceCase(7_000L, TimeUnit.MINUTES.toMillis(8), 3_000L, true),
+                PersistenceCase(2_000L, TimeUnit.MINUTES.toMillis(5), 6_000L, true),
+                PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(15), 6_000L, true),
+                PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(11), 10_000L, true),
+                PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(100), 10_000L, true),
+                PersistenceCase(1_000L, TimeUnit.MINUTES.toMillis(1), 9_000L, true),
+                PersistenceCase(6_000L, TimeUnit.MINUTES.toMillis(11), 6_000L, true),
+                PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(40), 6_000L, true),
+
+                PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(2), 2_000L, false),
+                PersistenceCase(8_000L, TimeUnit.MINUTES.toMillis(1), 2_500L, false),
+                PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(5), 6_000L, false),
+                PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(5), 1L, false),
+                PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(1), 1_000L, false),
+                PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(9), 10_000L, false)
+            )
+
+            testCases.forEach { persistenceCase ->
+                val sessionPrefs = TotalBytesCounterStorageTestImpl()
+
+                Given("First TotalBytesCounter and already sent ${persistenceCase.sentBytes} bytes") {
+                    every { mockedTime.millis() }.returns(CURRENT_TIME)
+
+                    val firstTotalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+                        sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                        sessionMaxBytes = TEST_SESSION_MAX_BYTES,
+                        mockedTime = mockedTime,
+                        currentTime = CURRENT_TIME,
+                        totalBytesCounterPrefs = sessionPrefs
+                    )
+
+                    assertTrue(firstTotalBytesCounter10Min10kBytes.trackSentBytes(persistenceCase.sentBytes))
+                }
+
+                var actualValue = false
+
+                When("Start second TotalBytesCounter after ${persistenceCase.nextSessionStartTime / (1000 * 60)}s and send ${persistenceCase.tryToSentBytes} bytes") {
+                    every { mockedTime.millis() }.returns(CURRENT_TIME + persistenceCase.nextSessionStartTime)
+
+                    val secondTotalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+                        sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                        sessionMaxBytes = TEST_SESSION_MAX_BYTES,
+                        mockedTime = mockedTime,
+                        currentTime = CURRENT_TIME + persistenceCase.nextSessionStartTime,
+                        totalBytesCounterPrefs = sessionPrefs
+                    )
+                    actualValue = secondTotalBytesCounter10Min10kBytes.trackSentBytes(persistenceCase.tryToSentBytes)
+                }
+
+                Then("TrackSentBytes should be ${persistenceCase.expectedValue}") {
+                    assertEquals(persistenceCase.expectedValue, actualValue)
+                }
+            }
+        }
     }
 })
 
@@ -276,16 +405,46 @@ private fun getTotalBytesCounterWithStartedSession(
     sessionLengthMillis: Long,
     sessionMaxBytes: Long,
     mockedTime: Time,
-    currentTime: Long
+    currentTime: Long,
+    totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
 ): TotalBytesCounter {
+    every { mockedTime.millis() }.returns(currentTime)
     val result = TotalBytesCounter.Impl(
         sessionLengthMillis = sessionLengthMillis,
         sessionMaxBytes = sessionMaxBytes,
-        time = mockedTime
+        currentTime = mockedTime,
+        totalBytesCounterPrefs = totalBytesCounterPrefs
     )
-    every { mockedTime.millis() }.returns(currentTime)
-    assertEquals(result.millisToNextSession(), 0)
 
     result.trackSentBytes(0)
     return result
+}
+
+private data class PersistenceCase(
+    val sentBytes: Long,
+    val nextSessionStartTime: Long,
+    val tryToSentBytes: Long,
+    val expectedValue: Boolean
+)
+
+private class TestPreference<T> : Preference<T> {
+
+    private var value: T? = null
+
+    override val preferences: SharedPreferences
+        get() = throw Exception("Do nothing")
+    override val key: String
+        get() = throw Exception("Do nothing")
+    override val adapter: Preference.Adapter<T>
+        get() = throw Exception("Do nothing")
+
+    override fun get() = value
+    override fun set(value: T) {
+        this.value = value
+    }
+}
+
+private class TotalBytesCounterStorageTestImpl : TotalBytesCounterPrefs {
+    override val sessionStartMillis = TestPreference<Long>()
+    override val bytesSentPerSession = TestPreference<Long>()
 }
