@@ -2,7 +2,7 @@ package com.mapbox.vision.sync.telemetry
 
 import android.content.SharedPreferences
 import com.mapbox.vision.mobile.core.utils.preferences.Preference
-import com.mapbox.vision.utils.prefs.TotalBytesCounterStorage
+import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
 import io.mockk.mockk
@@ -28,7 +28,7 @@ object TotalBytesCounterTest : Spek({
             lateinit var totalBytesCounter: TotalBytesCounter
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = TotalBytesCounterStorageTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = false
@@ -56,7 +56,7 @@ object TotalBytesCounterTest : Spek({
             every { mockedTime.millis() }.returns(CURRENT_TIME)
 
             Given("TotalBytesCounter with default params") {
-                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, sessionPrefs = TotalBytesCounterStorageTestImpl())
+                totalBytesCounter = TotalBytesCounter.Impl(currentTime = mockedTime, totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl())
             }
 
             var actualValue = 0L
@@ -97,7 +97,7 @@ object TotalBytesCounterTest : Spek({
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     currentTime = mockedTime,
-                    sessionPrefs = TotalBytesCounterStorageTestImpl()
+                    totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
                 )
             }
 
@@ -372,7 +372,7 @@ object TotalBytesCounterTest : Spek({
                         sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                         mockedTime = mockedTime,
                         currentTime = CURRENT_TIME,
-                        sessionPrefs = sessionPrefs
+                        totalBytesCounterPrefs = sessionPrefs
                     )
 
                     assertTrue(firstTotalBytesCounter10Min10kBytes.trackSentBytes(persistenceCase.sentBytes))
@@ -388,7 +388,7 @@ object TotalBytesCounterTest : Spek({
                         sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                         mockedTime = mockedTime,
                         currentTime = CURRENT_TIME + persistenceCase.nextSessionStartTime,
-                        sessionPrefs = sessionPrefs
+                        totalBytesCounterPrefs = sessionPrefs
                     )
                     actualValue = secondTotalBytesCounter10Min10kBytes.trackSentBytes(persistenceCase.tryToSentBytes)
                 }
@@ -406,14 +406,14 @@ private fun getTotalBytesCounterWithStartedSession(
     sessionMaxBytes: Long,
     mockedTime: Time,
     currentTime: Long,
-    sessionPrefs: TotalBytesCounterStorage = TotalBytesCounterStorageTestImpl()
+    totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
 ): TotalBytesCounter {
     every { mockedTime.millis() }.returns(currentTime)
     val result = TotalBytesCounter.Impl(
         sessionLengthMillis = sessionLengthMillis,
         sessionMaxBytes = sessionMaxBytes,
         currentTime = mockedTime,
-        sessionPrefs = sessionPrefs
+        totalBytesCounterPrefs = totalBytesCounterPrefs
     )
 
     result.trackSentBytes(0)
@@ -444,7 +444,7 @@ private class TestPreference<T> : Preference<T> {
     }
 }
 
-private class TotalBytesCounterStorageTestImpl : TotalBytesCounterStorage {
+private class TotalBytesCounterStorageTestImpl : TotalBytesCounterPrefs {
     override val sessionStartMillis = TestPreference<Long>()
     override val bytesSentPerSession = TestPreference<Long>()
 }

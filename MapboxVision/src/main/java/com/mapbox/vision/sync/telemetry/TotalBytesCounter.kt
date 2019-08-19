@@ -1,6 +1,6 @@
 package com.mapbox.vision.sync.telemetry
 
-import com.mapbox.vision.utils.prefs.TotalBytesCounterStorage
+import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.system.Time
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -25,7 +25,7 @@ internal interface TotalBytesCounter {
         private val sessionLengthMillis: Long = SESSION_LENGTH_MILLIS,
         private val sessionMaxBytes: Long = SESSION_MAX_BYTES,
         private val currentTime: Time = Time.SystemImpl,
-        private val sessionPrefs: TotalBytesCounterStorage = TotalBytesCounterStorage.Impl("")
+        private val totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("")
     ) : TotalBytesCounter {
 
         companion object {
@@ -34,23 +34,23 @@ internal interface TotalBytesCounter {
         }
 
         private val sessionStartMillis: Long
-            get() = sessionPrefs.sessionStartMillis.get().let {
-                it ?: currentTime.millis().also { sessionPrefs.sessionStartMillis.set(it) }
+            get() = totalBytesCounterPrefs.sessionStartMillis.get().let {
+                it ?: currentTime.millis().also { totalBytesCounterPrefs.sessionStartMillis.set(it) }
             }
         private val bytesSentPerSession: Long
-            get() = sessionPrefs.bytesSentPerSession.get() ?: 0L
+            get() = totalBytesCounterPrefs.bytesSentPerSession.get() ?: 0L
 
         override fun trackSentBytes(bytes: Long): Boolean {
             val timestamp = currentTime.millis()
 
             if (sessionStartMillis + sessionLengthMillis <= timestamp) {
-                sessionPrefs.sessionStartMillis.set(timestamp)
-                sessionPrefs.bytesSentPerSession.set(0)
+                totalBytesCounterPrefs.sessionStartMillis.set(timestamp)
+                totalBytesCounterPrefs.bytesSentPerSession.set(0)
             }
 
             return when {
                 fitInLimitCurrentSession(bytes) -> {
-                    sessionPrefs.bytesSentPerSession.set(bytes + bytesSentPerSession)
+                    totalBytesCounterPrefs.bytesSentPerSession.set(bytes + bytesSentPerSession)
                     true
                 }
                 else -> false
