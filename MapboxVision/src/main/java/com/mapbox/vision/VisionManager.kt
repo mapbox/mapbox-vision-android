@@ -360,6 +360,15 @@ object VisionManager : BaseVisionManager {
         videoRecorder.release()
     }
 
+    /**
+     *
+     * @param cameraHeight Float unit in meters
+     */
+    @JvmStatic
+    fun setCameraHeight(cameraHeight: Float) {
+        nativeVisionManager.setCameraHeight(cameraHeight)
+    }
+
     @JvmStatic
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener) {
         delegate.setVideoSourceListener(videoSourceListener)
