@@ -1,7 +1,6 @@
 package com.mapbox.vision.dsl
 
 import org.junit.jupiter.api.DynamicContainer
-import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest
 
 @DslMarker
@@ -9,11 +8,11 @@ annotation class VisionDslMarker
 
 object TestCase {
 
-    private val givenBlocks = mutableListOf<DynamicNode>()
-    private val whenBlocks = mutableListOf<DynamicNode>()
+    private val givenBlocks = mutableListOf<DynamicContainer>()
+    private val whenBlocks = mutableListOf<DynamicContainer>()
     private val thenBlocks = mutableListOf<DynamicTest>()
 
-    operator fun invoke(block: TestContext.() -> Unit): List<DynamicNode> {
+    operator fun invoke(block: TestContext.() -> Unit): List<DynamicContainer> {
         givenBlocks.clear()
         TestContext().run(block)
         return givenBlocks

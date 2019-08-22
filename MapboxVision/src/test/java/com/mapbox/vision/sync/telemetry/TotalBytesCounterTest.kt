@@ -1,8 +1,8 @@
 package com.mapbox.vision.sync.telemetry
 
 import android.content.SharedPreferences
-import com.mapbox.vision.mobile.core.utils.preferences.Preference
 import com.mapbox.vision.dsl.TestCase
+import com.mapbox.vision.mobile.core.utils.preferences.Preference
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.system.Time
 import io.mockk.every
