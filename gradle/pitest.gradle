@@ -1,9 +1,8 @@
 apply plugin: 'pl.droidsonroids.pitest'
 
 pitest {
-    targetClasses = ['com.mapbox.vision.**TotalBytesCounter**']
+    targetClasses = ['com.mapbox.vision.**']
     targetTests = ['**Test**']
-    excludeMockableAndroidJar = true
     pitestVersion = '1.4.9'
     avoidCallsTo = ['kotlin.jvm.internal']
     testPlugin = "junit5"
@@ -14,5 +13,6 @@ pitest {
     verbose = true
     exportLineCoverage = true
     mutators = ['DEFAULTS', 'CONSTRUCTOR_CALLS', 'EMPTY_RETURNS', 'FALSE_RETURNS', 'NULL_RETURNS', 'REMOVE_CONDITIONALS', 'REMOVE_INCREMENTS', 'EXPERIMENTAL_SWITCH']
-    features = ["+EXPORT"]
+    // Use feature EXPORT for debug
+    // features = ["+EXPORT"]
 }
