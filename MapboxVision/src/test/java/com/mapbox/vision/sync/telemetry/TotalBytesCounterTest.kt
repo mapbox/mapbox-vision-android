@@ -30,7 +30,7 @@ class TotalBytesCounterTest {
         Given("TotalBytesCounter with default params") {
             val totalBytesCounter = TotalBytesCounter.Impl(
                 currentTime = mockedTime,
-                totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
+                totalBytesCounterPrefs = TotalBytesCounterPrefsTestImpl()
             )
 
             When("Get fitInLimit for ${DEFAULT_SESSION_SIZE_MB}MB") {
@@ -56,7 +56,7 @@ class TotalBytesCounterTest {
         Given("TotalBytesCounter with default params") {
             val totalBytesCounter = TotalBytesCounter.Impl(
                 currentTime = mockedTime,
-                totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
+                totalBytesCounterPrefs = TotalBytesCounterPrefsTestImpl()
             )
             When("Get millisToNextSession") {
                 val actualValue = totalBytesCounter.millisToNextSession()
@@ -75,7 +75,7 @@ class TotalBytesCounterTest {
                 sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                 sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                 currentTime = mockedTime,
-                totalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
+                totalBytesCounterPrefs = TotalBytesCounterPrefsTestImpl()
             )
 
             mapOf(
@@ -133,13 +133,13 @@ class TotalBytesCounterTest {
         )
         testCases.forEach { (requestTime, expectedValue) ->
             Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
-                val sessionPrefs = TotalBytesCounterStorageTestImpl()
+                val totalBytesCounterPrefsImpl = TotalBytesCounterPrefsTestImpl()
                 val totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     mockedTime = mockedTime,
                     currentTime = CURRENT_TIME,
-                    totalBytesCounterPrefs = sessionPrefs
+                    totalBytesCounterPrefs = totalBytesCounterPrefsImpl
                 )
 
                 When("Get millisToNextSession for $requestTime ms") {
@@ -350,7 +350,7 @@ class TotalBytesCounterTest {
         )
 
         testCases.forEach { persistenceCase ->
-            val sessionPrefs = TotalBytesCounterStorageTestImpl()
+            val totalBytesCounterPrefsImpl = TotalBytesCounterPrefsTestImpl()
 
             Given("First TotalBytesCounter and already sent ${persistenceCase.sentBytes} bytes") {
                 every { mockedTime.millis() }.returns(CURRENT_TIME)
@@ -360,7 +360,7 @@ class TotalBytesCounterTest {
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     mockedTime = mockedTime,
                     currentTime = CURRENT_TIME,
-                    totalBytesCounterPrefs = sessionPrefs
+                    totalBytesCounterPrefs = totalBytesCounterPrefsImpl
                 )
 
                 assertTrue(firstTotalBytesCounter10Min10kBytes.trackSentBytes(persistenceCase.sentBytes))
@@ -373,7 +373,7 @@ class TotalBytesCounterTest {
                         sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                         mockedTime = mockedTime,
                         currentTime = CURRENT_TIME + persistenceCase.nextSessionStartTime,
-                        totalBytesCounterPrefs = sessionPrefs
+                        totalBytesCounterPrefs = totalBytesCounterPrefsImpl
                     )
 
                     val actualValue =
@@ -390,7 +390,7 @@ class TotalBytesCounterTest {
     @TestFactory
     fun `Check 3 sessions`() = TestCase {
         val mockedTime = mockk<Time>()
-        val sessionPrefs = TotalBytesCounterStorageTestImpl()
+        val totalBytesCounterPrefsImpl = TotalBytesCounterPrefsTestImpl()
         Given("Send 5000 bytes") {
             every { mockedTime.millis() }.returns(CURRENT_TIME)
 
@@ -399,7 +399,7 @@ class TotalBytesCounterTest {
                 sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                 mockedTime = mockedTime,
                 currentTime = CURRENT_TIME,
-                totalBytesCounterPrefs = sessionPrefs
+                totalBytesCounterPrefs = totalBytesCounterPrefsImpl
             )
 
             assertTrue(firstTotalBytesCounter10Min10kBytes.trackSentBytes(5_000L))
@@ -412,7 +412,7 @@ class TotalBytesCounterTest {
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                     mockedTime = mockedTime,
                     currentTime = CURRENT_TIME + TimeUnit.MINUTES.toMillis(40),
-                    totalBytesCounterPrefs = sessionPrefs
+                    totalBytesCounterPrefs = totalBytesCounterPrefsImpl
                 )
 
                 assertTrue(secondTotalBytesCounter10Min10kBytes.trackSentBytes(5_000L))
@@ -425,7 +425,7 @@ class TotalBytesCounterTest {
                         sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                         mockedTime = mockedTime,
                         currentTime = CURRENT_TIME + TimeUnit.MINUTES.toMillis(45),
-                        totalBytesCounterPrefs = sessionPrefs
+                        totalBytesCounterPrefs = totalBytesCounterPrefsImpl
                     )
 
                     assertFalse(secondTotalBytesCounter10Min10kBytes3.trackSentBytes(6_000L))
@@ -440,7 +440,7 @@ private fun getTotalBytesCounterWithStartedSession(
     sessionMaxBytes: Long,
     mockedTime: Time,
     currentTime: Long,
-    totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterStorageTestImpl()
+    totalBytesCounterPrefs: TotalBytesCounterPrefs = TotalBytesCounterPrefsTestImpl()
 ): TotalBytesCounter {
     every { mockedTime.millis() }.returns(currentTime)
     val result = TotalBytesCounter.Impl(
@@ -478,7 +478,7 @@ private class TestPreference<T> : Preference<T> {
     }
 }
 
-private class TotalBytesCounterStorageTestImpl : TotalBytesCounterPrefs {
+private class TotalBytesCounterPrefsTestImpl : TotalBytesCounterPrefs {
     override val sessionStartMillis = TestPreference<Long>()
     override val bytesSentPerSession = TestPreference<Long>()
 }
