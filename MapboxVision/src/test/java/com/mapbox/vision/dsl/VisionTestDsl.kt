@@ -13,9 +13,9 @@ object TestCase {
     private val whenBlocks = mutableListOf<DynamicNode>()
     private val thenBlocks = mutableListOf<DynamicTest>()
 
-    operator fun invoke(init: TestContext.() -> Unit): List<DynamicNode> {
+    operator fun invoke(block: TestContext.() -> Unit): List<DynamicNode> {
         givenBlocks.clear()
-        TestContext().run(init)
+        TestContext().run(block)
         return givenBlocks
     }
 
@@ -36,17 +36,16 @@ object TestCase {
 
 @VisionDslMarker
 class TestContext {
-    fun Given(displayName: String, init: GivenContext.() -> Unit) {
-        GivenContext().run(init)
+    fun Given(displayName: String, block: GivenContext.() -> Unit) {
+        GivenContext().run(block)
         TestCase.addGivenBlock(displayName)
     }
 }
 
 @VisionDslMarker
 class GivenContext {
-
-    fun When(displayName: String, init: WhenContext.() -> Unit) {
-        WhenContext().run(init)
+    fun When(displayName: String, block: WhenContext.() -> Unit) {
+        WhenContext().run(block)
         TestCase.addWhenBlock(displayName)
     }
 }
