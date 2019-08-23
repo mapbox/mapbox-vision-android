@@ -108,39 +108,39 @@ class TotalBytesCounterTest {
     fun `Check millisToNextSession`() = TestCase {
         val mockedTime = mockk<Time>()
 
-        val testCases = mapOf(
-            TimeUnit.MINUTES.toMillis(0) to TimeUnit.MINUTES.toMillis(10),
-            TimeUnit.MILLISECONDS.toMillis(1) to TimeUnit.MINUTES.toMillis(9) +
-                    TimeUnit.SECONDS.toMillis(59) +
-                    TimeUnit.MILLISECONDS.toMillis(999),
-            TimeUnit.MINUTES.toMillis(2) to TimeUnit.MINUTES.toMillis(8),
-            TimeUnit.MINUTES.toMillis(5) to TimeUnit.MINUTES.toMillis(5),
-            TimeUnit.MINUTES.toMillis(8) to TimeUnit.MINUTES.toMillis(2),
-            TimeUnit.MINUTES.toMillis(9) to TimeUnit.MINUTES.toMillis(1),
+        Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
+            val totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+                sessionLengthMillis = TEST_SESSION_LENGTH_MS,
+                sessionMaxBytes = TEST_SESSION_MAX_BYTES,
+                mockedTime = mockedTime,
+                currentTime = CURRENT_TIME
+            )
 
-            TimeUnit.MINUTES.toMillis(9) +
-                    TimeUnit.SECONDS.toMillis(59) to TimeUnit.SECONDS.toMillis(1),
+            val testCases = mapOf(
+                TimeUnit.MINUTES.toMillis(0) to TimeUnit.MINUTES.toMillis(10),
+                TimeUnit.MILLISECONDS.toMillis(1) to TimeUnit.MINUTES.toMillis(9) +
+                        TimeUnit.SECONDS.toMillis(59) +
+                        TimeUnit.MILLISECONDS.toMillis(999),
+                TimeUnit.MINUTES.toMillis(2) to TimeUnit.MINUTES.toMillis(8),
+                TimeUnit.MINUTES.toMillis(5) to TimeUnit.MINUTES.toMillis(5),
+                TimeUnit.MINUTES.toMillis(8) to TimeUnit.MINUTES.toMillis(2),
+                TimeUnit.MINUTES.toMillis(9) to TimeUnit.MINUTES.toMillis(1),
 
-            TimeUnit.MINUTES.toMillis(9) +
-                    TimeUnit.SECONDS.toMillis(59) +
-                    TimeUnit.MILLISECONDS.toMillis(999) to TimeUnit.MILLISECONDS.toMillis(1),
+                TimeUnit.MINUTES.toMillis(9) +
+                        TimeUnit.SECONDS.toMillis(59) to TimeUnit.SECONDS.toMillis(1),
 
-            TimeUnit.MINUTES.toMillis(10) to TimeUnit.MINUTES.toMillis(0),
+                TimeUnit.MINUTES.toMillis(9) +
+                        TimeUnit.SECONDS.toMillis(59) +
+                        TimeUnit.MILLISECONDS.toMillis(999) to TimeUnit.MILLISECONDS.toMillis(1),
 
-            TimeUnit.MINUTES.toMillis(10) + TimeUnit.MILLISECONDS.toMillis(1) to TimeUnit.MINUTES.toMillis(0),
-            TimeUnit.MINUTES.toMillis(11) to TimeUnit.MINUTES.toMillis(0),
-            TimeUnit.MINUTES.toMillis(25) to TimeUnit.MINUTES.toMillis(0)
-        )
-        testCases.forEach { (requestTime, expectedValue) ->
-            Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
-                val totalBytesCounterPrefsImpl = TotalBytesCounterPrefsTestImpl()
-                val totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
-                    sessionLengthMillis = TEST_SESSION_LENGTH_MS,
-                    sessionMaxBytes = TEST_SESSION_MAX_BYTES,
-                    mockedTime = mockedTime,
-                    currentTime = CURRENT_TIME,
-                    totalBytesCounterPrefs = totalBytesCounterPrefsImpl
-                )
+                TimeUnit.MINUTES.toMillis(10) to TimeUnit.MINUTES.toMillis(0),
+
+                TimeUnit.MINUTES.toMillis(10) + TimeUnit.MILLISECONDS.toMillis(1) to TimeUnit.MINUTES.toMillis(0),
+                TimeUnit.MINUTES.toMillis(11) to TimeUnit.MINUTES.toMillis(0),
+                TimeUnit.MINUTES.toMillis(25) to TimeUnit.MINUTES.toMillis(0)
+            )
+            testCases.forEach { (requestTime, expectedValue) ->
+
 
                 When("Get millisToNextSession for $requestTime ms") {
                     every { mockedTime.millis() }.returns(CURRENT_TIME + requestTime)
@@ -258,8 +258,8 @@ class TotalBytesCounterTest {
             )
         )
 
-        testCases.forEach { listOfBytesAndResults ->
-            Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
+        testCases.forEachIndexed { index, listOfBytesAndResults ->
+            Given("[$index] TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
                 val totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
                     sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                     sessionMaxBytes = TEST_SESSION_MAX_BYTES,
@@ -315,7 +315,7 @@ class TotalBytesCounterTest {
                     every { mockedTime.millis() }.returns(CURRENT_TIME + TEST_SESSION_LENGTH_MS)
                 }
 
-                Then("Successfully send sequence of bytes $successfulSequenceOfBytes") {
+                Then("Again successfully send sequence of bytes $successfulSequenceOfBytes") {
                     successfulSequenceOfBytes.forEach { bytes ->
                         assertTrue(totalBytesCounter10Min10kBytes.trackSentBytes(bytes))
                     }
@@ -332,19 +332,19 @@ class TotalBytesCounterTest {
             PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(5), 5_000L, true),
             PersistenceCase(7_000L, TimeUnit.MINUTES.toMillis(8), 3_000L, true),
             PersistenceCase(2_000L, TimeUnit.MINUTES.toMillis(5), 6_000L, true),
-            PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(15), 6_000L, true),
+            PersistenceCase(9_500L, TimeUnit.MINUTES.toMillis(15), 6_000L, true),
             PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(11), 10_000L, true),
-            PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(100), 10_000L, true),
+            PersistenceCase(9_999L, TimeUnit.MINUTES.toMillis(100), 10_000L, true),
             PersistenceCase(1_000L, TimeUnit.MINUTES.toMillis(1), 9_000L, true),
             PersistenceCase(6_000L, TimeUnit.MINUTES.toMillis(11), 6_000L, true),
-            PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(40), 6_000L, true),
+            PersistenceCase(5_500L, TimeUnit.MINUTES.toMillis(40), 6_000L, true),
 
-            PersistenceCase(9_000L, TimeUnit.MINUTES.toMillis(2), 2_000L, false),
+            PersistenceCase(9_200L, TimeUnit.MINUTES.toMillis(2), 2_000L, false),
             PersistenceCase(8_000L, TimeUnit.MINUTES.toMillis(1), 2_500L, false),
-            PersistenceCase(5_000L, TimeUnit.MINUTES.toMillis(5), 6_000L, false),
+            PersistenceCase(5_100L, TimeUnit.MINUTES.toMillis(5), 6_000L, false),
             PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(5), 1L, false),
-            PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(1), 1_000L, false),
-            PersistenceCase(10_000L, TimeUnit.MINUTES.toMillis(9), 10_000L, false)
+            PersistenceCase(9_900L, TimeUnit.MINUTES.toMillis(1), 1_000L, false),
+            PersistenceCase(9_100L, TimeUnit.MINUTES.toMillis(9), 10_000L, false)
         )
 
         testCases.forEach { persistenceCase ->
