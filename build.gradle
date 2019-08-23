@@ -7,6 +7,7 @@ buildscript {
         dokka_version = '0.9.17'
         android_maven_plugin_version = '2.0'
         gradle_bintray_plugin = '1.8.0'
+        jacoco_version = '0.8.0'
     }
 
     repositories {
@@ -22,6 +23,7 @@ buildscript {
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$gradle_bintray_plugin"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:$mannodermaus_junit5_version"
         pitest "org.pitest:pitest-junit5-plugin:$pitest_junit5_plugin_version"
+        classpath "org.jacoco:org.jacoco.core:$jacoco_version"
     }
 }
 
