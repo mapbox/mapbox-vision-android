@@ -8,6 +8,18 @@ annotation class VisionDslMarker
 
 object TestCase {
 
+    private const val GIVEN_PREFIX_NAME = "Given"
+    private const val WHEN_PREFIX_NAME = "When"
+    private const val THEN_PREFIX_NAME = "Then"
+
+    internal enum class WhenPrefix(val prefixName: String) {
+        WHEN(WHEN_PREFIX_NAME)
+    }
+
+    internal enum class ThenPrefix(val prefixName: String) {
+        THEN(THEN_PREFIX_NAME)
+    }
+
     private val givenBlocks = mutableListOf<DynamicContainer>()
     private val givenBlockDisplayNames = mutableSetOf<String>()
 
@@ -24,8 +36,8 @@ object TestCase {
         return givenBlocks
     }
 
-    internal fun addGivenBlock(displayName: String, prefix: String = "Given") {
-        val givenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+    internal fun addGivenBlock(displayName: String) {
+        val givenBlockDisplayName = getBlockDisplayName(displayName, GIVEN_PREFIX_NAME)
         addToSetOrThrowException(givenBlockDisplayName, givenBlockDisplayNames)
 
         givenBlocks.add(DynamicContainer.dynamicContainer(givenBlockDisplayName, whenBlocks.toMutableList()))
@@ -33,8 +45,8 @@ object TestCase {
         whenBlockDisplayNames.clear()
     }
 
-    internal fun addWhenBlock(displayName: String, prefix: String = "When") {
-        val whenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+    internal fun addWhenBlock(displayName: String, prefix: WhenPrefix = WhenPrefix.WHEN) {
+        val whenBlockDisplayName = getBlockDisplayName(displayName, prefix.prefixName)
         addToSetOrThrowException(whenBlockDisplayName, whenBlockDisplayNames)
 
         whenBlocks.add(DynamicContainer.dynamicContainer(whenBlockDisplayName, thenBlocks.toMutableList()))
@@ -42,8 +54,8 @@ object TestCase {
         thenBlockDisplayNames.clear()
     }
 
-    internal fun addThenBlock(displayName: String, prefix: String = "Then", block: () -> Unit) {
-        val thenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+    internal fun addCheckBlock(displayName: String, prefix: ThenPrefix = TestCase.ThenPrefix.THEN, block: () -> Unit) {
+        val thenBlockDisplayName = getBlockDisplayName(displayName, prefix.prefixName)
         addToSetOrThrowException(thenBlockDisplayName, thenBlockDisplayNames)
 
         thenBlocks.add(DynamicTest.dynamicTest(thenBlockDisplayName, block))
@@ -78,6 +90,6 @@ class GivenContext {
 @VisionDslMarker
 class WhenContext {
     fun Then(displayName: String, block: () -> Unit) {
-        TestCase.addThenBlock(displayName, block = block)
+        TestCase.addCheckBlock(displayName, block = block)
     }
 }
