@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.1
+
+### Vision
+- Fixed ModelPerformanceMode.DYNAMIC not taking effect with ModelPerformanceConfig.Merged
+- Fixed detections of sign objects
+
 ## v0.7.0
 
 ### Vision
