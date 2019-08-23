@@ -287,10 +287,8 @@ class TotalBytesCounterTest {
     fun `Check trackSentBytes with several sessions`() = TestCase {
         val mockedTime = mockk<Time>()
 
-        lateinit var totalBytesCounter10Min10kBytes: TotalBytesCounter
-
         Given("TotalBytesCounter with 10 minutes, 10 KBytes and started session") {
-            totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
+            val totalBytesCounter10Min10kBytes = getTotalBytesCounterWithStartedSession(
                 sessionLengthMillis = TEST_SESSION_LENGTH_MS,
                 sessionMaxBytes = TEST_SESSION_MAX_BYTES,
                 mockedTime = mockedTime,
