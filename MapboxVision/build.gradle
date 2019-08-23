@@ -6,6 +6,7 @@ apply from: "../gradle/versions.gradle"
 apply from: "../gradle/utils.gradle"
 apply from: "../gradle/ktlint.gradle"
 apply from: "../gradle/pitest.gradle"
+apply from: "../gradle/jacoco.gradle"
 
 buildscript {
     repositories {
