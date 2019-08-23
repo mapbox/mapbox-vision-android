@@ -9,27 +9,53 @@ annotation class VisionDslMarker
 object TestCase {
 
     private val givenBlocks = mutableListOf<DynamicContainer>()
+    private val givenBlockDisplayNames = mutableSetOf<String>()
+
     private val whenBlocks = mutableListOf<DynamicContainer>()
+    private val whenBlockDisplayNames = mutableSetOf<String>()
+
     private val thenBlocks = mutableListOf<DynamicTest>()
+    private val thenBlockDisplayNames = mutableSetOf<String>()
 
     operator fun invoke(block: TestContext.() -> Unit): List<DynamicContainer> {
         givenBlocks.clear()
+        givenBlockDisplayNames.clear()
         TestContext().run(block)
         return givenBlocks
     }
 
-    internal fun addGivenBlock(displayName: String) {
-        givenBlocks.add(DynamicContainer.dynamicContainer("Given: $displayName", whenBlocks.toMutableList()))
+    internal fun addGivenBlock(displayName: String, prefix: String = "Given") {
+        val givenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+        addToSetOrThrowException(givenBlockDisplayName, givenBlockDisplayNames)
+
+        givenBlocks.add(DynamicContainer.dynamicContainer(givenBlockDisplayName, whenBlocks.toMutableList()))
         whenBlocks.clear()
+        whenBlockDisplayNames.clear()
     }
 
-    internal fun addWhenBlock(displayName: String) {
-        whenBlocks.add(DynamicContainer.dynamicContainer("When: $displayName", thenBlocks.toMutableList()))
+    internal fun addWhenBlock(displayName: String, prefix: String = "When") {
+        val whenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+        addToSetOrThrowException(whenBlockDisplayName, whenBlockDisplayNames)
+
+        whenBlocks.add(DynamicContainer.dynamicContainer(whenBlockDisplayName, thenBlocks.toMutableList()))
         thenBlocks.clear()
+        thenBlockDisplayNames.clear()
     }
 
-    internal fun addThenBlock(displayName: String, block: () -> Unit) {
-        thenBlocks.add(DynamicTest.dynamicTest("Then: $displayName", block))
+    internal fun addThenBlock(displayName: String, prefix: String = "Then", block: () -> Unit) {
+        val thenBlockDisplayName = getBlockDisplayName(displayName, prefix)
+        addToSetOrThrowException(thenBlockDisplayName, thenBlockDisplayNames)
+
+        thenBlocks.add(DynamicTest.dynamicTest(thenBlockDisplayName, block))
+    }
+
+    private fun getBlockDisplayName(displayName: String, prefix: String) = "$prefix: $displayName"
+
+    private fun addToSetOrThrowException(displayName: String, displayNameSet: MutableSet<String>) {
+        if (displayName in displayNameSet) {
+            throw Exception("Block with name <$displayName> already exists")
+        }
+        displayNameSet.add(displayName)
     }
 }
 
@@ -52,6 +78,6 @@ class GivenContext {
 @VisionDslMarker
 class WhenContext {
     fun Then(displayName: String, block: () -> Unit) {
-        TestCase.addThenBlock(displayName, block)
+        TestCase.addThenBlock(displayName, block = block)
     }
 }
