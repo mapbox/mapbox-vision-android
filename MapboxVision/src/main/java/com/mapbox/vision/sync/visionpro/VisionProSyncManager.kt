@@ -1,11 +1,20 @@
-package com.mapbox.vision.sync.syncmanager
+package com.mapbox.vision.sync.visionpro
 
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
 import com.mapbox.vision.mobile.core.models.VideoClipMetadata
-import com.mapbox.vision.sync.telemetry.TotalBytesCounter
+import com.mapbox.vision.sync.MetaGenerator
+import com.mapbox.vision.sync.SyncManager
+import com.mapbox.vision.sync.util.TotalBytesCounter
 import com.mapbox.vision.utils.VisionLogger
+import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import java.io.File
+import java.io.FileReader
+import java.io.IOException
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType
@@ -15,21 +24,22 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
-import java.io.File
-import java.io.FileReader
-import java.io.IOException
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
-class VisionProSyncManager(private val gson: Gson) : SyncManager {
+class VisionProSyncManager(
+    private val gson: Gson,
+    private val metaGenerator: MetaGenerator
+) :
+    SyncManager {
 
     private val httpClient = OkHttpClient
         .Builder()
         .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
         .build()
 
-    private val totalBytesCounter = TotalBytesCounter.Impl(sessionMaxBytes = 1 * 1024 * 1024 * 1024 /* 1 GB */)
+    private val totalBytesCounter = TotalBytesCounter.Impl(
+        sessionMaxBytes = 70 * 1024 * 1024 /* 70 mb */,
+        totalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("visionPro")
+    )
 
     private val threadHandler = WorkThreadHandler()
 
@@ -42,6 +52,7 @@ class VisionProSyncManager(private val gson: Gson) : SyncManager {
     companion object {
         private const val TAG = "VisionProSyncManager"
 
+        private const val MAX_DIR_SIZE = 300 * 1024 * 1024L // 300 MB
         private const val MAX_COUNT_OF_UNSUCCESSFUL_REQUEST = 2
     }
 
@@ -86,13 +97,44 @@ class VisionProSyncManager(private val gson: Gson) : SyncManager {
         }
     }
 
-    private fun removeFiles(path: String) {
-            val jsonPath = "${path.substringAfter("/")}.json"
-            val jsonFile = File(jsonPath)
-            val videoFile = File(path)
+    private fun removeVisionProOverQuota(rootDir: File) {
+        val totalTelemetrySize = rootDir.directorySizeRecursive()
+        if (totalTelemetrySize > MAX_DIR_SIZE) {
+            var bytesToRemove = totalTelemetrySize - MAX_DIR_SIZE
+            val sortedTelemetryDirs = rootDir
+                .listFiles()
+                .sortedBy { it.name }
 
-            jsonFile.delete()
-            videoFile.delete()
+            for (dir in sortedTelemetryDirs) {
+                bytesToRemove -= dir.directorySizeRecursive()
+                dir.deleteRecursively()
+                queue.removeAll {
+                    it.first.contains(dir.path)
+                }
+                if (bytesToRemove <= 0) {
+                    break
+                }
+            }
+        }
+    }
+
+    private fun File.directorySizeRecursive(): Long = if (!isDirectory) {
+        0
+    } else {
+        listFiles()
+            .map {
+                (if (it.isFile) it.length() else it.directorySizeRecursive())
+            }
+            .sum()
+    }
+
+    private fun removeFiles(path: String) {
+        val jsonPath = "${path.substringAfter("/")}.json"
+        val jsonFile = File(jsonPath)
+        val videoFile = File(path)
+
+        jsonFile.delete()
+        videoFile.delete()
     }
 
     private fun createRequest(videoPath: String, videoFile: File, metadata: VideoClipMetadata): Request {
@@ -118,37 +160,60 @@ class VisionProSyncManager(private val gson: Gson) : SyncManager {
         val item = queue.peek() ?: return
         val (videoPath, metadata) = item
 
+        sync(item)
+    }
+
+    private fun sync(item: Pair<String, VideoClipMetadata>) {
+        val (videoPath, metadata) = item
+
+        val dirFile = File(videoPath)
+
+        removeVisionProOverQuota(dirFile.parentFile)
+
         if (isInProgress.get()) {
             return
         }
-        val file = File(videoPath).let {
+
+        File(item.first).let {
             if (it.exists()) {
                 it
             } else {
                 queue.remove(item)
+                processQueue()
                 return
             }
         }
-        val request = createRequest(videoPath, file, metadata)
+
+        val videoFile = File(item.first)
+
+        val request = createRequest(videoPath, videoFile, metadata)
         val contentLength = request.body()?.contentLength() ?: 0
 
-        if (!totalBytesCounter.trackSentBytes(contentLength)) {
+        if (!totalBytesCounter.fitInLimitCurrentSession(contentLength)) {
+            queue.remove(item)
+            queue.add(item)
             threadHandler.postDelayed({
-                processQueue()
+                sync(item)
             }, totalBytesCounter.millisToNextSession())
+            return
         }
 
+        if (isInProgress.get()) {
+            return
+        }
         isInProgress.set(true)
 
         httpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                VisionLogger.e(e, TAG)
+                VisionLogger.e(e,
+                    TAG
+                )
 
                 isInProgress.set(false)
 
                 threadHandler.postDelayed({
                     processQueue()
-                }, TimeUnit.SECONDS.toMillis(1))
+                }, TimeUnit.SECONDS.toMillis(2))
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -163,8 +228,6 @@ class VisionProSyncManager(private val gson: Gson) : SyncManager {
 
                         queue.remove(item)
                         removeFiles(item.first)
-
-                        totalBytesCounter.trackSentBytes(-contentLength)
 
                         VisionLogger.e(TAG, "Cannot sync vision pro: ${response.body()?.string()}")
                     }

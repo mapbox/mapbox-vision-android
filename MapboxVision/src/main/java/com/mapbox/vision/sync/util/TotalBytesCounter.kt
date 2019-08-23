@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync.telemetry
+package com.mapbox.vision.sync.util
 
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.system.Time

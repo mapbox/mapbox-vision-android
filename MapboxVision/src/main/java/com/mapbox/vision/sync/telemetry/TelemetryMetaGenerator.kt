@@ -1,6 +1,7 @@
-package com.mapbox.vision.sync.metagenerator
+package com.mapbox.vision.sync.telemetry
 
 import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.sync.MetaGenerator
 import com.mapbox.vision.utils.VisionLogger
 import java.io.BufferedWriter
 import java.io.File

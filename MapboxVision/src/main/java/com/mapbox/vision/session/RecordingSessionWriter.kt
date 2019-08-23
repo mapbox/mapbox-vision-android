@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync.session
+package com.mapbox.vision.session
 
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.utils.file.RotatedBuffers

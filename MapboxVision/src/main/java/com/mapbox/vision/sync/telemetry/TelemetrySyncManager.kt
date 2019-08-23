@@ -1,11 +1,14 @@
-package com.mapbox.vision.sync.syncmanager
+package com.mapbox.vision.sync.telemetry
 
 import android.content.Context
 import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.vision.sync.telemetry.AttachmentManager
-import com.mapbox.vision.sync.telemetry.TotalBytesCounter
+import com.mapbox.vision.mobile.core.models.Country
+import com.mapbox.vision.sync.MetaGenerator
+import com.mapbox.vision.sync.SyncManager
+import com.mapbox.vision.sync.util.FeatureEnvironment
+import com.mapbox.vision.sync.util.TotalBytesCounter
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
@@ -18,10 +21,36 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.MediaType
 
-class TelemetrySyncManager(
+internal class TelemetrySyncManager(
     private val mapboxTelemetry: MapboxTelemetry,
-    context: Context
+    context: Context,
+    private val metaGenerator: MetaGenerator,
+    private val featureEnvironment: FeatureEnvironment,
+    private var currentCountry: Country
 ) : SyncManager, AttachmentListener {
+
+    override val baseDir: String = "Telemetry"
+
+    private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
+    private val imageZipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
+    private val videoQueue = ConcurrentLinkedQueue<AttachmentProperties>()
+    private val threadHandler = WorkThreadHandler()
+    private val fileCompressor = ZipFileCompressorImpl()
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
+    private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
+    private val bytesTracker = TotalBytesCounter.Impl(
+        sessionMaxBytes = 10 * 1024 * 1024 /* 10 mb */,
+        totalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("telemetry")
+    )
+    private val uuidUtil = UuidHolder.Impl(context)
+    @Suppress("DEPRECATION")
+    private val language = context.resources.configuration.locale.language
+    @Suppress("DEPRECATION")
+    private val country = context.resources.configuration.locale.country
+
+    private val uploadInProgress = AtomicBoolean(false)
+
+    private var isBaseUrlSet = false
 
     companion object {
         private const val MAX_TELEMETRY_SIZE = 300 * 1024 * 1024L // 300 MB
@@ -33,22 +62,6 @@ class TelemetrySyncManager(
         private const val TYPE_VIDEO = "video"
         private const val TYPE_ZIP = "zip"
     }
-
-    private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
-    private val imageZipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
-    private val videoQueue = ConcurrentLinkedQueue<AttachmentProperties>()
-    private val threadHandler = WorkThreadHandler()
-    private val fileCompressor = ZipFileCompressorImpl()
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
-    private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
-    private val bytesTracker = TotalBytesCounter.Impl(totalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("telemetry"))
-    private val uuidUtil = UuidHolder.Impl(context)
-    @Suppress("DEPRECATION")
-    private val language = context.resources.configuration.locale.language
-    @Suppress("DEPRECATION")
-    private val country = context.resources.configuration.locale.country
-
-    private val uploadInProgress = AtomicBoolean(false)
 
     init {
         mapboxTelemetry.addAttachmentListener(this)
@@ -72,6 +85,19 @@ class TelemetrySyncManager(
         }
 
         threadHandler.stop()
+    }
+
+    override fun setCountry(country: Country) {
+    }
+
+    private fun configMapboxTelemetry() {
+        isBaseUrlSet = try {
+            // TODO remove when fix is no more necessary
+            mapboxTelemetry.setBaseUrl(featureEnvironment.getHost(currentCountry))
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     override fun syncSessionDir(path: String) {
@@ -122,7 +148,8 @@ class TelemetrySyncManager(
                     val interval = videoFile.name.substringBeforeLast(".").split("_")
                     val startMillis = (interval[0].toFloat() * 1000).toLong()
                     val endMillis = (interval[1].toFloat() * 1000).toLong()
-                    it.metadata.startTime = isoDateFormat.format(Date(parentTimestamp + startMillis))
+                    it.metadata.startTime =
+                        isoDateFormat.format(Date(parentTimestamp + startMillis))
                     it.metadata.endTime = isoDateFormat.format(Date(parentTimestamp + endMillis))
                 }
             )

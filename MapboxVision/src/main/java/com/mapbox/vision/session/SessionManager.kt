@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync
+package com.mapbox.vision.session
 
 import android.app.Application
 import com.google.gson.Gson
@@ -9,14 +9,14 @@ import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
-import com.mapbox.vision.sync.metagenerator.TelemetryMetaGenerator
-import com.mapbox.vision.sync.metagenerator.VisionProMetaGenerator
-import com.mapbox.vision.sync.session.RecordingSessionWriter
-import com.mapbox.vision.sync.session.RotatedBuffersSessionWriter
-import com.mapbox.vision.sync.session.SessionWriter
-import com.mapbox.vision.sync.syncmanager.TelemetrySyncManager
-import com.mapbox.vision.sync.syncmanager.VisionProSyncManager
+import com.mapbox.vision.mobile.core.utils.extentions.lazyUnsafe
+import com.mapbox.vision.sync.SessionWriterListener
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
+import com.mapbox.vision.sync.telemetry.TelemetryMetaGenerator
+import com.mapbox.vision.sync.telemetry.TelemetrySyncManager
+import com.mapbox.vision.sync.util.TelemetryEnvironment
+import com.mapbox.vision.sync.visionpro.VisionProMetaGenerator
+import com.mapbox.vision.sync.visionpro.VisionProSyncManager
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.file.RotatedBuffers
@@ -49,17 +49,20 @@ internal interface SessionManager {
         companion object {
             private const val CACHE_DIR = "Cache"
             private const val VIDEO_BUFFERS_DIR = "Buffers"
-            private const val TELEMETRY_DIR = "Telemetry"
         }
 
         private lateinit var sessionWriter: SessionWriter
         private var currentCountry = Country.Unknown
         private var isRecording = false
-        private var isBaseUrlSet = false
         private val videoProcessor: VideoProcessor
-        private val telemetryEnvironment = TelemetryEnvironment
+//        private val telemetryEnvironment = TelemetryEnvironment
         private val telemetryMetaGenerator = TelemetryMetaGenerator()
         private val visionProMetaGenerator = VisionProMetaGenerator(gson)
+
+        private val syncManagers by lazyUnsafe {
+            arrayOf(telemetrySyncManager, visionProSyncManager)
+        }
+
         private val telemetrySyncManager: TelemetrySyncManager
         private val visionProSyncManager: VisionProSyncManager
 
@@ -70,9 +73,11 @@ internal interface SessionManager {
 
             telemetrySyncManager = TelemetrySyncManager(
                 mapboxTelemetry = mapboxTelemetry,
-                context = application
+                context = application,
+                metaGenerator = telemetryMetaGenerator,
+                featureEnvironment = TelemetryEnvironment
             )
-            visionProSyncManager = VisionProSyncManager(gson)
+            visionProSyncManager = VisionProSyncManager(gson, visionProMetaGenerator)
         }
 
         override fun start() {
@@ -176,31 +181,23 @@ internal interface SessionManager {
             }
         }
 
-        private fun createRotatedBuffersSessionWriter() = RotatedBuffersSessionWriter(
-            buffers = RotatedBuffers(getVideoBuffersDir()),
-            nativeVisionManager = nativeVisionManager,
-            rootCacheDir = getCacheDir(),
-            videoRecorder = videoRecorder,
-            telemetryImageSaverImpl = telemetryImageSaver as TelemetryImageSaverImpl,
-            sessionWriterListener = sessionWriterListener
-        )
+        private fun createRotatedBuffersSessionWriter() =
+            RotatedBuffersSessionWriter(
+                buffers = RotatedBuffers(getVideoBuffersDir()),
+                nativeVisionManager = nativeVisionManager,
+                rootCacheDir = getCacheDir(),
+                videoRecorder = videoRecorder,
+                telemetryImageSaverImpl = telemetryImageSaver as TelemetryImageSaverImpl,
+                sessionWriterListener = sessionWriterListener
+            )
 
-        private fun createRecordingSessionWriter(path: String) = RecordingSessionWriter(
-            buffers = RotatedBuffers(buffersDir = "$path/", totalBuffersNumber = 1),
-            nativeVisionManager = nativeVisionManager,
-            sessionDir = "$path/",
-            videoRecorder = videoRecorder
-        )
-
-        private fun configMapboxTelemetry() {
-            isBaseUrlSet = try {
-                // TODO remove when fix is no more necessary
-                mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
+        private fun createRecordingSessionWriter(path: String) =
+            RecordingSessionWriter(
+                buffers = RotatedBuffers(buffersDir = "$path/", totalBuffersNumber = 1),
+                nativeVisionManager = nativeVisionManager,
+                sessionDir = "$path/",
+                videoRecorder = videoRecorder
+            )
 
         private val sessionWriterListener = object : SessionWriterListener {
             override fun onSessionStop(
@@ -243,7 +240,7 @@ internal interface SessionManager {
                     syncSessionDir(videoDir)
 
                     // TODO not right logic should be separate
-                    visionProMetaGenerator.generateMeta(videoClips, videoDir, sessionStartMillis)
+                    visionProMetaGenerator.generateMeta(videoClips, videoDir)
                     syncSessionDir(videoDir)
                 }
             }
@@ -277,9 +274,14 @@ internal interface SessionManager {
             }
         }
 
-        private fun getVideoBuffersDir() =
-            FileUtils.getAppRelativeDir(application, VIDEO_BUFFERS_DIR)
+        private fun getVideoBuffersDir() = FileUtils.getAppRelativeDir(
+            application,
+            VIDEO_BUFFERS_DIR
+        )
 
-        private fun getCacheDir() = FileUtils.getAppRelativeDir(application, CACHE_DIR)
+        private fun getCacheDir() = FileUtils.getAppRelativeDir(
+            application,
+            CACHE_DIR
+        )
     }
 }

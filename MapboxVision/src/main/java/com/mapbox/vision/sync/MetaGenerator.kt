@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync.metagenerator
+package com.mapbox.vision.sync
 
 import com.mapbox.vision.mobile.core.models.VideoClip
 import java.util.HashMap

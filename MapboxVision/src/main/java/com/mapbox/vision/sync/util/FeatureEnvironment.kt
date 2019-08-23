@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync
+package com.mapbox.vision.sync.util
 
 import com.mapbox.android.telemetry.MapboxTelemetryConstants.DEFAULT_CHINA_EVENTS_HOST
 import com.mapbox.android.telemetry.MapboxTelemetryConstants.DEFAULT_COM_EVENTS_HOST

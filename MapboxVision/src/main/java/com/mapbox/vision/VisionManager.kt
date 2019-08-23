@@ -39,7 +39,7 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.sensors.SensorsListener
 import com.mapbox.vision.sensors.SensorsManager
-import com.mapbox.vision.sync.SessionManager
+import com.mapbox.vision.session.SessionManager
 import com.mapbox.vision.sync.telemetry.MapboxTelemetryEventManager
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.utils.VisionLogger

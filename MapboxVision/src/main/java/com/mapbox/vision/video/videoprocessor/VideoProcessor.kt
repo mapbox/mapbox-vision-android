@@ -184,7 +184,8 @@ internal interface VideoProcessor {
             }
             return VideoClip(
                 startSeconds = realRelativeStartSeconds + absoluteSessionStartMillis / 1000f,
-                endSeconds = realRelativeEndSeconds + absoluteSessionStartMillis / 1000f
+                endSeconds = realRelativeEndSeconds + absoluteSessionStartMillis / 1000f,
+                metadata = null
             )
         }
 

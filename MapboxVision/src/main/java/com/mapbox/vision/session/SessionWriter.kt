@@ -1,4 +1,4 @@
-package com.mapbox.vision.sync.session
+package com.mapbox.vision.session
 
 internal interface SessionWriter {
 
