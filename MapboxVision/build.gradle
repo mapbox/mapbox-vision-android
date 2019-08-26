@@ -5,6 +5,21 @@ apply plugin: "de.mannodermaus.android-junit5"
 apply from: "../gradle/versions.gradle"
 apply from: "../gradle/utils.gradle"
 apply from: "../gradle/ktlint.gradle"
+apply from: "../gradle/pitest.gradle"
+apply from: "../gradle/jacoco.gradle"
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'pl.droidsonroids.gradle:gradle-pitest-plugin:0.2.1'
+    }
+}
 
 if (booleanProjectOrLocalProperty('PUBLISH_CORE')) {
     // publishing
@@ -80,26 +95,20 @@ android {
     }
 
     testOptions {
-        junitPlatform {
-            filters {
-                engines {
-                    include 'spek2'
-                }
-            }
+        unitTests {
+            returnDefaultValues = true
         }
     }
+
 }
 
 dependencies {
-    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
-    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_5_version"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:$junit_5_version"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testImplementation "org.mockito:mockito-core:$mockito_version"
     testImplementation "io.mockk:mockk:$mockk_version"
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
