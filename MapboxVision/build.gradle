@@ -113,7 +113,7 @@ dependencies {
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
-    if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
+    if (gradle.ext.BUILD_CORE_FROM_SOURCE) {
         api project(path: ':CoreSdk')
     } else {
         api "com.mapbox.vision:mapbox-android-vision-native:$vision_native"
