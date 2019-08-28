@@ -70,7 +70,7 @@ object VisionReplayManager : BaseVisionManager {
     private lateinit var videoSource: FileVideoSource
     private lateinit var performanceProvider: PerformanceProvider
 
-    private val attachedModules = ArrayList<Attachable>()
+    private val attachableModules = HashSet<Attachable>()
 
     private val videoSourceListener = object : VideoSourceListener {
         override fun onNewFrame(
@@ -105,7 +105,7 @@ object VisionReplayManager : BaseVisionManager {
         this.path = path
         this.delegate = DelegateVisionManager.Impl()
 
-        performanceProvider = PerformanceProvider.Impl(VisionManager.application).addTo(attachedModules)
+        performanceProvider = PerformanceProvider.Impl(VisionManager.application).addTo(attachableModules)
         // TODO lifecycle
 
         nativeVisionManager = NativeVisionReplayManager(
@@ -155,7 +155,7 @@ object VisionReplayManager : BaseVisionManager {
         delegate.start(visionEventsListener)
         videoSource.attach(videoSourceListener)
 
-        attachedModules.forEach { it.attach() }
+        attachableModules.forEach { it.attach() }
     }
 
     /**
@@ -169,7 +169,7 @@ object VisionReplayManager : BaseVisionManager {
             return
         }
 
-        attachedModules.forEach { it.detach() }
+        attachableModules.forEach { it.detach() }
 
         videoSource.detach()
         delegate.stop()
