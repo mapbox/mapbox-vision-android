@@ -98,6 +98,13 @@ class WhenContext {
         TestCase.addCheckBlock(displayName, block = block)
     }
 
+    /**
+     * @param ordering how the verification should be ordered
+     * @param inverse when true, the verification will check that the behaviour specified did **not** happen
+     * @param atLeast verifies that the behaviour happened at least [atLeast] times
+     * @param atMost verifies that the behaviour happened at most [atMost] times
+     * @param exactly verifies that the behaviour happened exactly [exactly] times. Use -1 to disable
+     */
     fun Verify(
         displayName: String,
         ordering: Ordering = Ordering.UNORDERED,
@@ -105,7 +112,7 @@ class WhenContext {
         atLeast: Int = 1,
         atMost: Int = Int.MAX_VALUE,
         exactly: Int = -1,
-        timeout: Long = 0,
+        timeoutMs: Long = 0,
         verifyBlock: MockKVerificationScope.() -> Unit
     ) {
         TestCase.addCheckBlock(displayName, prefix = TestCase.ThenPrefix.VERIFY) {
@@ -115,7 +122,7 @@ class WhenContext {
                 atLeast = atLeast,
                 atMost = atMost,
                 exactly = exactly,
-                timeout = timeout,
+                timeout = timeoutMs,
                 verifyBlock = verifyBlock
             )
         }
