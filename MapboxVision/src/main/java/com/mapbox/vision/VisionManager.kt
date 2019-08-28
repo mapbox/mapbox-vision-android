@@ -31,6 +31,7 @@ import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
+import com.mapbox.vision.mobile.core.utils.delegate.DelegateAlias
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
 import com.mapbox.vision.mobile.core.utils.extentions.addTo
 import com.mapbox.vision.mobile.core.utils.preferences.PreferencesManager
@@ -151,6 +152,11 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
+     * Listener for [VisionManager]. Is's holds as a week reference.
+     */
+    var visionEventsListener: VisionEventsListener? by DelegateAlias { delegate::visionEventsListener }
+
+    /**
      * Initialize SDK with mapbox access token and application instance.
      * Do it once per application session, eg in [android.app.Application.onCreate].
      */
@@ -240,21 +246,23 @@ object VisionManager : BaseVisionManager {
      * @param visionEventsListener: listener for [VisionManager]. Is held as a strong reference until [stop] is called.
      */
     @JvmStatic
+    @Deprecated(
+        "Will be removed in 0.9.0. Use start() and var visionEventsListener: VisionEventsListener? instead",
+        ReplaceWith("VisionManager.start()")
+    )
     fun start(visionEventsListener: VisionEventsListener) {
-        delegate.checkManagerCreated()
         if (delegate.isStarted) {
             VisionLogger.e(TAG_CLASS, "VisionManager was already started.")
             return
         }
+        delegate.keepListenerStrongRef = true
+        this.visionEventsListener = visionEventsListener
 
-        delegate.start(
-            visionEventsListener
-        ) { country ->
+        delegate.start { country ->
             handlerMain.post {
                 sessionManager.setCountry(country)
             }
         }
-
         sessionManager.start()
 
         sensorsManager.attach(sensorsListener)
@@ -262,6 +270,37 @@ object VisionManager : BaseVisionManager {
         videoSource.attach(videoSourceListener)
         attachableModules.forEach { it.attach() }
     }
+
+    /**
+     * Start delivering events from [VisionManager].
+     * Should be called with all permission granted, and after [create] is called.
+     * Do NOT call this method more than once or after [destroy] is called.
+     */
+    @JvmStatic
+    fun start() {
+        delegate.checkManagerCreated()
+        if (delegate.isStarted) {
+            VisionLogger.e(TAG_CLASS, "VisionManager was already started.")
+            return
+        }
+        delegate.keepListenerStrongRef = false
+
+        delegate.start { country ->
+            handlerMain.post {
+                sessionManager.setCountry(country)
+            }
+        }
+        sessionManager.start()
+
+        sensorsManager.attach(sensorsListener)
+        locationEngine.attach(nativeVisionManager)
+        videoSource.attach(videoSourceListener)
+        attachableModules.forEach { it.attach() }
+    }
+
+    override fun addObservable(observer: VisionEventsListener) = delegate.addObservable(observer)
+
+    override fun removeObserver(observer: VisionEventsListener) = delegate.removeObserver(observer)
 
     /**
      * Start recording a session.
@@ -340,8 +379,7 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a world coordinate to a frame coordinate.
      * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
-    @JvmStatic
-    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
+    override fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
         return delegate.worldToPixel(worldCoordinate)
     }
 
@@ -349,24 +387,21 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a frame coordinate to a world coordinate.
      * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
-    @JvmStatic
-    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
+    override fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
     /**
      * Converts the location of the point in a world coordinate to a geographical coordinate.
      */
-    @JvmStatic
-    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
+    override fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
         return delegate.worldToGeo(worldCoordinate)
     }
 
     /**
      * Converts the location of the point from a geographical coordinate to a world coordinate.
      */
-    @JvmStatic
-    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
+    override fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
         return delegate.geoToWorld(geoCoordinate)
     }
 

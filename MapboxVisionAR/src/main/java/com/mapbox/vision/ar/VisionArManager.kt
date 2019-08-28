@@ -5,12 +5,19 @@ import com.mapbox.vision.ar.core.VisionArEventsListener
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.ModuleInterface
+import com.mapbox.vision.utils.observable.Observable
+import com.mapbox.vision.utils.observable.delegateWeakPropertyObservable
 
-object VisionArManager : ModuleInterface {
+object VisionArManager : ModuleInterface, Observable<VisionArEventsListener> {
 
     private lateinit var nativeArManager: NativeArManager
-    private lateinit var visionManager: BaseVisionManager
+    lateinit var visionManager: BaseVisionManager
+        private set
     private var modulePtr: Long = 0L
+
+    private val observerComposerVisionArEvents = ObserverComposerVisionArEvents()
+
+    var visionArEventsListener by delegateWeakPropertyObservable(this)
 
     override fun registerModule(ptr: Long) {
         modulePtr = ptr
@@ -21,12 +28,26 @@ object VisionArManager : ModuleInterface {
     }
 
     @JvmStatic
-    fun create(baseVisionManager: BaseVisionManager, visionArEventsListener: VisionArEventsListener) {
+    @Deprecated(
+        "Will be removed in 0.9.0. Use create() and var visionArEventsListener:VisionEventsListener instead",
+        ReplaceWith("VisionArManager.create(baseVisionManager: BaseVisionManager)", "com.mapbox.vision.manager.BaseVisionManager")
+    )
+    fun create(
+        baseVisionManager: BaseVisionManager,
+        visionArEventsListener: VisionArEventsListener
+    ) {
+        this.visionArEventsListener = visionArEventsListener
+        create(baseVisionManager)
+    }
+
+    fun create(
+        baseVisionManager: BaseVisionManager
+    ) {
         this.visionManager = baseVisionManager
         baseVisionManager.registerModule(this)
 
         nativeArManager = NativeArManager()
-        nativeArManager.create(modulePtr, visionArEventsListener)
+        nativeArManager.create(modulePtr, observerComposerVisionArEvents)
     }
 
     @JvmStatic
@@ -44,4 +65,10 @@ object VisionArManager : ModuleInterface {
     fun setLaneLength(laneLength: Double) {
         nativeArManager.setLaneLength(laneLength)
     }
+
+    override fun addObservable(observer: VisionArEventsListener) =
+        observerComposerVisionArEvents.addObservable(observer)
+
+    override fun removeObserver(observer: VisionArEventsListener) =
+        observerComposerVisionArEvents.removeObserver(observer)
 }

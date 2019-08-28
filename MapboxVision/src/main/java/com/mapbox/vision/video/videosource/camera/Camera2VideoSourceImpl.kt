@@ -16,6 +16,7 @@ import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import com.mapbox.vision.video.videosource.ObserverComposerVideoSource
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.util.concurrent.Semaphore
@@ -35,6 +36,8 @@ class Camera2VideoSourceImpl(
     private lateinit var yuvAllocation2Rgba: YuvAllocation2Rgba
     private lateinit var previewSize: ImageSize
     private lateinit var cameraParameters: CameraParameters
+
+    private val observerComposerVideoSource = ObserverComposerVideoSource()
 
     private var sensorOrientation: Int = 0
 
@@ -81,9 +84,11 @@ class Camera2VideoSourceImpl(
 
     override fun attach(videoSourceListener: VideoSourceListener) {
         this.videoSourceListener = videoSourceListener
+        addObservable(videoSourceListener)
+
         videoSourceListener.onNewCameraParameters(cameraParameters)
         yuvAllocation2Rgba = YuvAllocation2Rgba(RenderScript.create(application), previewSize) { bytes ->
-            this.videoSourceListener?.onNewFrame(bytes, ImageFormat.RGBA, previewSize)
+            observerComposerVideoSource.onNewFrame(bytes, ImageFormat.RGBA, previewSize)
         }
         backgroundThreadHandler.start()
         openCamera()
@@ -91,10 +96,21 @@ class Camera2VideoSourceImpl(
 
     override fun detach() {
         closeCamera()
-        videoSourceListener = null
+
+        videoSourceListener?.let {
+            removeObserver(it)
+            videoSourceListener = null
+        }
+
         backgroundThreadHandler.stop()
         yuvAllocation2Rgba.release()
     }
+
+    override fun addObservable(observer: VideoSourceListener) =
+        observerComposerVideoSource.addObservable(observer)
+
+    override fun removeObserver(observer: VideoSourceListener) =
+        observerComposerVideoSource.removeObserver(observer)
 
     @SuppressLint("MissingPermission")
     private fun openCamera() {
