@@ -9,6 +9,7 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
+import com.mapbox.vision.mobile.core.utils.delegate.DelegateWeakRef
 import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
@@ -26,15 +27,15 @@ internal interface DelegateVisionManager : BaseVisionManager {
     val isStarted: Boolean
     val isCreated: Boolean
 
+    var visionEventsListener: VisionEventsListener?
+    var keepListenerStrongRef: Boolean
+
     fun create(
         nativeVisionManagerBase: NativeVisionManagerBase,
         performanceManager: PerformanceManager
     )
 
-    fun start(
-        visionEventsListener: VisionEventsListener,
-        onCountrySet: (Country) -> Unit = {}
-    )
+    fun start(onCountrySet: (Country) -> Unit = {})
 
     fun stop()
     fun destroy()
@@ -42,11 +43,6 @@ internal interface DelegateVisionManager : BaseVisionManager {
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener)
 
     fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig)
-
-    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate?
-    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate?
-    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate?
-    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate?
 
     fun getFrameStatistics(): FrameStatistics
 
@@ -62,6 +58,27 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
         override var isStarted: Boolean = false
         override var isCreated: Boolean = false
+
+        private lateinit var onCountrySet: (Country) -> Unit
+
+        // TODO shoud be refactored to visionEventsListener by delegateWeakPropertyObservable after 0.9.0. Now we should keep strong link on listener,
+        override var visionEventsListener: VisionEventsListener? by DelegateWeakRef.valueChange { oldValue, newValue ->
+            if (keepListenerStrongRef || newValue == null) {
+                visionEventsListenerStrongLink = newValue
+            }
+            oldValue?.let { removeObserver(it) }
+            newValue?.let { addObservable(it) }
+        }
+        var visionEventsListenerStrongLink: VisionEventsListener? = null
+        // TODO remove after 0.9.0 along with visionEventsListenerStrongLink
+        override var keepListenerStrongRef: Boolean = false
+
+        private val observableComposer = object : ObserverComposerVisionEvents() {
+            override fun onCountryUpdated(country: Country) {
+                super.onCountryUpdated(country)
+                onCountrySet(country)
+            }
+        }
 
         override fun create(
             nativeVisionManagerBase: NativeVisionManagerBase,
@@ -82,23 +99,20 @@ internal interface DelegateVisionManager : BaseVisionManager {
             )
         }
 
-        override fun start(
-            visionEventsListener: VisionEventsListener,
-            onCountrySet: (Country) -> Unit
-        ) {
+        override fun start(onCountrySet: (Country) -> Unit) {
             isStarted = true
-
-            nativeVisionManagerBase.start(object : VisionEventsListener by visionEventsListener {
-                override fun onCountryUpdated(country: Country) {
-                    visionEventsListener.onCountryUpdated(country)
-                    onCountrySet(country)
-                }
-            })
+            this.onCountrySet = onCountrySet
+            nativeVisionManagerBase.start(observableComposer)
         }
+
+        override fun addObservable(observer: VisionEventsListener) =
+            observableComposer.addObservable(observer)
+
+        override fun removeObserver(observer: VisionEventsListener) =
+            observableComposer.removeObserver(observer)
 
         override fun stop() {
             nativeVisionManagerBase.stop()
-
             isStarted = false
         }
 

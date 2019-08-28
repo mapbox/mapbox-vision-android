@@ -11,6 +11,7 @@ import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import com.mapbox.vision.video.videosource.ObserverComposerVideoSource
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.io.File
@@ -31,9 +32,12 @@ class FileVideoSource(
         RenderScript.create(application)
     }
 
+    private val observerComposerVideoSource = ObserverComposerVideoSource()
+
     // Image from MediaCodec arrive in NV12 format, while ScriptIntrinsicYuvToRGB processes NV21,
     // which results in BGR format in the output.
-    private val intrinsicYuvToRgb = ScriptIntrinsicYuvToRGB.create(renderscript, Element.U8_4(renderscript))
+    private val intrinsicYuvToRgb =
+        ScriptIntrinsicYuvToRGB.create(renderscript, Element.U8_4(renderscript))
     // So we use additional renderscript, that swaps BGR to RGB.
     private val bgrToRgb = ScriptC_bgr_to_rgb(renderscript)
     // Scripts are used as ScriptGroup to use single memory for conversion.
@@ -81,6 +85,7 @@ class FileVideoSource(
 
     override fun attach(videoSourceListener: VideoSourceListener) {
         this.videoSourceListener = videoSourceListener
+        addObservable(videoSourceListener)
 
         responseHandler.start()
         handler.start()
@@ -100,13 +105,22 @@ class FileVideoSource(
     }
 
     override fun detach() {
-        videoSourceListener = null
+        videoSourceListener?.let {
+            observerComposerVideoSource.removeObserver(it)
+            videoSourceListener = null
+        }
 
         currentVideo = 0
         videoDecoder.stopPlayback()
         handler.stop()
         responseHandler.stop()
     }
+
+    override fun addObservable(observer: VideoSourceListener) =
+        observerComposerVideoSource.addObservable(observer)
+
+    override fun removeObserver(observer: VideoSourceListener) =
+        observerComposerVideoSource.removeObserver(observer)
 
     private fun onFrameDecoded(byteBuffer: ByteBuffer, videoProgress: Long) {
         try {
@@ -121,7 +135,11 @@ class FileVideoSource(
                     sourceAllocation.copyFrom(yuvArray)
                     scriptGroup.execute()
                     destinationAllocation.copyTo(rgbaArray)
-                    videoSourceListener?.onNewFrame(rgbaArray, ImageFormat.RGBA, ImageSize(width, height))
+                    observerComposerVideoSource.onNewFrame(
+                        rgbaArray,
+                        ImageFormat.RGBA,
+                        ImageSize(width, height)
+                    )
                 } catch (e: Exception) {
                     VisionLogger.e(e, "FileVideoSource")
                 }
