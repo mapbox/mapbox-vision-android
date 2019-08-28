@@ -37,6 +37,8 @@ class Camera2VideoSourceImpl(
 
     private var sensorOrientation: Int = 0
 
+    private var configureAttemptNumber = 0
+
     private var captureSession: CameraCaptureSession? = null
 
     // Prevents app from exiting before closing the camera.
@@ -55,15 +57,11 @@ class Camera2VideoSourceImpl(
         }
 
         override fun onDisconnected(currentCameraDevice: CameraDevice) {
-            currentCameraDevice.close()
-            cameraDevice = null
-            cameraOpenCloseLock.release()
+            closeCamera(currentCameraDevice)
         }
 
         override fun onError(currentCameraDevice: CameraDevice, error: Int) {
-            currentCameraDevice.close()
-            cameraDevice = null
-            cameraOpenCloseLock.release()
+            closeCamera(currentCameraDevice)
         }
     }
 
@@ -127,8 +125,15 @@ class Camera2VideoSourceImpl(
         }
     }
 
+    private fun closeCamera(camera: CameraDevice?) {
+        camera?.close()
+        cameraDevice = null
+        cameraOpenCloseLock.release()
+    }
+
     private fun createCaptureSession() {
         try {
+            configureAttemptNumber++
             cameraDevice?.let { camera ->
 
                 val previewRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
@@ -139,6 +144,7 @@ class Camera2VideoSourceImpl(
                     surfaces,
                     object : CameraCaptureSession.StateCallback() {
                         override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                            configureAttemptNumber = 0
                             cameraOpenCloseLock.acquire()
                             if (cameraDevice == null) {
                                 cameraOpenCloseLock.release()
@@ -167,7 +173,7 @@ class Camera2VideoSourceImpl(
                         }
 
                         override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-                            throw IllegalStateException("Failed to configure Camera ${cameraCaptureSession.device.id}!")
+                            repeatConfigureAttempt()
                         }
                     },
                     null
@@ -175,6 +181,15 @@ class Camera2VideoSourceImpl(
             }
         } catch (e: CameraAccessException) {
             e.printStackTrace()
+        }
+    }
+
+    private fun repeatConfigureAttempt() {
+        if (configureAttemptNumber <= CREATE_SESSION_MAX_ATTEMPTS) {
+            backgroundThreadHandler.handler.postDelayed({createCaptureSession()}, TimeUnit.SECONDS.toMillis(configureAttemptNumber * 2L))  // delay 2 - 4 - 6 seconds
+        } else {
+            configureAttemptNumber = 0
+            closeCamera(cameraDevice)
         }
     }
 
@@ -233,6 +248,8 @@ class Camera2VideoSourceImpl(
 
         private const val DEFAULT_FRAME_WIDTH = 1280
         private const val DEFAULT_FRAME_HEIGHT = 720
+
+        private const val CREATE_SESSION_MAX_ATTEMPTS = 3
 
         private fun chooseOptimalCameraResolution(
             supportedSizes: List<Size>,
