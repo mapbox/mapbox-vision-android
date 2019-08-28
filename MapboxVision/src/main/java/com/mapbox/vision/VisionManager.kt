@@ -81,7 +81,7 @@ object VisionManager : BaseVisionManager {
     private lateinit var videoRecorder: VideoRecorder
     private lateinit var performanceProvider: PerformanceProvider
 
-    private val attachedModules = ArrayList<Attachable>()
+    private val attachableModules = HashSet<Attachable>()
 
     private lateinit var mapboxTelemetry: MapboxTelemetry
 
@@ -171,7 +171,7 @@ object VisionManager : BaseVisionManager {
     fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
         delegate = DelegateVisionManager.Impl()
 
-        performanceProvider = PerformanceProvider.Impl(application).addTo(attachedModules)
+        performanceProvider = PerformanceProvider.Impl(application).addTo(attachableModules)
 
         nativeVisionManager = NativeVisionManager(
             mapboxToken,
@@ -254,7 +254,7 @@ object VisionManager : BaseVisionManager {
         sensorsManager.attach(sensorsListener)
         locationEngine.attach(nativeVisionManager)
         videoSource.attach(videoSourceListener)
-        attachedModules.forEach { it.attach() }
+        attachableModules.forEach { it.attach() }
     }
 
     /**
@@ -302,7 +302,7 @@ object VisionManager : BaseVisionManager {
 
         locationEngine.detach()
         sensorsManager.detach()
-        attachedModules.forEach { it.detach() }
+        attachableModules.forEach { it.detach() }
     }
 
     /**
