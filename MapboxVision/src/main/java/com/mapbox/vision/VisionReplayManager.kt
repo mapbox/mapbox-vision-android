@@ -29,6 +29,7 @@ import com.mapbox.vision.mobile.core.utils.extentions.addTo
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.utils.VisionLogger
+import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.file.FileVideoSource
 import java.io.File
@@ -65,10 +66,12 @@ object VisionReplayManager : BaseVisionManager {
         override fun pushEvent() {}
     }
 
-    private lateinit var delegate: DelegateVisionManager
+    override val videoSource: VideoSource.WithProgress
+        get() = delegate.videoSource
+
+    private lateinit var delegate: DelegateVisionManager<VideoSource.WithProgress>
     private lateinit var nativeVisionManager: NativeVisionReplayManager
     private lateinit var path: String
-    private lateinit var videoSource: FileVideoSource
     private lateinit var performanceProvider: PerformanceProvider
 
     private val attachableModules = HashSet<Attachable>()
@@ -95,8 +98,9 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     /**
-     * Listener for [VisionReplayManager]. Is's holds as a week reference.
+     * Listener for [VisionReplayManager]. It's held as a week reference.
      */
+    @JvmStatic
     var visionEventsListener: VisionEventsListener? by DelegateAlias { delegate::visionEventsListener }
 
     /**
@@ -109,7 +113,7 @@ object VisionReplayManager : BaseVisionManager {
     @JvmStatic
     fun create(path: String) {
         this.path = path
-        this.delegate = DelegateVisionManager.Impl()
+        delegate = DelegateVisionManager.Impl()
 
         performanceProvider =
             PerformanceProvider.Impl(VisionManager.application).addTo(attachableModules)
@@ -127,7 +131,7 @@ object VisionReplayManager : BaseVisionManager {
             path = path
         )
 
-        videoSource = FileVideoSource(
+        delegate.videoSource = FileVideoSource(
             VisionManager.application,
             videoFiles = File(path)
                 .listFiles
@@ -153,7 +157,7 @@ object VisionReplayManager : BaseVisionManager {
      */
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use start() and addEventListener(VisionEventsListener) instead",
+        "Will be removed in 0.9.0. Use start() and setVisionEventsListener(VisionEventsListener) instead",
         ReplaceWith("VisionReplayManager.start()")
     )
     fun start(visionEventsListener: VisionEventsListener) {
@@ -193,9 +197,9 @@ object VisionReplayManager : BaseVisionManager {
         attachableModules.forEach { it.attach() }
     }
 
-    override fun addObservable(observer: VisionEventsListener) = delegate.addObservable(observer)
+    override fun addListener(observer: VisionEventsListener) = delegate.addListener(observer)
 
-    override fun removeObserver(observer: VisionEventsListener) = delegate.removeObserver(observer)
+    override fun removeListener(observer: VisionEventsListener) = delegate.removeListener(observer)
 
     /**
      * Stop delivering events from [VisionReplayManager].
@@ -243,7 +247,8 @@ object VisionReplayManager : BaseVisionManager {
      * Converts the location of the point from a world coordinate to a frame coordinate.
      * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
-    override fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
+    @JvmStatic
+    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
         return delegate.worldToPixel(worldCoordinate)
     }
 
@@ -251,21 +256,24 @@ object VisionReplayManager : BaseVisionManager {
      * Converts the location of the point from a frame coordinate to a world coordinate.
      * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
-    override fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
+    @JvmStatic
+    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
     /**
      * Converts the location of the point in a world coordinate to a geographical coordinate.
      */
-    override fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
+    @JvmStatic
+    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
         return delegate.worldToGeo(worldCoordinate)
     }
 
     /**
      * Converts the location of the point from a geographical coordinate to a world coordinate.
      */
-    override fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
+    @JvmStatic
+    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
         return delegate.geoToWorld(geoCoordinate)
     }
 

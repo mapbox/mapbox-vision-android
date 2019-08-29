@@ -10,9 +10,9 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
-import com.mapbox.vision.utils.observable.ObserverComposer
+import com.mapbox.vision.utils.observable.CompositeListener
 
-open class ObserverComposerVisionEvents : ObserverComposer<VisionEventsListener>(),
+open class CompositeListenerVisionEvents : CompositeListener.Impl<VisionEventsListener>(),
     VisionEventsListener {
 
     override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {

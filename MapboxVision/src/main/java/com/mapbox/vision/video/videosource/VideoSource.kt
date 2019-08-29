@@ -1,6 +1,6 @@
 package com.mapbox.vision.video.videosource
 
-import com.mapbox.vision.utils.observable.Observable
+import com.mapbox.vision.utils.observable.CompositeListener
 
 interface Progress {
     fun setProgress(timestampMillis: Long)
@@ -10,10 +10,13 @@ interface Progress {
     fun resume()
 }
 
-interface VideoSource : Observable<VideoSourceListener> {
+interface VideoSource : CompositeListener<VideoSourceListener> {
     fun attach(videoSourceListener: VideoSourceListener)
 
     fun detach()
+
+    override fun addListener(observer: VideoSourceListener) {}
+    override fun removeListener(observer: VideoSourceListener) {}
 
     interface WithProgress : VideoSource, Progress
 }

@@ -4,17 +4,18 @@ import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.ModuleInterface
 import com.mapbox.vision.safety.core.NativeSafetyManager
 import com.mapbox.vision.safety.core.VisionSafetyListener
-import com.mapbox.vision.utils.observable.Observable
+import com.mapbox.vision.utils.observable.CompositeListener
 import com.mapbox.vision.utils.observable.delegateWeakPropertyObservable
 
-object VisionSafetyManager : ModuleInterface, Observable<VisionSafetyListener> {
+object VisionSafetyManager : ModuleInterface, CompositeListener<VisionSafetyListener> {
 
     private lateinit var nativeSafetyManager: NativeSafetyManager
     private lateinit var visionManager: BaseVisionManager
     private var modulePtr: Long = 0L
 
-    private val observerComposerVisionEvents = ObserverComposerVisionSafety()
+    private val compositeListenerVisionEvents = CompositeListenerVisionSafety()
 
+    @JvmStatic
     var visionSafetyListener by delegateWeakPropertyObservable(this)
 
     override fun registerModule(ptr: Long) {
@@ -27,7 +28,7 @@ object VisionSafetyManager : ModuleInterface, Observable<VisionSafetyListener> {
 
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use create() and var visionSafetyListener:VisionSafetyListener instead",
+        "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionSafetyListener) instead",
         ReplaceWith("VisionSafetyManager.create(baseVisionManager: BaseVisionManager)", "com.mapbox.vision.manager.BaseVisionManager")
     )
     fun create(baseVisionManager: BaseVisionManager, visionSafetyListener: VisionSafetyListener) {
@@ -44,7 +45,7 @@ object VisionSafetyManager : ModuleInterface, Observable<VisionSafetyListener> {
         baseVisionManager.registerModule(this)
 
         nativeSafetyManager = NativeSafetyManager()
-        nativeSafetyManager.create(modulePtr, observerComposerVisionEvents)
+        nativeSafetyManager.create(modulePtr, compositeListenerVisionEvents)
     }
 
     @JvmStatic
@@ -71,9 +72,9 @@ object VisionSafetyManager : ModuleInterface, Observable<VisionSafetyListener> {
         nativeSafetyManager.setCollisionMinSpeed(speed)
     }
 
-    override fun addObservable(observer: VisionSafetyListener) =
-        observerComposerVisionEvents.addObservable(observer)
+    override fun addListener(observer: VisionSafetyListener) =
+        compositeListenerVisionEvents.addListener(observer)
 
-    override fun removeObserver(observer: VisionSafetyListener) =
-        observerComposerVisionEvents.removeObserver(observer)
+    override fun removeListener(observer: VisionSafetyListener) =
+        compositeListenerVisionEvents.removeListener(observer)
 }

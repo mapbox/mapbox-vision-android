@@ -15,10 +15,11 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.performance.PerformanceManager
+import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
 
-internal interface DelegateVisionManager : BaseVisionManager {
+internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
 
     val externalVideoSourceListener: VideoSourceListener?
     val nativeVisionManagerBase: NativeVisionManagerBase
@@ -29,6 +30,7 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
     var visionEventsListener: VisionEventsListener?
     var keepListenerStrongRef: Boolean
+    override var videoSource: T
 
     fun create(
         nativeVisionManagerBase: NativeVisionManagerBase,
@@ -49,7 +51,14 @@ internal interface DelegateVisionManager : BaseVisionManager {
     fun checkManagerCreated()
     fun checkManagerStarted()
 
-    class Impl : DelegateVisionManager {
+    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate?
+    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate?
+    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate?
+    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate?
+
+    class Impl<T : VideoSource> : DelegateVisionManager<T> {
+
+        override lateinit var videoSource: T
 
         override var externalVideoSourceListener: VideoSourceListener? = null
 
@@ -61,19 +70,19 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
         private lateinit var onCountrySet: (Country) -> Unit
 
-        // TODO shoud be refactored to visionEventsListener by delegateWeakPropertyObservable after 0.9.0. Now we should keep strong link on listener,
+        // TODO should be refactored to visionEventsListener by delegateWeakPropertyObservable after 0.9.0. Now we should keep strong link on listener
         override var visionEventsListener: VisionEventsListener? by DelegateWeakRef.valueChange { oldValue, newValue ->
             if (keepListenerStrongRef || newValue == null) {
                 visionEventsListenerStrongLink = newValue
             }
-            oldValue?.let { removeObserver(it) }
-            newValue?.let { addObservable(it) }
+            oldValue?.let { removeListener(it) }
+            newValue?.let { addListener(it) }
         }
         var visionEventsListenerStrongLink: VisionEventsListener? = null
         // TODO remove after 0.9.0 along with visionEventsListenerStrongLink
         override var keepListenerStrongRef: Boolean = false
 
-        private val observableComposer = object : ObserverComposerVisionEvents() {
+        private val compositeListener = object : CompositeListenerVisionEvents() {
             override fun onCountryUpdated(country: Country) {
                 super.onCountryUpdated(country)
                 onCountrySet(country)
@@ -102,14 +111,14 @@ internal interface DelegateVisionManager : BaseVisionManager {
         override fun start(onCountrySet: (Country) -> Unit) {
             isStarted = true
             this.onCountrySet = onCountrySet
-            nativeVisionManagerBase.start(observableComposer)
+            nativeVisionManagerBase.start(compositeListener)
         }
 
-        override fun addObservable(observer: VisionEventsListener) =
-            observableComposer.addObservable(observer)
+        override fun addListener(observer: VisionEventsListener) =
+            compositeListener.addListener(observer)
 
-        override fun removeObserver(observer: VisionEventsListener) =
-            observableComposer.removeObserver(observer)
+        override fun removeListener(observer: VisionEventsListener) =
+            compositeListener.removeListener(observer)
 
         override fun stop() {
             nativeVisionManagerBase.stop()

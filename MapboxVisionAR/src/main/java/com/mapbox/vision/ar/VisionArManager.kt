@@ -5,18 +5,20 @@ import com.mapbox.vision.ar.core.VisionArEventsListener
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.ModuleInterface
-import com.mapbox.vision.utils.observable.Observable
+import com.mapbox.vision.utils.observable.CompositeListener
 import com.mapbox.vision.utils.observable.delegateWeakPropertyObservable
 
-object VisionArManager : ModuleInterface, Observable<VisionArEventsListener> {
+object VisionArManager : ModuleInterface, CompositeListener<VisionArEventsListener> {
 
-    private lateinit var nativeArManager: NativeArManager
     lateinit var visionManager: BaseVisionManager
         private set
+
+    private lateinit var nativeArManager: NativeArManager
     private var modulePtr: Long = 0L
 
-    private val observerComposerVisionArEvents = ObserverComposerVisionArEvents()
+    private val compositeListenerVisionArEvents = CompositeListenerVisionArEvents()
 
+    @JvmStatic
     var visionArEventsListener by delegateWeakPropertyObservable(this)
 
     override fun registerModule(ptr: Long) {
@@ -29,7 +31,7 @@ object VisionArManager : ModuleInterface, Observable<VisionArEventsListener> {
 
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use create() and var visionArEventsListener:VisionEventsListener instead",
+        "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionEventsListener) instead",
         ReplaceWith("VisionArManager.create(baseVisionManager: BaseVisionManager)", "com.mapbox.vision.manager.BaseVisionManager")
     )
     fun create(
@@ -47,7 +49,7 @@ object VisionArManager : ModuleInterface, Observable<VisionArEventsListener> {
         baseVisionManager.registerModule(this)
 
         nativeArManager = NativeArManager()
-        nativeArManager.create(modulePtr, observerComposerVisionArEvents)
+        nativeArManager.create(modulePtr, compositeListenerVisionArEvents)
     }
 
     @JvmStatic
@@ -66,9 +68,9 @@ object VisionArManager : ModuleInterface, Observable<VisionArEventsListener> {
         nativeArManager.setLaneLength(laneLength)
     }
 
-    override fun addObservable(observer: VisionArEventsListener) =
-        observerComposerVisionArEvents.addObservable(observer)
+    override fun addListener(observer: VisionArEventsListener) =
+        compositeListenerVisionArEvents.addListener(observer)
 
-    override fun removeObserver(observer: VisionArEventsListener) =
-        observerComposerVisionArEvents.removeObserver(observer)
+    override fun removeListener(observer: VisionArEventsListener) =
+        compositeListenerVisionArEvents.removeListener(observer)
 }

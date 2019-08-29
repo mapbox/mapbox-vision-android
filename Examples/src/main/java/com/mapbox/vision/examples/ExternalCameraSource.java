@@ -43,7 +43,6 @@ public class ExternalCameraSource extends BaseActivity {
 
     // VideoSource that will play the file.
     private VideoSource customVideoSource = new VideoSource() {
-
         @Override
         public void attach(@NotNull VideoSourceListener videoSourceListener) {
             // video source is attached, we can start decoding frames from video and feeding them to Vision SDK.
@@ -62,6 +61,12 @@ public class ExternalCameraSource extends BaseActivity {
             videoSourceListener = null;
             handlerThread.quitSafely();
         }
+
+        @Override
+        public void removeListener(@NotNull VideoSourceListener observer) { }
+
+        @Override
+        public void addListener(@NotNull VideoSourceListener observer) { }
     };
 
     // VisionEventsListener handles events from Vision SDK on background thread.
