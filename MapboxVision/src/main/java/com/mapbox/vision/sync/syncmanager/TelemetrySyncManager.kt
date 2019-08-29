@@ -81,7 +81,9 @@ class TelemetrySyncManager(
 
         val dirFile = File(path)
 
-        removeTelemetryOverQuota(dirFile.parentFile)
+        // path = ../Telemetry/Recordings_Country/timestamp/
+        // quota need to be checked for Telemetry dir
+        removeTelemetryOverQuota(dirFile.parentFile.parentFile)
 
         zipDataFiles("telemetry", path) { file ->
             file.name.endsWith("bin") || file.name.endsWith("json")
@@ -133,11 +135,18 @@ class TelemetrySyncManager(
         val totalTelemetrySize = rootTelemetryDirectory.directorySizeRecursive()
         if (totalTelemetrySize > MAX_TELEMETRY_SIZE) {
             var bytesToRemove = totalTelemetrySize - MAX_TELEMETRY_SIZE
-            val sortedTelemetryDirs = rootTelemetryDirectory
-                .listFiles()
-                .sortedBy { it.name }
 
-            for (telemetryDir in sortedTelemetryDirs) {
+            val telemetryDirs = mutableListOf<File>()
+
+            rootTelemetryDirectory.listFiles()?.forEach { countryDir ->
+                countryDir.listFiles()?.let { timestampDir ->
+                    telemetryDirs.addAll(timestampDir)
+                }
+            }
+            
+            telemetryDirs.sortBy { it.name }
+
+            for (telemetryDir in telemetryDirs) {
                 bytesToRemove -= telemetryDir.directorySizeRecursive()
                 telemetryDir.deleteRecursively()
                 zipQueue.removeAll {

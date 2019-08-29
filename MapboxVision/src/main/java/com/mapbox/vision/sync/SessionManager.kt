@@ -253,7 +253,7 @@ internal interface SessionManager {
             currentCountryTelemetryPath: String
         ): String {
             val cachedPath = File(cachedTelemetryPath)
-            return "$currentCountryTelemetryPath/${cachedPath.name}"
+            return "$currentCountryTelemetryPath${cachedPath.name}"
         }
 
         private fun getCurrentCountryTelemetryPath(): String? {
