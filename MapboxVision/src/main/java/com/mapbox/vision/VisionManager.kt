@@ -72,11 +72,13 @@ object VisionManager : BaseVisionManager {
     lateinit var mapboxToken: String
         private set
 
-    private lateinit var delegate: DelegateVisionManager
+    override val videoSource: VideoSource
+        get() = delegate.videoSource
+
+    private lateinit var delegate: DelegateVisionManager<VideoSource>
     private lateinit var nativeVisionManager: NativeVisionManager
     private lateinit var telemetryImageSaver: TelemetryImageSaverImpl
 
-    private lateinit var videoSource: VideoSource
     private lateinit var sensorsManager: SensorsManager
     private lateinit var locationEngine: LocationEngine
     private lateinit var sessionManager: SessionManager
@@ -152,8 +154,9 @@ object VisionManager : BaseVisionManager {
     }
 
     /**
-     * Listener for [VisionManager]. Is's holds as a week reference.
+     * Listener for [VisionManager]. It's held as a week reference.
      */
+    @JvmStatic
     var visionEventsListener: VisionEventsListener? by DelegateAlias { delegate::visionEventsListener }
 
     /**
@@ -200,7 +203,7 @@ object VisionManager : BaseVisionManager {
             VideoRecorder.DummyVideoRecorder()
         }
 
-        this.videoSource = videoSource
+        delegate.videoSource = videoSource
         this.videoRecorder = videoRecorder
 
         mapboxTelemetry = MapboxTelemetry(
@@ -247,7 +250,7 @@ object VisionManager : BaseVisionManager {
      */
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use start() and var visionEventsListener: VisionEventsListener? instead",
+        "Will be removed in 0.9.0. Use start() and setVisionEventsListener(VisionEventsListener) instead",
         ReplaceWith("VisionManager.start()")
     )
     fun start(visionEventsListener: VisionEventsListener) {
@@ -298,9 +301,9 @@ object VisionManager : BaseVisionManager {
         attachableModules.forEach { it.attach() }
     }
 
-    override fun addObservable(observer: VisionEventsListener) = delegate.addObservable(observer)
+    override fun addListener(observer: VisionEventsListener) = delegate.addListener(observer)
 
-    override fun removeObserver(observer: VisionEventsListener) = delegate.removeObserver(observer)
+    override fun removeListener(observer: VisionEventsListener) = delegate.removeListener(observer)
 
     /**
      * Start recording a session.
@@ -379,7 +382,8 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a world coordinate to a frame coordinate.
      * @return [PixelCoordinate] if [worldCoordinate] can be represented in screen coordinates and null otherwise
      */
-    override fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
+    @JvmStatic
+    fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate? {
         return delegate.worldToPixel(worldCoordinate)
     }
 
@@ -387,21 +391,23 @@ object VisionManager : BaseVisionManager {
      * Converts the location of the point from a frame coordinate to a world coordinate.
      * @return [WorldCoordinate] if [pixelCoordinate] can be projected on the road and null otherwise
      */
-    override fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
+    @JvmStatic
+    fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate? {
         return delegate.pixelToWorld(pixelCoordinate)
     }
 
     /**
      * Converts the location of the point in a world coordinate to a geographical coordinate.
      */
-    override fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
+    @JvmStatic
+    fun worldToGeo(worldCoordinate: WorldCoordinate): GeoCoordinate? {
         return delegate.worldToGeo(worldCoordinate)
     }
 
     /**
      * Converts the location of the point from a geographical coordinate to a world coordinate.
      */
-    override fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
+    fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
         return delegate.geoToWorld(geoCoordinate)
     }
 

@@ -59,16 +59,16 @@ constructor(
     }
 
     private fun subscribeWith(visionArManager: VisionArManager) {
-        visionArManager.addObservable(arViewSupporter)
-        visionArManager.visionManager.getVideoSource().addObservable(arViewSupporter)
+        visionArManager.addListener(arViewSupporter)
+        visionArManager.visionManager.videoSource.addListener(arViewSupporter)
     }
 
     private fun unsubscribeWith(visionArManager: VisionArManager?) {
         if (visionArManager == null) {
             return
         }
-        visionArManager.removeObserver(arViewSupporter)
-        visionArManager.visionManager.getVideoSource().removeObserver(arViewSupporter)
+        visionArManager.removeListener(arViewSupporter)
+        visionArManager.visionManager.videoSource.removeListener(arViewSupporter)
     }
 
     @Deprecated("Will be removed in 0.9.0")
