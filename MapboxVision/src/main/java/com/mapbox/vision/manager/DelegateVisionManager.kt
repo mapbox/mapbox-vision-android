@@ -9,7 +9,10 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.PixelCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
+import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
+import com.mapbox.vision.performance.ModelPerformanceMode
+import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.performance.PerformanceManager
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
@@ -68,6 +71,13 @@ internal interface DelegateVisionManager : BaseVisionManager {
 
             this.nativeVisionManagerBase = nativeVisionManagerBase
             this.performanceManager = performanceManager
+
+             this.performanceManager.setModelConfig(
+                ModelPerformanceConfig.Merged(ModelPerformance.On(
+                    mode = ModelPerformanceMode.DYNAMIC,
+                    rate = ModelPerformanceRate.HIGH
+                ))
+            )
         }
 
         override fun start(

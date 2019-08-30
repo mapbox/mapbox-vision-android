@@ -149,13 +149,7 @@ internal interface PerformanceManager {
             when (modelConfig) {
                 is ModelPerformanceConfig.Merged -> {
                     nativeVisionManagerBase.setUseMergedModel(true)
-                    setDetectionPerformance(
-                        modelConfig.performance,
-                        minFps = snpeBoard.getMinWorkingFps().mergedFpsRange,
-                        maxFps = snpeBoard.getMaxFps(modelConfig.performance).mergedFpsRange,
-                        backgroundFps = snpeBoard.getMinBackgroundFps().mergedFpsRange
-                    )
-                    setSegmentationPerformance(
+                    setMergedPerformance(
                         modelConfig.performance,
                         minFps = snpeBoard.getMinWorkingFps().mergedFpsRange,
                         maxFps = snpeBoard.getMaxFps(modelConfig.performance).mergedFpsRange,
@@ -176,6 +170,29 @@ internal interface PerformanceManager {
                         maxFps = snpeBoard.getMaxFps(modelConfig.segmentationPerformance).segmentationFps,
                         backgroundFps = snpeBoard.getMinBackgroundFps().segmentationFps
                     )
+                }
+            }
+        }
+
+        private fun setMergedPerformance(
+            modelPerformance: ModelPerformance,
+            minFps: Fps,
+            maxFps: Fps,
+            backgroundFps: Fps
+        ) {
+            when (modelPerformance) {
+                is ModelPerformance.On -> {
+                    when (modelPerformance.mode) {
+                        ModelPerformanceMode.FIXED -> {
+                            nativeVisionManagerBase.setMergedFixedFps(maxFps.value)
+                        }
+                        ModelPerformanceMode.DYNAMIC -> {
+                            nativeVisionManagerBase.setMergedDynamicFps(minFps.value, maxFps.value)
+                        }
+                    }
+                }
+                ModelPerformance.Off -> {
+                    nativeVisionManagerBase.setMergedFixedFps(backgroundFps.value)
                 }
             }
         }
