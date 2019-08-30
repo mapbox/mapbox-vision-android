@@ -4,7 +4,6 @@
 
 ### Vision
 - Start monitoring performance related device info
-- Performance improved
 
 ## v0.7.1
 
