@@ -1,5 +1,8 @@
 package com.mapbox.vision.dsl
 
+import io.mockk.MockKVerificationScope
+import io.mockk.Ordering
+import io.mockk.verify
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicTest
 
@@ -11,13 +14,15 @@ object TestCase {
     private const val GIVEN_PREFIX_NAME = "Given"
     private const val WHEN_PREFIX_NAME = "When"
     private const val THEN_PREFIX_NAME = "Then"
+    private const val VERIFY_PREFIX_NAME = "Verify"
 
     internal enum class WhenPrefix(val prefixName: String) {
         WHEN(WHEN_PREFIX_NAME)
     }
 
     internal enum class ThenPrefix(val prefixName: String) {
-        THEN(THEN_PREFIX_NAME)
+        THEN(THEN_PREFIX_NAME),
+        VERIFY(VERIFY_PREFIX_NAME)
     }
 
     private val givenBlocks = mutableListOf<DynamicContainer>()
@@ -91,5 +96,35 @@ class GivenContext {
 class WhenContext {
     fun Then(displayName: String, block: () -> Unit) {
         TestCase.addCheckBlock(displayName, block = block)
+    }
+
+    /**
+     * @param ordering how the verification should be ordered
+     * @param inverse when true, the verification will check that the behaviour specified did **not** happen
+     * @param atLeast verifies that the behaviour happened at least [atLeast] times
+     * @param atMost verifies that the behaviour happened at most [atMost] times
+     * @param exactly verifies that the behaviour happened exactly [exactly] times. Use -1 to disable
+     */
+    fun Verify(
+        displayName: String,
+        ordering: Ordering = Ordering.UNORDERED,
+        inverse: Boolean = false,
+        atLeast: Int = 1,
+        atMost: Int = Int.MAX_VALUE,
+        exactly: Int = -1,
+        timeoutMs: Long = 0,
+        verifyBlock: MockKVerificationScope.() -> Unit
+    ) {
+        TestCase.addCheckBlock(displayName, prefix = TestCase.ThenPrefix.VERIFY) {
+            verify(
+                ordering = ordering,
+                inverse = inverse,
+                atLeast = atLeast,
+                atMost = atMost,
+                exactly = exactly,
+                timeout = timeoutMs,
+                verifyBlock = verifyBlock
+            )
+        }
     }
 }
