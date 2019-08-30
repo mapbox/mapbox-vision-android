@@ -111,10 +111,8 @@ object VisionReplayManager : BaseVisionManager {
         nativeVisionManager = NativeVisionReplayManager(
             VisionManager.mapboxToken,
             AccountManager.Impl,
+            VisionManager.application,
             performanceProvider,
-            VisionManager.application
-        )
-        nativeVisionManager.create(
             telemetryImageSaver = DummyImageSaver,
             telemetryEventManager = DummyEventManager,
             path = path

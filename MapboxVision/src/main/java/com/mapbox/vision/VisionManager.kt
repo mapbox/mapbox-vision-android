@@ -169,33 +169,6 @@ object VisionManager : BaseVisionManager {
     @JvmStatic
     @JvmOverloads
     fun create(videoSource: VideoSource = Camera2VideoSourceImpl(application)) {
-        delegate = DelegateVisionManager.Impl()
-
-        performanceProvider = PerformanceProvider.Impl(application).addTo(attachableModules)
-
-        nativeVisionManager = NativeVisionManager(
-            mapboxToken,
-            AccountManager.Impl,
-            performanceProvider,
-            application
-        )
-
-        telemetryImageSaver = TelemetryImageSaverImpl()
-
-        delegate.create(
-            nativeVisionManagerBase = nativeVisionManager,
-            performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
-        )
-
-        sensorsManager = SensorsManager.Impl(application)
-        locationEngine = LocationEngine.Impl(application)
-
-        val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
-        (videoSource as? Camera2VideoSourceImpl)?.setVideoRecorder(videoRecorder)
-
-        this.videoSource = videoSource
-        this.videoRecorder = videoRecorder
-
         mapboxTelemetry = MapboxTelemetry(
             application,
             mapboxToken,
@@ -204,19 +177,40 @@ object VisionManager : BaseVisionManager {
 
         if (!isTurnstileEventSent) {
             mapboxTelemetry.push(
-                AppUserTurnstile(
-                    MAPBOX_VISION_IDENTIFIER,
-                    BuildConfig.VERSION_NAME
-                )
+                    AppUserTurnstile(
+                            MAPBOX_VISION_IDENTIFIER,
+                            BuildConfig.VERSION_NAME
+                    )
             )
             isTurnstileEventSent = true
         }
 
-        nativeVisionManager.create(
-            telemetryEventManager = MapboxTelemetryEventManager(mapboxTelemetry),
-            telemetryImageSaver = telemetryImageSaver
+        telemetryImageSaver = TelemetryImageSaverImpl()
+
+        performanceProvider = PerformanceProvider.Impl(application).addTo(attachableModules)
+
+        nativeVisionManager = NativeVisionManager(
+            mapboxToken,
+            AccountManager.Impl,
+            application,
+            performanceProvider,
+            MapboxTelemetryEventManager(mapboxTelemetry),
+            telemetryImageSaver
         )
 
+        delegate = DelegateVisionManager.Impl()
+        delegate.create(
+            nativeVisionManagerBase = nativeVisionManager,
+            performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
+        )
+
+        sensorsManager = SensorsManager.Impl(application)
+        locationEngine = LocationEngine.Impl(application)
+        val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
+        (videoSource as? Camera2VideoSourceImpl)?.setVideoRecorder(videoRecorder)
+
+        this.videoSource = videoSource
+        this.videoRecorder = videoRecorder
         sessionManager = SessionManager.Impl(
             application,
             nativeVisionManager,
