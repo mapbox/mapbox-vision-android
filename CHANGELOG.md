@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0
+
+### Vision
+- Start monitoring performance related device info
+
 ## v0.7.1
 
 ### Vision
