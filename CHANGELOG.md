@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.1
+
+### Vision
+- Fixed crash
+
 ## v0.8.0
 
 ### Vision
