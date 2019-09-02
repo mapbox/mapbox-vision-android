@@ -1,7 +1,6 @@
 package com.mapbox.vision.sync.telemetry
 
 import android.app.Application
-import android.content.Context
 import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
@@ -10,21 +9,19 @@ import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.sync.MetaGenerator
 import com.mapbox.vision.sync.SyncManager
 import com.mapbox.vision.sync.util.FeatureEnvironment
-import com.mapbox.vision.sync.util.TelemetryEnvironment
 import com.mapbox.vision.sync.util.TotalBytesCounter
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
-import com.mapbox.vision.video.videoprocessor.VideoProcessor
+import okhttp3.MediaType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.MediaType
 
 internal class TelemetrySyncManager(
     private val application: Application,
@@ -97,8 +94,39 @@ internal class TelemetrySyncManager(
         threadHandler.stop()
     }
 
-    override fun setCountry(country: Country) {
-        currentCountry = country
+    override fun setCountry(newCountry: Country) {
+        if (currentCountry == newCountry) {
+            return
+        }
+
+        if (isRecording) {
+            currentCountry = newCountry
+            return
+        }
+
+        when {
+            currentCountry == Country.Unknown && newCountry != Country.Unknown -> {
+                currentCountry = newCountry
+                configMapboxTelemetry()
+                checkCountryTelemetryDir()
+            }
+
+            currentCountry != Country.Unknown && newCountry != Country.Unknown -> {
+                stop()
+
+                currentCountry = newCountry
+
+                configMapboxTelemetry()
+
+                start()
+                checkCountryTelemetryDir()
+            }
+
+            currentCountry != Country.Unknown && newCountry == Country.Unknown -> {
+                currentCountry = newCountry
+                stop()
+            }
+        }
     }
 
     override fun syncSessionDir(path: String) {
@@ -321,7 +349,7 @@ internal class TelemetrySyncManager(
         } catch (e: Exception) {
             false
         }
-        if (isBaseUrlSet){
+        if (isBaseUrlSet) {
             mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
         }
     }
