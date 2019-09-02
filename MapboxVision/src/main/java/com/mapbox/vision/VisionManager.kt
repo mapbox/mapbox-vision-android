@@ -182,10 +182,6 @@ object VisionManager : BaseVisionManager {
 
         telemetryImageSaver = TelemetryImageSaverImpl()
 
-        delegate.create(
-            nativeVisionManagerBase = nativeVisionManager,
-            performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
-        )
 
         sensorsManager = SensorsManager.Impl(application)
         locationEngine = LocationEngine.Impl(application)
@@ -215,6 +211,11 @@ object VisionManager : BaseVisionManager {
         nativeVisionManager.create(
             telemetryEventManager = MapboxTelemetryEventManager(mapboxTelemetry),
             telemetryImageSaver = telemetryImageSaver
+        )
+
+        delegate.create(
+            nativeVisionManagerBase = nativeVisionManager,
+            performanceManager = PerformanceManager.getPerformanceManager(nativeVisionManager)
         )
 
         sessionManager = SessionManager.Impl(
