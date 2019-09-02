@@ -1,18 +1,23 @@
 package com.mapbox.vision.sync.telemetry
 
+import android.app.Application
 import android.content.Context
 import com.mapbox.android.telemetry.AttachmentListener
 import com.mapbox.android.telemetry.AttachmentMetadata
 import com.mapbox.android.telemetry.MapboxTelemetry
+import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.sync.MetaGenerator
 import com.mapbox.vision.sync.SyncManager
 import com.mapbox.vision.sync.util.FeatureEnvironment
+import com.mapbox.vision.sync.util.TelemetryEnvironment
 import com.mapbox.vision.sync.util.TotalBytesCounter
+import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -22,35 +27,40 @@ import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.MediaType
 
 internal class TelemetrySyncManager(
+    private val application: Application,
     private val mapboxTelemetry: MapboxTelemetry,
-    context: Context,
-    private val metaGenerator: MetaGenerator,
-    private val featureEnvironment: FeatureEnvironment,
+    private val telemetryMetaGenerator: MetaGenerator,
+    private val telemetryEnvironment: FeatureEnvironment,
     private var currentCountry: Country
 ) : SyncManager, AttachmentListener {
-
-    override val baseDir: String = "Telemetry"
 
     private val zipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
     private val imageZipQueue = ConcurrentLinkedQueue<AttachmentProperties>()
     private val videoQueue = ConcurrentLinkedQueue<AttachmentProperties>()
+
     private val threadHandler = WorkThreadHandler()
+
     private val fileCompressor = ZipFileCompressorImpl()
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ssZ", Locale.US)
     private val isoDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZZ", Locale.US)
+
     private val bytesTracker = TotalBytesCounter.Impl(
         sessionMaxBytes = 10 * 1024 * 1024 /* 10 mb */,
         totalBytesCounterPrefs = TotalBytesCounterPrefs.Impl("telemetry")
     )
-    private val uuidUtil = UuidHolder.Impl(context)
+
+    private val uuidUtil = UuidHolder.Impl(application)
     @Suppress("DEPRECATION")
-    private val language = context.resources.configuration.locale.language
+    private val language = application.resources.configuration.locale.language
     @Suppress("DEPRECATION")
-    private val country = context.resources.configuration.locale.country
+    private val country = application.resources.configuration.locale.country
 
     private val uploadInProgress = AtomicBoolean(false)
 
     private var isBaseUrlSet = false
+
+    override val baseDir: String = "Telemetry"
 
     companion object {
         private const val MAX_TELEMETRY_SIZE = 300 * 1024 * 1024L // 300 MB
@@ -88,19 +98,14 @@ internal class TelemetrySyncManager(
     }
 
     override fun setCountry(country: Country) {
-    }
-
-    private fun configMapboxTelemetry() {
-        isBaseUrlSet = try {
-            // TODO remove when fix is no more necessary
-            mapboxTelemetry.setBaseUrl(featureEnvironment.getHost(currentCountry))
-            true
-        } catch (e: Exception) {
-            false
-        }
+        currentCountry = country
     }
 
     override fun syncSessionDir(path: String) {
+        if (!isBaseUrlSet) {
+            configMapboxTelemetry()
+        }
+
         if (!threadHandler.isStarted()) {
             return
         }
@@ -306,6 +311,37 @@ internal class TelemetrySyncManager(
     override fun onAttachmentFailure(message: String?, fileIds: MutableList<String>?) {
         uploadInProgress.set(false)
         processQueues()
+    }
+
+    private fun configMapboxTelemetry() {
+        isBaseUrlSet = try {
+            // TODO remove when fix is no more necessary
+            mapboxTelemetry.setBaseUrl(telemetryEnvironment.getHost(currentCountry))
+            true
+        } catch (e: Exception) {
+            false
+        }
+        if (isBaseUrlSet){
+            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
+        }
+    }
+
+    internal fun generateSessionPath(
+        cachedTelemetryPath: String,
+        currentCountryTelemetryPath: String
+    ): String {
+        val cachedPath = File(cachedTelemetryPath)
+        return "$currentCountryTelemetryPath/${cachedPath.name}"
+    }
+
+    internal fun getCurrentCountryTelemetryPath(): String? {
+        val countryDir = telemetryEnvironment.getBasePath(currentCountry)
+
+        return if (countryDir != null) {
+            FileUtils.getAppRelativeDir(application, "$baseDir/$countryDir/")
+        } else {
+            null
+        }
     }
 }
 

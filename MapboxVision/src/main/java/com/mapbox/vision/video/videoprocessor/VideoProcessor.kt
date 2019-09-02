@@ -7,7 +7,7 @@ import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.os.Build
-import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.models.videoclip.VideoClipStartStop
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
 import java.io.IOException
@@ -17,23 +17,25 @@ import java.util.Locale
 
 internal interface VideoProcessor {
 
-    fun attach(videoProcessorListener: VideoProcessorListener)
+    fun attach(videoProcessorListener: VideoProcessorListener.MultipleClips)
     fun detach()
 
     fun splitVideoClips(
-        clips: Array<VideoClip>,
+        clips: Array<VideoClipStartStop>,
         videoPath: String,
         outputPath: String,
-        coreSessionStartMillis: Long
+        coreSessionStartMillis: Long,
+        onVideoClipReady:VideoProcessorListener.SingleClip?,
+        onVideoClipsReady: VideoProcessorListener.MultipleClips?
     )
 
     class Impl : VideoProcessor {
 
-        private var videoProcessorListener: VideoProcessorListener? = null
+        private var videoProcessorListener: VideoProcessorListener.MultipleClips? = null
 
         private val workThreadHandler = WorkThreadHandler()
 
-        override fun attach(videoProcessorListener: VideoProcessorListener) {
+        override fun attach(videoProcessorListener: VideoProcessorListener.MultipleClips) {
             this.videoProcessorListener = videoProcessorListener
             workThreadHandler.start()
         }
@@ -44,22 +46,24 @@ internal interface VideoProcessor {
         }
 
         override fun splitVideoClips(
-            clips: Array<VideoClip>,
+            clips: Array<VideoClipStartStop>,
             videoPath: String,
             outputPath: String,
-            coreSessionStartMillis: Long
+            coreSessionStartMillis: Long,
+            onVideoClipReady: VideoProcessorListener.SingleClip?,
+            onVideoClipsReady: VideoProcessorListener.MultipleClips?
         ) {
             workThreadHandler.post {
-                val clipsResult = HashMap<String, VideoClip>()
+                val clipsResult = HashMap<String, VideoClipStartStop>()
                 for (part in clips) {
-                    val absoluteCoreClipStartMillis = part.startSeconds * 1000
-                    val absoluteCoreClipVideoEndMillis = part.endSeconds * 1000
+                    val absoluteCoreClipStartMillis = part.startSecond * 1000
+                    val absoluteCoreClipVideoEndMillis = part.endSecond * 1000
                     val relativeClipStartMillis = absoluteCoreClipStartMillis - coreSessionStartMillis
                     val relativeClipEndMillis = absoluteCoreClipVideoEndMillis - coreSessionStartMillis
                     if (relativeClipStartMillis < 0 || relativeClipEndMillis < 0) {
                         continue
                     }
-                    val timespan = "${part.startSeconds.formatSeconds()}_${part.endSeconds.formatSeconds()}"
+                    val timespan = "${part.startSecond.formatSeconds()}_${part.endSecond.formatSeconds()}"
                     val outputClipPath = "$outputPath/$timespan.mp4"
                     val videoClip = genVideoUsingMuxer(
                         srcPath = videoPath,
@@ -68,10 +72,13 @@ internal interface VideoProcessor {
                         endMillis = relativeClipEndMillis.toLong(),
                         absoluteSessionStartMillis = coreSessionStartMillis
                     )
-                        .copy(metadata = part.metadata)
-
                     clipsResult[outputClipPath] = videoClip
+
+                    onVideoClipReady?.onVideoClipReady(outputClipPath, videoClip)
                 }
+
+                onVideoClipsReady?.onVideoClipsReady(clipsResult, outputPath)
+
                 videoProcessorListener?.onVideoClipsReady(
                     videoClips = clipsResult,
                     videoDir = outputPath
@@ -90,7 +97,7 @@ internal interface VideoProcessor {
             startMillis: Long,
             endMillis: Long,
             absoluteSessionStartMillis: Long
-        ): VideoClip {
+        ): VideoClipStartStop {
             val extractor = MediaExtractor()
             extractor.setDataSource(srcPath)
             val trackCount = extractor.trackCount
@@ -172,20 +179,19 @@ internal interface VideoProcessor {
                 muxer.stop()
             } catch (e: IllegalStateException) {
                 VisionLogger.d(TAG, "The source video file is malformed")
-                return VideoClip(0f, 0f, null)
+                return VideoClipStartStop(0f, 0f)
             } finally {
                 try {
                     muxer.release()
                 } catch (e: IllegalStateException) {
                     e.printStackTrace()
                     VisionLogger.d(TAG, "Cannot release MediaMuxer. Exception : ${e.message}")
-                    return VideoClip(0f, 0f, null)
+                    return VideoClipStartStop(0f, 0f)
                 }
             }
-            return VideoClip(
-                startSeconds = realRelativeStartSeconds + absoluteSessionStartMillis / 1000f,
-                endSeconds = realRelativeEndSeconds + absoluteSessionStartMillis / 1000f,
-                metadata = null
+            return VideoClipStartStop(
+                startSecond = realRelativeStartSeconds + absoluteSessionStartMillis / 1000f,
+                endSecond = realRelativeEndSeconds + absoluteSessionStartMillis / 1000f
             )
         }
 

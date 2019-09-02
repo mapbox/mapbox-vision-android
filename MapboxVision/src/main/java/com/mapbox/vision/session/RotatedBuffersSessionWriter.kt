@@ -1,6 +1,10 @@
 package com.mapbox.vision.session
 
 import com.mapbox.vision.mobile.core.NativeVisionManager
+import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.models.videoclip.VideoClipsCombined
+import com.mapbox.vision.models.videoclip.mapToTelemetry
+import com.mapbox.vision.models.videoclip.mapToVisionPro
 import com.mapbox.vision.sync.SessionWriterListener
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.utils.FileUtils
@@ -47,7 +51,8 @@ internal class RotatedBuffersSessionWriter(
         nativeVisionManager.startTelemetrySavingSession(sessionCacheDir)
         telemetryImageSaverImpl.start(sessionCacheDir)
 
-        coreSessionStartMillis = TimeUnit.SECONDS.toMillis(nativeVisionManager.getCoreTimeSeconds().toLong())
+        coreSessionStartMillis =
+            TimeUnit.SECONDS.toMillis(nativeVisionManager.getCoreTimeSeconds().toLong())
 
         workingHandler.postDelayed({
             stopSession()
@@ -60,11 +65,12 @@ internal class RotatedBuffersSessionWriter(
         nativeVisionManager.stopTelemetrySavingSession()
         telemetryImageSaverImpl.stop()
 
-        val clips = nativeVisionManager.getClips()
+        val clipsCombined = nativeVisionManager.getClips().toClipsCombined()
+
         nativeVisionManager.resetClips()
 
         sessionWriterListener.onSessionStop(
-            clips = clips,
+            clips = clipsCombined,
             videoPath = buffers.getBuffer(),
             cachedTelemetryPath = sessionCacheDir,
             coreSessionStartMillis = coreSessionStartMillis
@@ -72,8 +78,23 @@ internal class RotatedBuffersSessionWriter(
         buffers.rotate()
     }
 
+    private fun Array<VideoClip>.toClipsCombined(): VideoClipsCombined = this.let { clips ->
+        val telemetryProClips =
+            clips.filter { it.metadata == null }.map { it.mapToTelemetry() }.ifEmpty { null }
+                ?.toTypedArray()
+        val visionProClips =
+            clips.filter { it.metadata != null }.mapNotNull { it.mapToVisionPro() }.ifEmpty { null }
+                ?.toTypedArray()
+        VideoClipsCombined(telemetryClips = telemetryProClips, visionProClips = visionProClips)
+    }
+
     private fun generateCacheDirForCurrentTime() {
         sessionCacheDir =
-            "${FileUtils.getAbsoluteDir(File(rootCacheDir, System.currentTimeMillis().toString()).absolutePath)}/"
+            "${FileUtils.getAbsoluteDir(
+                File(
+                    rootCacheDir,
+                    System.currentTimeMillis().toString()
+                ).absolutePath
+            )}/"
     }
 }

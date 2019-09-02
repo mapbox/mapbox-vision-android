@@ -2,6 +2,7 @@ package com.mapbox.vision.sync.visionpro
 
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
+import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.VideoClipMetadata
 import com.mapbox.vision.sync.MetaGenerator
 import com.mapbox.vision.sync.SyncManager
@@ -9,6 +10,7 @@ import com.mapbox.vision.sync.util.TotalBytesCounter
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import com.mapbox.vision.video.videoprocessor.VideoProcessor
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
@@ -49,6 +51,8 @@ class VisionProSyncManager(
     @Volatile
     private var countOfUnsuccessfulRequests = 0
 
+    override val baseDir: String = "VisionPro"
+
     companion object {
         private const val TAG = "VisionProSyncManager"
 
@@ -72,6 +76,10 @@ class VisionProSyncManager(
         }
 
         threadHandler.stop()
+    }
+
+    override fun setCountry(country: Country) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun syncSessionDir(path: String) {

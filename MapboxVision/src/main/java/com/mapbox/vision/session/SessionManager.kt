@@ -9,7 +9,11 @@ import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
+import com.mapbox.vision.mobile.core.utils.extentions.ifNonNull
 import com.mapbox.vision.mobile.core.utils.extentions.lazyUnsafe
+import com.mapbox.vision.models.videoclip.VideoClipStartStop
+import com.mapbox.vision.models.videoclip.VideoClipsCombined
+import com.mapbox.vision.models.videoclip.mapToVideoClipStartStop
 import com.mapbox.vision.sync.SessionWriterListener
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.sync.telemetry.TelemetryMetaGenerator
@@ -55,9 +59,6 @@ internal interface SessionManager {
         private var currentCountry = Country.Unknown
         private var isRecording = false
         private val videoProcessor: VideoProcessor
-//        private val telemetryEnvironment = TelemetryEnvironment
-        private val telemetryMetaGenerator = TelemetryMetaGenerator()
-        private val visionProMetaGenerator = VisionProMetaGenerator(gson)
 
         private val syncManagers by lazyUnsafe {
             arrayOf(telemetrySyncManager, visionProSyncManager)
@@ -72,12 +73,13 @@ internal interface SessionManager {
             videoProcessor = VideoProcessor.Impl()
 
             telemetrySyncManager = TelemetrySyncManager(
+                application = application,
                 mapboxTelemetry = mapboxTelemetry,
-                context = application,
-                metaGenerator = telemetryMetaGenerator,
-                featureEnvironment = TelemetryEnvironment
+                telemetryMetaGenerator = TelemetryMetaGenerator(),
+                telemetryEnvironment = TelemetryEnvironment,
+                currentCountry = currentCountry
             )
-            visionProSyncManager = VisionProSyncManager(gson, visionProMetaGenerator)
+            visionProSyncManager = VisionProSyncManager(gson,  VisionProMetaGenerator(gson))
         }
 
         override fun start() {
@@ -95,30 +97,30 @@ internal interface SessionManager {
             sessionWriter.stop()
         }
 
-        override fun setCountry(country: Country) {
+        override fun setCountry(newCountry: Country) {
 
-            if (currentCountry == country) {
+            if (currentCountry == newCountry) {
                 return
             }
 
             if (isRecording) {
-                currentCountry = country
+                currentCountry = newCountry
                 return
             }
 
             when {
-                currentCountry == Country.Unknown && country != Country.Unknown -> {
-                    currentCountry = country
+                currentCountry == Country.Unknown && newCountry != Country.Unknown -> {
+                    currentCountry = newCountry
                     configMapboxTelemetry()
                     checkCountryTelemetryDir()
                 }
 
-                currentCountry != Country.Unknown && country != Country.Unknown -> {
+                currentCountry != Country.Unknown && newCountry != Country.Unknown -> {
                     telemetrySyncManager.stop()
                     videoProcessor.detach()
                     sessionWriter.stop()
 
-                    currentCountry = country
+                    currentCountry = newCountry
 
                     configMapboxTelemetry()
 
@@ -129,8 +131,8 @@ internal interface SessionManager {
                     sessionWriter.start()
                 }
 
-                currentCountry != Country.Unknown && country == Country.Unknown -> {
-                    currentCountry = country
+                currentCountry != Country.Unknown && newCountry == Country.Unknown -> {
+                    currentCountry = newCountry
                     telemetrySyncManager.stop()
                 }
             }
@@ -201,12 +203,36 @@ internal interface SessionManager {
 
         private val sessionWriterListener = object : SessionWriterListener {
             override fun onSessionStop(
-                clips: Array<VideoClip>,
+                clips: VideoClipsCombined,
                 videoPath: String,
                 cachedTelemetryPath: String,
                 coreSessionStartMillis: Long
             ) {
                 if (currentCountry != Country.Unknown) {
+                    ifNonNull(clips.telemetryClips, telemetrySyncManager.getCurrentCountryTelemetryPath()){ telemetryClips, currentCountryTelemetryPath ->
+                        val newTelemetryPath = telemetrySyncManager.generateSessionPath(
+                            cachedTelemetryPath,
+                            currentCountryTelemetryPath
+                        )
+                        videoProcessor.splitVideoClips(
+                            clips = telemetryClips.map { it.mapToVideoClipStartStop() }.toTypedArray(),
+                            videoPath = videoPath,
+                            outputPath = newTelemetryPath,
+                            coreSessionStartMillis = coreSessionStartMillis,
+                            onVideoClipReady = null,
+                            onVideoClipsReady = object : VideoProcessorListener.MultipleClips {
+                                override fun onVideoClipsReady(
+                                    videoClips: HashMap<String, VideoClipStartStop>,
+                                    videoDir: String
+                                ) {
+                                    telemetrySyncManager.syncSessionDir()
+                                }
+                            }
+                        )
+                    }
+                    clips.visionProClips?.let {
+
+                    }
 
                     val currentCountryTelemetryPath = getCurrentCountryTelemetryPath() ?: return
                     val newTelemetryPath = generateSessionPath(
@@ -227,13 +253,13 @@ internal interface SessionManager {
             }
         }
 
-        private val videoProcessorListener = object : VideoProcessorListener {
+        private val videoProcessorListener = object : VideoProcessorListener.MultipleClips {
             override fun onVideoClipsReady(
-                videoClips: HashMap<String, VideoClip>,
+                videoClips: HashMap<String, VideoClipStartStop>,
                 videoDir: String
             ) {
                 if (currentCountry != Country.Unknown) {
-                    telemetryMetaGenerator.generateMeta(
+                     .generateMeta(
                         videoClipMap = videoClips,
                         saveDirPath = videoDir
                     )
@@ -247,31 +273,8 @@ internal interface SessionManager {
         }
 
         private fun syncSessionDir(videoDir: String) {
-            if (!isBaseUrlSet) {
-                configMapboxTelemetry()
-            }
-            if (isBaseUrlSet) {
-                mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-                telemetrySyncManager.syncSessionDir(videoDir)
-            }
-        }
-
-        private fun generateSessionPath(
-            cachedTelemetryPath: String,
-            currentCountryTelemetryPath: String
-        ): String {
-            val cachedPath = File(cachedTelemetryPath)
-            return "$currentCountryTelemetryPath${cachedPath.name}"
-        }
-
-        private fun getCurrentCountryTelemetryPath(): String? {
-            val countryDir = telemetryEnvironment.getBasePath(currentCountry)
-
-            return if (countryDir != null) {
-                FileUtils.getAppRelativeDir(application, "$TELEMETRY_DIR/$countryDir/")
-            } else {
-                null
-            }
+            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
+            telemetrySyncManager.syncSessionDir(videoDir)
         }
 
         private fun getVideoBuffersDir() = FileUtils.getAppRelativeDir(
