@@ -98,11 +98,6 @@ public class SafetyActivity extends BaseActivity {
     };
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     protected void initViews() {
         setContentView(R.layout.activity_main);
     }

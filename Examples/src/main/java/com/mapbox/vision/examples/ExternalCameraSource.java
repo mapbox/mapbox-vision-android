@@ -111,11 +111,6 @@ public class ExternalCameraSource extends BaseActivity {
     };
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     protected void initViews() {
         setContentView(R.layout.activity_main);
         visionView = findViewById(R.id.vision_view);

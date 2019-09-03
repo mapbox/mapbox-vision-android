@@ -83,11 +83,6 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
     private final Point ROUTE_DESTINATION = Point.fromLngLat(27.655637, 53.935712);
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     protected void initViews() {
         setContentView(R.layout.activity_ar_navigation);
     }

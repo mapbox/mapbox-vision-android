@@ -36,7 +36,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             Toast.makeText(this, text, Toast.LENGTH_LONG).show();
             VisionLogger.Companion.e(
                     "NotSupportedBoard",
-                    "Current board is {\"$board\"}, Supported Boards: [${enumValues<SupportedSnapdragonBoards>().joinToString { it.name }}]; System Info: [${SystemInfoUtils.obtainSystemInfo()}]"
+                    "Current board is " + board + ", Supported Boards: [ " + getSupportedBoardNames() + " ]; System Info: [ " + SystemInfoUtils.INSTANCE.obtainSystemInfo() + " ]"
             );
             finish();
             return;
@@ -49,6 +49,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         } else {
             onPermissionsGranted();
         }
+    }
+
+    private String getSupportedBoardNames() {
+        StringBuilder sb = new StringBuilder();
+        for (SupportedSnapdragonBoards board : SupportedSnapdragonBoards.values()) {
+            sb.append(board.name());
+        }
+
+        return sb.toString();
     }
 
     protected boolean allPermissionsGranted() {
