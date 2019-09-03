@@ -16,7 +16,7 @@ internal interface VideoRecorder {
     fun stopRecording()
     fun release()
 
-    class EmptyImpl : VideoRecorder {
+    class DummyVideoRecorder : VideoRecorder {
 
         override fun init(frameWidth: Int, frameHeight: Int, sensorOrientation: Int) {
             // do nothing

@@ -192,7 +192,7 @@ object VisionManager : BaseVisionManager {
                 videoSource.setVideoRecorder(it)
             }
         } else {
-            VideoRecorder.EmptyImpl()
+            VideoRecorder.DummyVideoRecorder()
         }
 
         this.videoSource = videoSource
