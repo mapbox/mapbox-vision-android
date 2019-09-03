@@ -1,8 +1,8 @@
 package com.mapbox.vision.examples;
 
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.widget.Toast;
+
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
@@ -18,35 +18,44 @@ import com.mapbox.vision.safety.VisionSafetyManager;
 import com.mapbox.vision.safety.core.VisionSafetyListener;
 import com.mapbox.vision.safety.core.models.CollisionObject;
 import com.mapbox.vision.safety.core.models.RoadRestrictions;
+import com.mapbox.vision.view.VisionView;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Example shows how overspeed can be detected using Vision and VisionSafety SDKs combined.
  */
-public class SafetyActivity extends AppCompatActivity {
+public class SafetyActivity extends BaseActivity {
 
     private Float maxAllowedSpeed = -1f;
+    private boolean visionManagerWasInit = false;
 
     // this listener handles events from Vision SDK
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
 
         @Override
-        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
+        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {
+        }
 
         @Override
-        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {
+        }
 
         @Override
-        public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
+        public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
+        }
 
         @Override
-        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
+        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {
+        }
 
         @Override
-        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
+        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {
+        }
 
         @Override
-        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
+        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {
+        }
 
         @Override
         public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
@@ -65,18 +74,22 @@ public class SafetyActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onCameraUpdated(@NotNull Camera camera) {}
+        public void onCameraUpdated(@NotNull Camera camera) {
+        }
 
         @Override
-        public void onCountryUpdated(@NotNull Country country) {}
+        public void onCountryUpdated(@NotNull Country country) {
+        }
 
         @Override
-        public void onUpdateCompleted() {}
+        public void onUpdateCompleted() {
+        }
     };
 
     private VisionSafetyListener visionSafetyListener = new VisionSafetyListener() {
         @Override
-        public void onCollisionsUpdated(@NotNull CollisionObject[] collisions) {}
+        public void onCollisionsUpdated(@NotNull CollisionObject[] collisions) {
+        }
 
         @Override
         public void onRoadRestrictionsUpdated(@NotNull RoadRestrictions roadRestrictions) {
@@ -87,26 +100,54 @@ public class SafetyActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void initViews() {
         setContentView(R.layout.activity_main);
+    }
+
+    @Override
+    protected void onPermissionsGranted() {
+        startVisionManager();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        VisionManager.create();
-        VisionManager.start(visionEventsListener);
-
-        VisionSafetyManager.create(VisionManager.INSTANCE, visionSafetyListener);
+        startVisionManager();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        stopVisionManager();
+    }
 
-        VisionSafetyManager.destroy();
+    private void startVisionManager() {
+        if (allPermissionsGranted() && !visionManagerWasInit) {
+            // Create and start VisionManager.
+            VisionManager.create();
+            VisionManager.start(visionEventsListener);
 
-        VisionManager.stop();
-        VisionManager.destroy();
+            VisionView visionView = findViewById(R.id.vision_view);
+            VisionManager.setVideoSourceListener(visionView);
+
+            // Create and start VisionManager.
+            VisionSafetyManager.create(VisionManager.INSTANCE, visionSafetyListener);
+
+            visionManagerWasInit = true;
+        }
+    }
+
+    private void stopVisionManager() {
+        if (visionManagerWasInit) {
+            VisionSafetyManager.destroy();
+
+            VisionManager.stop();
+            VisionManager.destroy();
+
+            visionManagerWasInit = false;
+        }
     }
 }

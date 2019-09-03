@@ -2,11 +2,20 @@ package com.mapbox.vision.examples;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import com.mapbox.android.core.location.*;
-import com.mapbox.api.directions.v5.models.*;
+
+import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineCallback;
+import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.location.LocationEngineRequest;
+import com.mapbox.android.core.location.LocationEngineResult;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
+import com.mapbox.api.directions.v5.models.LegStep;
+import com.mapbox.api.directions.v5.models.RouteLeg;
 import com.mapbox.core.constants.Constants;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.utils.PolylineUtils;
@@ -39,19 +48,21 @@ import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
 import com.mapbox.vision.utils.VisionLogger;
+
 import org.jetbrains.annotations.NotNull;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
-public class ArActivity extends AppCompatActivity implements RouteListener, ProgressChangeListener, OffRouteListener {
+public class ArActivity extends BaseActivity implements RouteListener, ProgressChangeListener, OffRouteListener {
 
     private static final String TAG = ArActivity.class.getSimpleName();
 
@@ -60,9 +71,11 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
     // Fetches route from points.
     private RouteFetcher routeFetcher;
     private RouteProgress lastRouteProgress;
-    private LocationEngine arLocationEngine;
-    private LocationEngineRequest arLocationEngineRequest;
+    private LocationEngine locationEngine;
     private LocationEngineCallback<LocationEngineResult> locationCallback;
+
+    private boolean visionManagerWasInit = false;
+    private boolean navigationWasStarted = false;
 
     // This dummy points will be used to build route. For real world test this needs to be changed to real values for
     // source and target locations.
@@ -72,93 +85,161 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.activity_ar_navigation);
-
-        // Initialize navigation with your Mapbox access token.
-        mapboxNavigation = new MapboxNavigation(
-                this,
-                getString(R.string.mapbox_access_token),
-                MapboxNavigationOptions.builder().build()
-        );
-
-        // Initialize route fetcher with your Mapbox access token.
-        routeFetcher = new RouteFetcher(this, getString(R.string.mapbox_access_token));
-        routeFetcher.addRouteListener(this);
-
-        arLocationEngine = LocationEngineProvider.getBestLocationEngine(this);
-        arLocationEngineRequest = new LocationEngineRequest.Builder(0)
-                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
-                .setFastestInterval(1000)
-                .build();
-        locationCallback = new LocationEngineCallback<LocationEngineResult>() {
-            @Override
-            public void onSuccess(LocationEngineResult result) {}
-
-            @Override
-            public void onFailure(@NonNull Exception exception) {}
-        };
-
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void initViews() {
+        setContentView(R.layout.activity_ar_navigation);
+    }
 
-        try {
-            arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, getMainLooper());
-        } catch (SecurityException se) {
-            VisionLogger.Companion.e(TAG, se.toString());
+    @Override
+    protected void onPermissionsGranted() {
+        startVisionManager();
+        startNavigation();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startVisionManager();
+        startNavigation();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopVisionManager();
+        stopNavigation();
+    }
+
+    private void startVisionManager() {
+        if (allPermissionsGranted() && !visionManagerWasInit) {
+            // Create and start VisionManager.
+            VisionManager.create();
+            VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.DYNAMIC, ModelPerformanceRate.LOW)));
+            VisionManager.start(
+                    new VisionEventsListener() {
+
+                        @Override
+                        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {
+                        }
+
+                        @Override
+                        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {
+                        }
+
+                        @Override
+                        public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
+                        }
+
+                        @Override
+                        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {
+                        }
+
+                        @Override
+                        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {
+                        }
+
+                        @Override
+                        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {
+                        }
+
+                        @Override
+                        public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
+                        }
+
+                        @Override
+                        public void onCameraUpdated(@NotNull Camera camera) {
+                        }
+
+                        @Override
+                        public void onCountryUpdated(@NotNull Country country) {
+                        }
+
+                        @Override
+                        public void onUpdateCompleted() {
+                        }
+                    }
+            );
+
+            VisionArView visionArView = findViewById(R.id.mapbox_ar_view);
+            VisionManager.setVideoSourceListener(visionArView);
+
+            // Create VisionArManager.
+            VisionArManager.create(VisionManager.INSTANCE, visionArView);
+
+            visionManagerWasInit = true;
         }
+    }
 
-        initDirectionsRoute();
+    private void stopVisionManager() {
+        if (visionManagerWasInit) {
+            VisionArManager.destroy();
+            VisionManager.stop();
+            VisionManager.destroy();
 
-        // Route need to be reestablished if off route happens.
-        mapboxNavigation.addOffRouteListener(this);
-        mapboxNavigation.addProgressChangeListener(this);
+            visionManagerWasInit = false;
+        }
+    }
 
-        // Create and start VisionManager.
-        VisionManager.create();
-        VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.FIXED, ModelPerformanceRate.LOW)));
-        VisionManager.start(
-                new VisionEventsListener() {
+    private void startNavigation() {
+        if (allPermissionsGranted() && !navigationWasStarted) {
+            // Initialize navigation with your Mapbox access token.
+            mapboxNavigation = new MapboxNavigation(
+                    this,
+                    getString(R.string.mapbox_access_token),
+                    MapboxNavigationOptions.builder().build()
+            );
 
-                    @Override
-                    public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
+            // Initialize route fetcher with your Mapbox access token.
+            routeFetcher = new RouteFetcher(this, getString(R.string.mapbox_access_token));
+            routeFetcher.addRouteListener(this);
 
-                    @Override
-                    public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+            locationEngine = LocationEngineProvider.getBestLocationEngine(this);
 
-                    @Override
-                    public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {}
+            LocationEngineRequest arLocationEngineRequest = new LocationEngineRequest.Builder(0)
+                    .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+                    .setFastestInterval(1000)
+                    .build();
 
-                    @Override
-                    public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
+            locationCallback = new LocationEngineCallback<LocationEngineResult>() {
+                @Override
+                public void onSuccess(LocationEngineResult result) {
 
-                    @Override
-                    public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
-
-                    @Override
-                    public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
-
-                    @Override
-                    public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {}
-
-                    @Override
-                    public void onCameraUpdated(@NotNull Camera camera) {}
-
-                    @Override
-                    public void onCountryUpdated(@NotNull Country country) {}
-
-                    @Override
-                    public void onUpdateCompleted() {}
                 }
-        );
 
-        VisionArView visionArView = findViewById(R.id.mapbox_ar_view);
-        VisionManager.setVideoSourceListener(visionArView);
+                @Override
+                public void onFailure(@NonNull Exception exception) {
 
-        // Create VisionArManager.
-        VisionArManager.create(VisionManager.INSTANCE, visionArView);
+                }
+            };
+
+            try {
+                locationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, Looper.getMainLooper());
+            } catch (SecurityException se) {
+                VisionLogger.Companion.e(TAG, se.toString());
+            }
+
+            initDirectionsRoute();
+
+            // Route need to be reestablished if off route happens.
+            mapboxNavigation.addOffRouteListener(this);
+            mapboxNavigation.addProgressChangeListener(this);
+
+            navigationWasStarted = true;
+        }
+    }
+
+    private void stopNavigation() {
+        if (navigationWasStarted) {
+            locationEngine.removeLocationUpdates(locationCallback);
+
+            mapboxNavigation.removeProgressChangeListener(this);
+            mapboxNavigation.removeOffRouteListener(this);
+            mapboxNavigation.stopNavigation();
+
+            navigationWasStarted = false;
+        }
     }
 
     private void initDirectionsRoute() {
@@ -189,22 +270,9 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
                     }
 
                     @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {}
+                    public void onFailure(Call<DirectionsResponse> call, Throwable t) {
+                    }
                 });
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        VisionArManager.destroy();
-        VisionManager.stop();
-        VisionManager.destroy();
-
-        arLocationEngine.removeLocationUpdates(locationCallback);
-
-        mapboxNavigation.removeProgressChangeListener(this);
-        mapboxNavigation.removeOffRouteListener(this);
-        mapboxNavigation.stopNavigation();
     }
 
     @Override
@@ -265,7 +333,7 @@ public class ArActivity extends AppCompatActivity implements RouteListener, Prog
                         routePoints.add(point);
 
                         List<Point> geometryPoints = buildStepPointsFromGeometry(step.geometry());
-                        for (Point geometryPoint: geometryPoints) {
+                        for (Point geometryPoint : geometryPoints) {
                             point = new RoutePoint((new GeoCoordinate(
                                     geometryPoint.latitude(),
                                     geometryPoint.longitude()
