@@ -46,7 +46,7 @@ public class ExternalCameraSource extends BaseActivity {
 
         @Override
         public void attach(@NotNull VideoSourceListener videoSourceListener) {
-            // video source is attached, we can start decoding frames from video and feeding them to Vision SDK
+            // video source is attached, we can start decoding frames from video and feeding them to Vision SDK.
             ExternalCameraSource.this.videoSourceListener = videoSourceListener;
             handlerThread.start();
             new Handler(handlerThread.getLooper()).post(new Runnable() {
@@ -64,7 +64,7 @@ public class ExternalCameraSource extends BaseActivity {
         }
     };
 
-    // VideoSourceListener handles events from Vision SDK.
+    // VisionEventsListener handles events from Vision SDK on background thread.
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
 
         @Override
@@ -157,7 +157,7 @@ public class ExternalCameraSource extends BaseActivity {
      */
     private void startFileVideoSource() {
         // Use MediaMetadataRetriever to decode video.
-        // It isn't the fastest approach to decode videos and you probably want some other method
+        // It isn't the fastest approach to decode videos and you probably want some other method.
         // if FPS is important (eg. MediaCodec).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(PATH_TO_VIDEO_FILE);

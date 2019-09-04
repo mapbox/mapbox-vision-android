@@ -20,9 +20,9 @@ import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
-import kotlinx.android.synthetic.main.activity_main.*
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import kotlinx.android.synthetic.main.activity_main.*
 
 /**
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
@@ -53,7 +53,7 @@ class ExternalCameraSourceKt : BaseActivity() {
         }
     }
 
-    // VideoSourceListener handles events from Vision SDK.
+    // VisionEventsListener handles events from Vision SDK on background thread.
     private val visionEventsListener = object : VisionEventsListener {
 
         override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {}
@@ -123,7 +123,7 @@ class ExternalCameraSourceKt : BaseActivity() {
      */
     private fun startFileVideoSource() {
         // Use MediaMetadataRetriever to decode video.
-        // It isn't the fastest approach to decode videos and you probably want some other method
+        // It isn't the fastest approach to decode videos and you probably want some other method.
         // if FPS is important (eg. MediaCodec).
         val retriever = MediaMetadataRetriever()
         retriever.setDataSource(PATH_TO_VIDEO_FILE)
