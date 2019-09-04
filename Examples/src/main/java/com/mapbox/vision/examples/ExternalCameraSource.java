@@ -2,7 +2,6 @@ package com.mapbox.vision.examples;
 
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 
