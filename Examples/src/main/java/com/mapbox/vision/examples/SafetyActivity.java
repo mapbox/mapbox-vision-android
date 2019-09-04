@@ -1,6 +1,5 @@
 package com.mapbox.vision.examples;
 
-import android.os.Bundle;
 import android.widget.Toast;
 
 import com.mapbox.vision.VisionManager;
@@ -64,12 +63,13 @@ public class SafetyActivity extends BaseActivity {
 
             // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
-                Toast.makeText(
+                // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
+                runOnUiThread(() -> Toast.makeText(
                         SafetyActivity.this,
                         "Overspeeding! Current speed : " + mySpeed +
                                 ", allowed speed : " + maxAllowedSpeed,
                         Toast.LENGTH_LONG
-                ).show();
+                ).show());
             }
         }
 
