@@ -63,7 +63,8 @@ import com.mapbox.vision.video.videosource.camera.VideoRecorder
 object VisionManager : BaseVisionManager {
 
     private const val MAPBOX_VISION_IDENTIFIER = "MapboxVision"
-    private const val MAPBOX_TELEMETRY_USER_AGENT = "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
+    private const val MAPBOX_TELEMETRY_USER_AGENT =
+        "$MAPBOX_VISION_IDENTIFIER/${BuildConfig.VERSION_NAME}"
 
     lateinit var application: Application
         private set
@@ -186,8 +187,13 @@ object VisionManager : BaseVisionManager {
         sensorsManager = SensorsManager.Impl(application)
         locationEngine = LocationEngine.Impl(application)
 
-        val videoRecorder = SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application)
-        (videoSource as? Camera2VideoSourceImpl)?.setVideoRecorder(videoRecorder)
+        val videoRecorder = if (videoSource is Camera2VideoSourceImpl) {
+            SurfaceVideoRecorder.MediaCodecPersistentSurfaceImpl(application).also {
+                videoSource.setVideoRecorder(it)
+            }
+        } else {
+            VideoRecorder.DummyVideoRecorder()
+        }
 
         this.videoSource = videoSource
         this.videoRecorder = videoRecorder

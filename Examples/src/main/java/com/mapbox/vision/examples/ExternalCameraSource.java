@@ -2,10 +2,9 @@ package com.mapbox.vision.examples;
 
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import androidx.appcompat.app.AppCompatActivity;
+
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
@@ -22,9 +21,9 @@ import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.video.videosource.VideoSource;
 import com.mapbox.vision.video.videosource.VideoSourceListener;
 import com.mapbox.vision.view.VisionView;
+
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -32,21 +31,22 @@ import java.util.concurrent.TimeUnit;
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
  * other source of frames - video, set of pictures, etc.
  */
-public class ExternalCameraSource extends AppCompatActivity {
+public class ExternalCameraSource extends BaseActivity {
 
     // Video file that will be processed.
-    private static final String VIDEO_FILE = "video.mp4";
+    private static final String PATH_TO_VIDEO_FILE = "path_to_video_file";
 
     private VideoSourceListener videoSourceListener;
     private VisionView visionView;
     private HandlerThread handlerThread = new HandlerThread("VideoDecode");
+    private boolean visionManagerWasInit = false;
 
     // VideoSource that will play the file.
     private VideoSource customVideoSource = new VideoSource() {
 
         @Override
         public void attach(@NotNull VideoSourceListener videoSourceListener) {
-            // video source is attached, we can start decoding frames from video and feeding them to Vision SDK
+            // video source is attached, we can start decoding frames from video and feeding them to Vision SDK.
             ExternalCameraSource.this.videoSourceListener = videoSourceListener;
             handlerThread.start();
             new Handler(handlerThread.getLooper()).post(new Runnable() {
@@ -64,14 +64,16 @@ public class ExternalCameraSource extends AppCompatActivity {
         }
     };
 
-    // VideoSourceListener handles events from Vision SDK.
+    // VisionEventsListener handles events from Vision SDK on background thread.
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
 
         @Override
-        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {}
+        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {
+        }
 
         @Override
-        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {}
+        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {
+        }
 
         @Override
         public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
@@ -79,49 +81,75 @@ public class ExternalCameraSource extends AppCompatActivity {
         }
 
         @Override
-        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {}
+        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {
+        }
 
         @Override
-        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {}
+        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {
+        }
 
         @Override
-        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {}
+        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {
+        }
 
         @Override
-        public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {}
+        public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
+        }
 
         @Override
-        public void onCameraUpdated(@NotNull Camera camera) {}
+        public void onCameraUpdated(@NotNull Camera camera) {
+        }
 
         @Override
-        public void onCountryUpdated(@NotNull Country country) {}
+        public void onCountryUpdated(@NotNull Country country) {
+        }
 
         @Override
-        public void onUpdateCompleted() {}
+        public void onUpdateCompleted() {
+        }
     };
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void initViews() {
         setContentView(R.layout.activity_main);
         visionView = findViewById(R.id.vision_view);
     }
 
     @Override
+    protected void onPermissionsGranted() {
+        startVisionManager();
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
-
-        VisionManager.create(customVideoSource);
-        VisionManager.start(visionEventsListener);
-        VisionManager.setVideoSourceListener(visionView);
+        startVisionManager();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        stopVisionManager();
+    }
 
-        VisionManager.stop();
-        VisionManager.destroy();
+    private void startVisionManager() {
+        if (allPermissionsGranted() && !visionManagerWasInit) {
+            VisionManager.create(customVideoSource);
+            VisionManager.start(visionEventsListener);
+
+            VisionManager.setVideoSourceListener(visionView);
+
+            visionManagerWasInit = true;
+        }
+    }
+
+    private void stopVisionManager() {
+        if (visionManagerWasInit) {
+            VisionManager.stop();
+            VisionManager.destroy();
+
+            visionManagerWasInit = false;
+        }
     }
 
     /**
@@ -129,10 +157,10 @@ public class ExternalCameraSource extends AppCompatActivity {
      */
     private void startFileVideoSource() {
         // Use MediaMetadataRetriever to decode video.
-        // It isn't the fastest approach to decode videos and you probably want some other method
+        // It isn't the fastest approach to decode videos and you probably want some other method.
         // if FPS is important (eg. MediaCodec).
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(new File(getExternalFilesDir(""), VIDEO_FILE).getAbsolutePath());
+        retriever.setDataSource(PATH_TO_VIDEO_FILE);
 
         // Get video frame size.
         int frameWidth = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));

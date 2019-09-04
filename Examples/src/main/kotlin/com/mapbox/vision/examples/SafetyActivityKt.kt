@@ -1,8 +1,6 @@
 package com.mapbox.vision.examples
 
-import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
@@ -23,9 +21,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 /**
  * Example shows how overspeed can be detected using Vision and VisionSafety SDKs combined.
  */
-class SafetyActivityKt : AppCompatActivity() {
+class SafetyActivityKt : BaseActivity() {
 
     private var maxAllowedSpeed: Float = -1f
+    private var visionManagerWasInit = false
 
     // this listener handles events from Vision SDK
     private val visionEventsListener = object : VisionEventsListener {
@@ -48,11 +47,14 @@ class SafetyActivityKt : AppCompatActivity() {
 
             // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
-                Toast.makeText(
-                    this@SafetyActivityKt,
-                    "Overspeeding! Current speed : $mySpeed, allowed speed : $maxAllowedSpeed",
-                    Toast.LENGTH_LONG
-                ).show()
+                // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
+                runOnUiThread {
+                    Toast.makeText(
+                        this@SafetyActivityKt,
+                        "Overspeeding! Current speed : $mySpeed, allowed speed : $maxAllowedSpeed",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
 
@@ -73,27 +75,44 @@ class SafetyActivityKt : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onPermissionsGranted() {
+        startVisionManager()
+    }
+
+    override fun initViews() {
         setContentView(R.layout.activity_main)
     }
 
     override fun onStart() {
         super.onStart()
-
-        VisionManager.create()
-        VisionManager.start(visionEventsListener)
-        VisionManager.setVideoSourceListener(vision_view)
-
-        VisionSafetyManager.create(VisionManager, visionSafetyListener)
+        startVisionManager()
     }
 
     override fun onStop() {
         super.onStop()
+        stopVisionManager()
+    }
 
-        VisionSafetyManager.destroy()
+    private fun startVisionManager() {
+        if (allPermissionsGranted() && !visionManagerWasInit) {
+            VisionManager.create()
+            VisionManager.start(visionEventsListener)
+            VisionManager.setVideoSourceListener(vision_view)
 
-        VisionManager.stop()
-        VisionManager.destroy()
+            VisionSafetyManager.create(VisionManager, visionSafetyListener)
+
+            visionManagerWasInit = true
+        }
+    }
+
+    private fun stopVisionManager() {
+        if (visionManagerWasInit) {
+            VisionSafetyManager.destroy()
+
+            VisionManager.stop()
+            VisionManager.destroy()
+
+            visionManagerWasInit = false
+        }
     }
 }
