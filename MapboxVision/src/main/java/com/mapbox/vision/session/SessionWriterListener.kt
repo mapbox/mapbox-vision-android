@@ -1,11 +1,11 @@
-package com.mapbox.vision.sync
+package com.mapbox.vision.session
 
-import com.mapbox.vision.models.videoclip.VideoClipsCombined
+import com.mapbox.vision.models.video.VideoCombined
 
 internal interface SessionWriterListener {
 
     fun onSessionStop(
-        clips: VideoClipsCombined,
+        clips: VideoCombined,
         videoPath: String,
         cachedTelemetryPath: String,
         coreSessionStartMillis: Long

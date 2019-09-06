@@ -1,16 +1,28 @@
 package com.mapbox.vision.sync
 
-import com.mapbox.vision.mobile.core.models.Country
+import androidx.annotation.CallSuper
+import com.mapbox.vision.sync.filemanager.SyncFileHandler
+import com.mapbox.vision.sync.util.FeatureEnvironment
 
-internal interface SyncManager {
-
-    val baseDir: String
+internal interface SyncManager<T : FeatureEnvironment> : SyncQueue.QueueListener {
 
     fun start()
 
     fun stop()
 
-    fun syncSessionDir(path: String)
+    abstract class SyncManagerBase<T : FeatureEnvironment>(
+        syncQueue: SyncQueue.SyncQueueBase<T>,
+        private val syncFileHandler: SyncFileHandler<T>,
+        private val quotaBytes: Long
+    ) : SyncManager<T> {
 
-    fun setCountry(country: Country)
+        init {
+            syncQueue.queueListener = this
+        }
+
+        @CallSuper
+        override fun onNewElement() {
+            syncFileHandler.checkQuota(quotaBytes)
+        }
+    }
 }

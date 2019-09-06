@@ -1,12 +1,16 @@
 package com.mapbox.vision.sync
 
-import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.models.video.VideoMetadata
+import com.mapbox.vision.models.video.VideoStartStop
 import java.util.HashMap
 
-interface MetaGenerator {
+internal interface MetaGenerator {
 
     fun generateMeta(
-        videoClipMap: HashMap<String, VideoClip>,
-        saveDirPath: String
+        videoClipMap: HashMap<String, VideoStartStop>, saveDirPath: String
+    )
+
+    fun generateMeta(
+        clipPath: String, clip: VideoStartStop, videoMetadata: VideoMetadata
     )
 }

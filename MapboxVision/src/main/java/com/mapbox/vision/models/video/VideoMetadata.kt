@@ -1,11 +1,11 @@
-package com.mapbox.vision.models.videoclip
+package com.mapbox.vision.models.video
 
 import com.mapbox.vision.mobile.core.models.VideoClipMetadata
 
-internal data class VideoClipMetadata(val url: String, val keyValue: Map<String, String>)
+internal data class VideoMetadata(val url: String, val keyValue: Map<String, String>)
 
 internal fun VideoClipMetadata.toLocal() =
-    VideoClipMetadata(
+    VideoMetadata(
         url = url,
         keyValue = keyValue.toMap()
     )

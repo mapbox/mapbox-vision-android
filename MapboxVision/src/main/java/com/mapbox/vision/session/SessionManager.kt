@@ -3,31 +3,31 @@ package com.mapbox.vision.session
 import android.app.Application
 import com.google.gson.Gson
 import com.mapbox.android.telemetry.MapboxTelemetry
-import com.mapbox.vision.BuildConfig
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.models.Country
-import com.mapbox.vision.mobile.core.models.VideoClip
 import com.mapbox.vision.mobile.core.telemetry.TelemetryImageSaver
 import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
-import com.mapbox.vision.mobile.core.utils.extentions.ifNonNull
 import com.mapbox.vision.mobile.core.utils.extentions.lazyUnsafe
-import com.mapbox.vision.models.videoclip.VideoClipStartStop
-import com.mapbox.vision.models.videoclip.VideoClipsCombined
-import com.mapbox.vision.models.videoclip.mapToVideoClipStartStop
-import com.mapbox.vision.sync.SessionWriterListener
+import com.mapbox.vision.models.video.VideoCombined
+import com.mapbox.vision.sync.SyncClient
+import com.mapbox.vision.sync.filemanager.SyncFileHandler
+import com.mapbox.vision.sync.filemanager.SyncDirectoriesProvider
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.sync.telemetry.TelemetryMetaGenerator
+import com.mapbox.vision.sync.telemetry.TelemetryQueue
 import com.mapbox.vision.sync.telemetry.TelemetrySyncManager
 import com.mapbox.vision.sync.util.TelemetryEnvironment
+import com.mapbox.vision.sync.util.VideoMetadataJsonMapper
+import com.mapbox.vision.sync.util.VisionProEnvironment
 import com.mapbox.vision.sync.visionpro.VisionProMetaGenerator
+import com.mapbox.vision.sync.visionpro.VisionProQueue
 import com.mapbox.vision.sync.visionpro.VisionProSyncManager
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.file.RotatedBuffers
 import com.mapbox.vision.video.videoprocessor.VideoProcessor
-import com.mapbox.vision.video.videoprocessor.VideoProcessorListener
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
-import java.io.File
+import okhttp3.OkHttpClient
 
 internal interface SessionManager {
 
@@ -44,10 +44,11 @@ internal interface SessionManager {
     class Impl(
         private val application: Application,
         private val nativeVisionManager: NativeVisionManager,
+        private val okHttpClient: OkHttpClient,
         private val videoRecorder: VideoRecorder,
-        private val mapboxTelemetry: MapboxTelemetry,
+        mapboxTelemetry: MapboxTelemetry,
         private val telemetryImageSaver: TelemetryImageSaver,
-        private val gson: Gson
+        gson: Gson
     ) : SessionManager {
 
         companion object {
@@ -64,78 +65,100 @@ internal interface SessionManager {
             arrayOf(telemetrySyncManager, visionProSyncManager)
         }
 
+        private val countryChangeListeners = ArrayList<EnvironmentSettings.CountryChange>()
+
         private val telemetrySyncManager: TelemetrySyncManager
         private val visionProSyncManager: VisionProSyncManager
 
-        init {
-            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
+        private val telemetrySession: EnvironmentSession<EnvironmentSession.Telemetry.EnvironmentData>
+        private val visionProSession: EnvironmentSession<EnvironmentSession.VisionPro.EnvironmentData>
 
+        init {
             videoProcessor = VideoProcessor.Impl()
 
-            telemetrySyncManager = TelemetrySyncManager(
-                application = application,
-                mapboxTelemetry = mapboxTelemetry,
-                telemetryMetaGenerator = TelemetryMetaGenerator(),
-                telemetryEnvironment = TelemetryEnvironment,
-                currentCountry = currentCountry
+            val videoMetadataJsonMapper = VideoMetadataJsonMapper.Impl(gson)
+
+            val telemetrySyncFileProvider = SyncDirectoriesProvider.Impl(
+                application,
+                TelemetryEnvironment
             )
-            visionProSyncManager = VisionProSyncManager(gson,  VisionProMetaGenerator(gson))
+            val telemetryQueue =  TelemetryQueue(application, telemetrySyncFileProvider, TelemetryEnvironment)
+
+
+            val telemetryClient = SyncClient.Telemetry(mapboxTelemetry, TelemetryEnvironment)
+            telemetrySyncManager = TelemetrySyncManager(
+                syncQueue = telemetryQueue,
+                syncFileHandler = SyncFileHandler.Impl(
+                    telemetrySyncFileProvider
+                ),
+                syncClient = telemetryClient
+            )
+
+            val visionProSyncFileProvider = SyncDirectoriesProvider.Impl(
+                application,
+                VisionProEnvironment
+            )
+            val visionProQueue =  VisionProQueue(application, visionProSyncFileProvider, VisionProEnvironment, videoMetadataJsonMapper)
+            val visionProClient = SyncClient.VisionPro(okHttpClient, VisionProEnvironment)
+            visionProSyncManager = VisionProSyncManager(
+                syncClient = visionProClient,
+                syncFileHandler = SyncFileHandler.Impl(visionProSyncFileProvider),
+                syncQueue = visionProQueue,
+                gson = gson
+            )
+
+            telemetrySession = EnvironmentSession.Telemetry(telemetrySyncFileProvider, TelemetryMetaGenerator(), telemetryQueue)
+            visionProSession = EnvironmentSession.VisionPro(visionProSyncFileProvider, VisionProMetaGenerator(videoMetadataJsonMapper), visionProQueue)
+
+            countryChangeListeners.addAll(listOf(telemetryQueue, visionProQueue, visionProClient, telemetryClient))
         }
 
         override fun start() {
             sessionWriter = createRotatedBuffersSessionWriter()
             sessionWriter.start()
-            videoProcessor.attach(videoProcessorListener)
+            videoProcessor.attach()
 
-            telemetrySyncManager.start()
-            checkCountryTelemetryDir()
+            syncManagers.forEach { it.start() }
         }
 
         override fun stop() {
-            telemetrySyncManager.stop()
+            syncManagers.forEach { it.stop() }
             videoProcessor.detach()
             sessionWriter.stop()
         }
 
-        override fun setCountry(newCountry: Country) {
-
-            if (currentCountry == newCountry) {
+        override fun setCountry(country: Country) {
+            if (currentCountry == country) {
                 return
             }
 
             if (isRecording) {
-                currentCountry = newCountry
+                currentCountry = country
                 return
             }
 
             when {
-                currentCountry == Country.Unknown && newCountry != Country.Unknown -> {
-                    currentCountry = newCountry
-                    configMapboxTelemetry()
-                    checkCountryTelemetryDir()
+                currentCountry == Country.Unknown && country != Country.Unknown -> {
+                    currentCountry = country
                 }
 
-                currentCountry != Country.Unknown && newCountry != Country.Unknown -> {
-                    telemetrySyncManager.stop()
+                currentCountry != Country.Unknown && country != Country.Unknown -> {
                     videoProcessor.detach()
                     sessionWriter.stop()
 
-                    currentCountry = newCountry
+                    currentCountry = country
 
-                    configMapboxTelemetry()
-
-                    telemetrySyncManager.start()
-                    checkCountryTelemetryDir()
-
-                    videoProcessor.attach(videoProcessorListener)
+                    videoProcessor.attach()
                     sessionWriter.start()
                 }
 
-                currentCountry != Country.Unknown && newCountry == Country.Unknown -> {
-                    currentCountry = newCountry
+                currentCountry != Country.Unknown && country == Country.Unknown -> {
+                    currentCountry = country
                     telemetrySyncManager.stop()
                 }
             }
+            
+            countryChangeListeners.forEach { it.newCountry(country) }
         }
 
         override fun startRecording(path: String) {
@@ -149,7 +172,7 @@ internal interface SessionManager {
             sessionWriter = createRecordingSessionWriter(path)
             sessionWriter.start()
 
-            telemetrySyncManager.stop()
+            syncManagers.forEach { it.stop() }
             videoProcessor.detach()
         }
 
@@ -164,23 +187,8 @@ internal interface SessionManager {
             sessionWriter = createRotatedBuffersSessionWriter()
             sessionWriter.start()
 
-            videoProcessor.attach(videoProcessorListener)
-            telemetrySyncManager.start()
-            checkCountryTelemetryDir()
-        }
-
-        private fun checkCountryTelemetryDir() {
-            val telemetryDir = getCurrentCountryTelemetryPath()
-
-            telemetryDir?.let { dir ->
-                File(dir).listFiles()?.forEach {
-                    if (it.list().isNullOrEmpty()) {
-                        it?.delete()
-                    } else {
-                        syncSessionDir(it.absolutePath)
-                    }
-                }
-            }
+            videoProcessor.attach()
+            syncManagers.forEach { it.start() }
         }
 
         private fun createRotatedBuffersSessionWriter() =
@@ -201,80 +209,38 @@ internal interface SessionManager {
                 videoRecorder = videoRecorder
             )
 
-        private val sessionWriterListener = object : SessionWriterListener {
+        private val sessionWriterListener = object :
+            SessionWriterListener {
             override fun onSessionStop(
-                clips: VideoClipsCombined,
+                clips: VideoCombined,
                 videoPath: String,
                 cachedTelemetryPath: String,
                 coreSessionStartMillis: Long
             ) {
-                if (currentCountry != Country.Unknown) {
-                    ifNonNull(clips.telemetryClips, telemetrySyncManager.getCurrentCountryTelemetryPath()){ telemetryClips, currentCountryTelemetryPath ->
-                        val newTelemetryPath = telemetrySyncManager.generateSessionPath(
+                clips.telemetries?.let {
+                    telemetrySession.onSessionStop(
+                        EnvironmentSession.Telemetry.EnvironmentData(
                             cachedTelemetryPath,
-                            currentCountryTelemetryPath
-                        )
-                        videoProcessor.splitVideoClips(
-                            clips = telemetryClips.map { it.mapToVideoClipStartStop() }.toTypedArray(),
-                            videoPath = videoPath,
-                            outputPath = newTelemetryPath,
-                            coreSessionStartMillis = coreSessionStartMillis,
-                            onVideoClipReady = null,
-                            onVideoClipsReady = object : VideoProcessorListener.MultipleClips {
-                                override fun onVideoClipsReady(
-                                    videoClips: HashMap<String, VideoClipStartStop>,
-                                    videoDir: String
-                                ) {
-                                    telemetrySyncManager.syncSessionDir()
-                                }
-                            }
-                        )
-                    }
-                    clips.visionProClips?.let {
-
-                    }
-
-                    val currentCountryTelemetryPath = getCurrentCountryTelemetryPath() ?: return
-                    val newTelemetryPath = generateSessionPath(
-                        cachedTelemetryPath,
-                        currentCountryTelemetryPath
+                            it
+                        ),
+                        videoProcessor,
+                        videoPath,
+                        coreSessionStartMillis,
+                        currentCountry
                     )
-                    FileUtils.moveFiles(cachedTelemetryPath, newTelemetryPath)
-                    videoProcessor.splitVideoClips(
-                        clips = clips,
-                        videoPath = videoPath,
-                        outputPath = newTelemetryPath,
-                        coreSessionStartMillis = coreSessionStartMillis
+                }
+                clips.visionPros?.let {
+                    visionProSession.onSessionStop(
+                        EnvironmentSession.VisionPro.EnvironmentData(
+                            it
+                        ),
+                        videoProcessor,
+                        videoPath,
+                        coreSessionStartMillis,
+                        currentCountry
                     )
-                } else {
-                    // delete session because country is unknown
-                    FileUtils.deleteDir(cachedTelemetryPath)
                 }
             }
-        }
-
-        private val videoProcessorListener = object : VideoProcessorListener.MultipleClips {
-            override fun onVideoClipsReady(
-                videoClips: HashMap<String, VideoClipStartStop>,
-                videoDir: String
-            ) {
-                if (currentCountry != Country.Unknown) {
-                     .generateMeta(
-                        videoClipMap = videoClips,
-                        saveDirPath = videoDir
-                    )
-                    syncSessionDir(videoDir)
-
-                    // TODO not right logic should be separate
-                    visionProMetaGenerator.generateMeta(videoClips, videoDir)
-                    syncSessionDir(videoDir)
-                }
-            }
-        }
-
-        private fun syncSessionDir(videoDir: String) {
-            mapboxTelemetry.updateDebugLoggingEnabled(BuildConfig.DEBUG)
-            telemetrySyncManager.syncSessionDir(videoDir)
         }
 
         private fun getVideoBuffersDir() = FileUtils.getAppRelativeDir(

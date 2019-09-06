@@ -2,10 +2,9 @@ package com.mapbox.vision.session
 
 import com.mapbox.vision.mobile.core.NativeVisionManager
 import com.mapbox.vision.mobile.core.models.VideoClip
-import com.mapbox.vision.models.videoclip.VideoClipsCombined
-import com.mapbox.vision.models.videoclip.mapToTelemetry
-import com.mapbox.vision.models.videoclip.mapToVisionPro
-import com.mapbox.vision.sync.SessionWriterListener
+import com.mapbox.vision.models.video.VideoCombined
+import com.mapbox.vision.models.video.mapToTelemetry
+import com.mapbox.vision.models.video.mapToVisionPro
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.utils.FileUtils
 import com.mapbox.vision.utils.file.RotatedBuffers
@@ -78,14 +77,17 @@ internal class RotatedBuffersSessionWriter(
         buffers.rotate()
     }
 
-    private fun Array<VideoClip>.toClipsCombined(): VideoClipsCombined = this.let { clips ->
+    private fun Array<VideoClip>.toClipsCombined(): VideoCombined = this.let { clips ->
         val telemetryProClips =
             clips.filter { it.metadata == null }.map { it.mapToTelemetry() }.ifEmpty { null }
                 ?.toTypedArray()
         val visionProClips =
             clips.filter { it.metadata != null }.mapNotNull { it.mapToVisionPro() }.ifEmpty { null }
                 ?.toTypedArray()
-        VideoClipsCombined(telemetryClips = telemetryProClips, visionProClips = visionProClips)
+        VideoCombined(
+            telemetries = telemetryProClips,
+            visionPros = visionProClips
+        )
     }
 
     private fun generateCacheDirForCurrentTime() {

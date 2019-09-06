@@ -48,6 +48,7 @@ import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.video.videosource.camera.Camera2VideoSourceImpl
 import com.mapbox.vision.video.videosource.camera.SurfaceVideoRecorder
 import com.mapbox.vision.video.videosource.camera.VideoRecorder
+import okhttp3.OkHttpClient
 
 /**
  * The main object for registering for events from the SDK, starting and stopping their delivery.
@@ -230,6 +231,7 @@ object VisionManager : BaseVisionManager {
         sessionManager = SessionManager.Impl(
             application,
             nativeVisionManager,
+            OkHttpClient(),
             videoRecorder,
             mapboxTelemetry,
             telemetryImageSaver,
