@@ -27,7 +27,7 @@ internal interface VideoProcessor {
         videoPath: String,
         outputPath: String,
         coreSessionStartMillis: Long,
-        onVideoClipReady: VideoProcessorListener.SingleClip?,
+        onVideoClipReady: VideoProcessorListener.SingleClip?, // TODO remove callback
         onVideoClipsReady: VideoProcessorListener.MultipleClips?
     )
 
