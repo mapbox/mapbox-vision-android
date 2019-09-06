@@ -5,7 +5,7 @@ import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.sync.util.FeatureEnvironment
 import com.mapbox.vision.utils.FileUtils
 
-internal interface SyncDirectoriesProvider<T: FeatureEnvironment> {
+internal interface SyncDirectoriesProvider<T : FeatureEnvironment> {
 
     val pathsAllCountries: Array<String>
 

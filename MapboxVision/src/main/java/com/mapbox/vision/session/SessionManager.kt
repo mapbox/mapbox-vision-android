@@ -10,8 +10,8 @@ import com.mapbox.vision.mobile.core.utils.extentions.TAG_CLASS
 import com.mapbox.vision.mobile.core.utils.extentions.lazyUnsafe
 import com.mapbox.vision.models.video.VideoCombined
 import com.mapbox.vision.sync.SyncClient
-import com.mapbox.vision.sync.filemanager.SyncFileHandler
 import com.mapbox.vision.sync.filemanager.SyncDirectoriesProvider
+import com.mapbox.vision.sync.filemanager.SyncFileHandler
 import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.sync.telemetry.TelemetryMetaGenerator
 import com.mapbox.vision.sync.telemetry.TelemetryQueue
@@ -82,8 +82,7 @@ internal interface SessionManager {
                 application,
                 TelemetryEnvironment
             )
-            val telemetryQueue =  TelemetryQueue(application, telemetrySyncFileProvider, TelemetryEnvironment)
-
+            val telemetryQueue = TelemetryQueue(application, telemetrySyncFileProvider, TelemetryEnvironment)
 
             val telemetryClient = SyncClient.Telemetry(mapboxTelemetry, TelemetryEnvironment)
             telemetrySyncManager = TelemetrySyncManager(
@@ -98,7 +97,7 @@ internal interface SessionManager {
                 application,
                 VisionProEnvironment
             )
-            val visionProQueue =  VisionProQueue(application, visionProSyncFileProvider, VisionProEnvironment, videoMetadataJsonMapper)
+            val visionProQueue = VisionProQueue(application, visionProSyncFileProvider, VisionProEnvironment, videoMetadataJsonMapper)
             val visionProClient = SyncClient.VisionPro(okHttpClient, VisionProEnvironment)
             visionProSyncManager = VisionProSyncManager(
                 syncClient = visionProClient,
@@ -157,7 +156,7 @@ internal interface SessionManager {
                     telemetrySyncManager.stop()
                 }
             }
-            
+
             countryChangeListeners.forEach { it.newCountry(country) }
         }
 

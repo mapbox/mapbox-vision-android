@@ -10,6 +10,10 @@ import com.mapbox.vision.sync.util.VisionProEnvironment
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.prefs.TotalBytesCounterPrefs
 import com.mapbox.vision.utils.threads.WorkThreadHandler
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType
@@ -19,10 +23,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class VisionProSyncManager(
     private val gson: Gson,
@@ -145,7 +145,7 @@ internal class VisionProSyncManager(
         processRequest(request, item)
     }
 
-    private fun processRequest(request: Request, item: Pair<String, VideoMetadata>){
+    private fun processRequest(request: Request, item: Pair<String, VideoMetadata>) {
         httpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 VisionLogger.e(e, TAG)
@@ -174,6 +174,5 @@ internal class VisionProSyncManager(
                 processQueue()
             }
         })
-
     }
 }

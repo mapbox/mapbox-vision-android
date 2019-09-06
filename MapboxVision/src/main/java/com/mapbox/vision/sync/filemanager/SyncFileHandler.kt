@@ -6,13 +6,13 @@ import com.mapbox.vision.sync.util.FeatureEnvironment
 import com.mapbox.vision.utils.FileUtils
 import java.io.File
 
-internal interface SyncFileHandler<T: FeatureEnvironment> {
+internal interface SyncFileHandler<T : FeatureEnvironment> {
 
     fun checkQuota(quotaBytes: Long): List<String>
 
     fun removePath(path: String)
 
-    class Impl<T: FeatureEnvironment>(private val syncDirectoriesProvider: SyncDirectoriesProvider<T>) : SyncFileHandler<T> {
+    class Impl<T : FeatureEnvironment>(private val syncDirectoriesProvider: SyncDirectoriesProvider<T>) : SyncFileHandler<T> {
 
         override fun checkQuota(quotaBytes: Long): List<String> {
             val files = syncDirectoriesProvider.pathsAllCountries.map { File(it) }.filter { it.exists() }

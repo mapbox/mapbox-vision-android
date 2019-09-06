@@ -12,7 +12,9 @@ internal class VisionProMetaGenerator(
 ) : MetaGenerator {
 
     override fun generateMeta(
-        clipPath: String, clip: VideoStartStop, videoMetadata: VideoMetadata
+        clipPath: String,
+        clip: VideoStartStop,
+        videoMetadata: VideoMetadata
     ) {
         val video = File(clipPath)
 

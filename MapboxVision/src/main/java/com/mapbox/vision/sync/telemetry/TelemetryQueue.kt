@@ -7,12 +7,12 @@ import com.mapbox.vision.sync.filemanager.SyncDirectoriesProvider
 import com.mapbox.vision.sync.util.TelemetryEnvironment
 import com.mapbox.vision.utils.UuidHolder
 import com.mapbox.vision.utils.file.ZipFileCompressorImpl
-import okhttp3.MediaType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
+import okhttp3.MediaType
 
 internal class TelemetryQueue(
     application: Application,
@@ -147,7 +147,7 @@ internal class TelemetryQueue(
             return null
         }
 
-        val output = File(dirPath, "$fileName.${FORMAT_ZIP}")
+        val output = File(dirPath, "$fileName.$FORMAT_ZIP")
         if (!output.exists()) {
             output.createNewFile()
         }

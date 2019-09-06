@@ -7,10 +7,13 @@ import java.util.HashMap
 internal interface MetaGenerator {
 
     fun generateMeta(
-        videoClipMap: HashMap<String, VideoStartStop>, saveDirPath: String
+        videoClipMap: HashMap<String, VideoStartStop>,
+        saveDirPath: String
     )
 
     fun generateMeta(
-        clipPath: String, clip: VideoStartStop, videoMetadata: VideoMetadata
+        clipPath: String,
+        clip: VideoStartStop,
+        videoMetadata: VideoMetadata
     )
 }

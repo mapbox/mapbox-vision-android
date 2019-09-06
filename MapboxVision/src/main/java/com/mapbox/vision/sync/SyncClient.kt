@@ -29,7 +29,7 @@ internal interface SyncClient<T, R : FeatureEnvironment> : EnvironmentSettings.C
     class VisionPro(
         override val client: OkHttpClient,
         private val environment: VisionProEnvironment
-    ): SyncClient<OkHttpClient, VisionProEnvironment> {
+    ) : SyncClient<OkHttpClient, VisionProEnvironment> {
 
         override fun newCountry(country: Country) {
             // do nothing

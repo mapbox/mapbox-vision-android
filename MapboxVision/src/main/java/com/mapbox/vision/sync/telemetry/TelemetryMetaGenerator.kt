@@ -4,12 +4,12 @@ import com.mapbox.vision.models.video.VideoMetadata
 import com.mapbox.vision.models.video.VideoStartStop
 import com.mapbox.vision.sync.MetaGenerator
 import com.mapbox.vision.utils.VisionLogger
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.util.HashMap
+import org.json.JSONArray
+import org.json.JSONObject
 
 internal class TelemetryMetaGenerator : MetaGenerator {
 
@@ -52,5 +52,4 @@ internal class TelemetryMetaGenerator : MetaGenerator {
             VisionLogger.e(TAG, "Can not create Json file : " + e.localizedMessage)
         }
     }
-
 }

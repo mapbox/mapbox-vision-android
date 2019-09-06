@@ -187,7 +187,6 @@ object VisionManager : BaseVisionManager {
 
         telemetryImageSaver = TelemetryImageSaverImpl()
 
-
         sensorsManager = SensorsManager.Impl(application)
         locationEngine = LocationEngine.Impl(application)
 
