@@ -143,7 +143,7 @@ class TelemetrySyncManager(
                     telemetryDirs.addAll(timestampDir)
                 }
             }
-            
+
             telemetryDirs.sortBy { it.name }
 
             for (telemetryDir in telemetryDirs) {
