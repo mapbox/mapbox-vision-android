@@ -1,6 +1,5 @@
 package com.mapbox.vision.video.videosource.camera
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.graphics.SurfaceTexture
@@ -191,7 +190,10 @@ class Camera2VideoSourceImpl(
 
     private fun repeatConfigureAttempt() {
         if (configureAttemptNumber <= CREATE_SESSION_MAX_ATTEMPTS) {
-            backgroundThreadHandler.handler.postDelayed({ createCaptureSession() }, TimeUnit.SECONDS.toMillis(configureAttemptNumber * 2L)) // delay 2 - 4 - 6 seconds
+            backgroundThreadHandler.handler.postDelayed(
+                { createCaptureSession() },
+                TimeUnit.SECONDS.toMillis(configureAttemptNumber * 2L)
+            ) // delay 2 - 4 - 6 seconds
         } else {
             configureAttemptNumber = 0
             closeCamera(cameraDevice)

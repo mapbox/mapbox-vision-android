@@ -15,7 +15,7 @@ object VisionArManager : ModuleInterface {
     private lateinit var nativeArManager: NativeArManager
     private var modulePtr: Long = 0L
 
-    private val compositeListenerVisionArEvents = CompositeListenerVisionArEvents()
+    private val compositeVisionArEventsListener = CompositeVisionArEventsListener()
 
     @JvmStatic
     var visionArEventsListener by DelegateWeakRef.valueChange<VisionArEventsListener> { oldValue, newValue ->
@@ -33,7 +33,7 @@ object VisionArManager : ModuleInterface {
 
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionEventsListener) instead",
+        "Will be removed in 0.9.0. Use create(BaseVisionManager) and setVisionArEventsListener(VisionEventsListener) instead",
         ReplaceWith(
             "VisionArManager.create(baseVisionManager: BaseVisionManager)",
             "com.mapbox.vision.manager.BaseVisionManager"
@@ -47,6 +47,7 @@ object VisionArManager : ModuleInterface {
         create(baseVisionManager)
     }
 
+    @JvmStatic
     fun create(
         baseVisionManager: BaseVisionManager
     ) {
@@ -54,7 +55,7 @@ object VisionArManager : ModuleInterface {
         baseVisionManager.registerModule(this)
 
         nativeArManager = NativeArManager()
-        nativeArManager.create(modulePtr, compositeListenerVisionArEvents)
+        nativeArManager.create(modulePtr, compositeVisionArEventsListener)
     }
 
     @JvmStatic
@@ -72,10 +73,12 @@ object VisionArManager : ModuleInterface {
     fun setLaneLength(laneLength: Double) {
         nativeArManager.setLaneLength(laneLength)
     }
-
+    
+    @JvmStatic
     internal fun addListener(observer: VisionArEventsListener) =
-        compositeListenerVisionArEvents.addListener(observer)
+        compositeVisionArEventsListener.addListener(observer)
 
+    @JvmStatic
     internal fun removeListener(observer: VisionArEventsListener) =
-        compositeListenerVisionArEvents.removeListener(observer)
+        compositeVisionArEventsListener.removeListener(observer)
 }

@@ -416,6 +416,7 @@ object VisionManager : BaseVisionManager {
     /**
      * Converts the location of the point from a geographical coordinate to a world coordinate.
      */
+    @JvmStatic
     fun geoToWorld(geoCoordinate: GeoCoordinate): WorldCoordinate? {
         return delegate.geoToWorld(geoCoordinate)
     }
