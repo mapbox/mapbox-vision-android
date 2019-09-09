@@ -16,7 +16,6 @@ import com.mapbox.vision.mobile.core.models.CameraParameters
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.threads.WorkThreadHandler
-import com.mapbox.vision.video.videosource.CompositeListenerVideoSource
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.util.concurrent.Semaphore
@@ -36,8 +35,6 @@ class Camera2VideoSourceImpl(
     private lateinit var yuvAllocation2Rgba: YuvAllocation2Rgba
     private lateinit var previewSize: ImageSize
     private lateinit var cameraParameters: CameraParameters
-
-    private val compositeListenerVideoSource = CompositeListenerVideoSource()
 
     private var sensorOrientation: Int = 0
 
@@ -84,35 +81,24 @@ class Camera2VideoSourceImpl(
 
     override fun attach(videoSourceListener: VideoSourceListener) {
         this.videoSourceListener = videoSourceListener
-        addListener(videoSourceListener)
 
         videoSourceListener.onNewCameraParameters(cameraParameters)
-        yuvAllocation2Rgba = YuvAllocation2Rgba(RenderScript.create(application), previewSize) { bytes ->
-            compositeListenerVideoSource.onNewFrame(bytes, ImageFormat.RGBA, previewSize)
-        }
+        yuvAllocation2Rgba =
+            YuvAllocation2Rgba(RenderScript.create(application), previewSize) { bytes ->
+                this.videoSourceListener?.onNewFrame(bytes, ImageFormat.RGBA, previewSize)
+            }
         backgroundThreadHandler.start()
         openCamera()
     }
 
     override fun detach() {
         closeCamera()
-
-        videoSourceListener?.let {
-            removeListener(it)
-            videoSourceListener = null
-        }
+        videoSourceListener = null
 
         backgroundThreadHandler.stop()
         yuvAllocation2Rgba.release()
     }
 
-    override fun addListener(observer: VideoSourceListener) =
-        compositeListenerVideoSource.addListener(observer)
-
-    override fun removeListener(observer: VideoSourceListener) =
-        compositeListenerVideoSource.removeListener(observer)
-
-    @SuppressLint("MissingPermission")
     private fun openCamera() {
         val manager = application.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         try {
@@ -154,7 +140,8 @@ class Camera2VideoSourceImpl(
             configureAttemptNumber++
             cameraDevice?.let { camera ->
 
-                val previewRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                val previewRequestBuilder =
+                    camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
                 val surfaces = listOf(yuvAllocation2Rgba.getInputSurface(), videoRecorder.surface)
                 surfaces.forEach(previewRequestBuilder::addTarget)
 
@@ -237,9 +224,12 @@ class Camera2VideoSourceImpl(
                     .get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)!!
                     .first()
 
-                val physicalSensorSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)!!
-                val focalInPixelsX: Float = focalLength * previewSize.imageWidth / physicalSensorSize.width
-                val focalInPixelsY: Float = focalLength * previewSize.imageHeight / physicalSensorSize.height
+                val physicalSensorSize =
+                    characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)!!
+                val focalInPixelsX: Float =
+                    focalLength * previewSize.imageWidth / physicalSensorSize.width
+                val focalInPixelsY: Float =
+                    focalLength * previewSize.imageHeight / physicalSensorSize.height
 
                 cameraParameters = CameraParameters(
                     width = previewSize.imageWidth,

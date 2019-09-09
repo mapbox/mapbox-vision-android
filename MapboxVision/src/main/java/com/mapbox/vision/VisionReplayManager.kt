@@ -66,7 +66,7 @@ object VisionReplayManager : BaseVisionManager {
         override fun pushEvent() {}
     }
 
-    override val videoSource: VideoSource.WithProgress
+    private val videoSource: VideoSource.WithProgress
         get() = delegate.videoSource
 
     private lateinit var delegate: DelegateVisionManager<VideoSource.WithProgress>
@@ -172,7 +172,7 @@ object VisionReplayManager : BaseVisionManager {
 
         delegate.start()
 
-        videoSource.attach(videoSourceListener)
+        delegate.attachVideoSourceListener(videoSourceListener)
 
         attachableModules.forEach { it.attach() }
     }
@@ -192,14 +192,18 @@ object VisionReplayManager : BaseVisionManager {
 
         delegate.start()
 
-        videoSource.attach(videoSourceListener)
+        delegate.attachVideoSourceListener(videoSourceListener)
 
         attachableModules.forEach { it.attach() }
     }
 
-    override fun addListener(observer: VisionEventsListener) = delegate.addListener(observer)
+    internal fun addListener(observer: VisionEventsListener) = delegate.addListener(observer)
 
-    override fun removeListener(observer: VisionEventsListener) = delegate.removeListener(observer)
+    internal fun removeListener(observer: VisionEventsListener) = delegate.removeListener(observer)
+
+    internal fun addVideoSourceListener(listener: VideoSourceListener) = delegate.addVideoSourceListener(listener)
+
+    internal fun removeVideoSourceListener(listener: VideoSourceListener) = delegate.removeVideoSourceListener(listener)
 
     /**
      * Stop delivering events from [VisionReplayManager].
@@ -214,7 +218,7 @@ object VisionReplayManager : BaseVisionManager {
 
         attachableModules.forEach { it.detach() }
 
-        videoSource.detach()
+        delegate.detachVideoSourceListener()
         delegate.stop()
     }
 
@@ -234,6 +238,7 @@ object VisionReplayManager : BaseVisionManager {
     }
 
     @JvmStatic
+    @Deprecated("Will be removed in v0.10")
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener) {
         delegate.setVideoSourceListener(videoSourceListener)
     }

@@ -2,12 +2,11 @@ package com.mapbox.vision.safety
 
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.ModuleInterface
+import com.mapbox.vision.mobile.core.utils.delegate.DelegateWeakRef
 import com.mapbox.vision.safety.core.NativeSafetyManager
 import com.mapbox.vision.safety.core.VisionSafetyListener
-import com.mapbox.vision.utils.observable.CompositeListener
-import com.mapbox.vision.utils.observable.delegateWeakPropertyObservable
 
-object VisionSafetyManager : ModuleInterface, CompositeListener<VisionSafetyListener> {
+object VisionSafetyManager : ModuleInterface {
 
     private lateinit var nativeSafetyManager: NativeSafetyManager
     private lateinit var visionManager: BaseVisionManager
@@ -16,7 +15,10 @@ object VisionSafetyManager : ModuleInterface, CompositeListener<VisionSafetyList
     private val compositeListenerVisionEvents = CompositeListenerVisionSafety()
 
     @JvmStatic
-    var visionSafetyListener by delegateWeakPropertyObservable(this)
+    var visionSafetyListener by DelegateWeakRef.valueChange<VisionSafetyListener> { oldValue, newValue ->
+        oldValue?.let { removeListener(it) }
+        newValue?.let { addListener(it) }
+    }
 
     override fun registerModule(ptr: Long) {
         modulePtr = ptr
@@ -29,7 +31,10 @@ object VisionSafetyManager : ModuleInterface, CompositeListener<VisionSafetyList
     @JvmStatic
     @Deprecated(
         "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionSafetyListener) instead",
-        ReplaceWith("VisionSafetyManager.create(baseVisionManager: BaseVisionManager)", "com.mapbox.vision.manager.BaseVisionManager")
+        ReplaceWith(
+            "VisionSafetyManager.create(baseVisionManager: BaseVisionManager)",
+            "com.mapbox.vision.manager.BaseVisionManager"
+        )
     )
     fun create(baseVisionManager: BaseVisionManager, visionSafetyListener: VisionSafetyListener) {
         this.visionManager = baseVisionManager
@@ -72,9 +77,9 @@ object VisionSafetyManager : ModuleInterface, CompositeListener<VisionSafetyList
         nativeSafetyManager.setCollisionMinSpeed(speed)
     }
 
-    override fun addListener(observer: VisionSafetyListener) =
+    internal fun addListener(observer: VisionSafetyListener) =
         compositeListenerVisionEvents.addListener(observer)
 
-    override fun removeListener(observer: VisionSafetyListener) =
+    internal fun removeListener(observer: VisionSafetyListener) =
         compositeListenerVisionEvents.removeListener(observer)
 }

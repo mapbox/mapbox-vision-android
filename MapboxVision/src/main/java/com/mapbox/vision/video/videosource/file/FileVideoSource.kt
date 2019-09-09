@@ -11,7 +11,6 @@ import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.VisionLogger
 import com.mapbox.vision.utils.threads.WorkThreadHandler
-import com.mapbox.vision.video.videosource.CompositeListenerVideoSource
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.io.File
@@ -31,8 +30,6 @@ class FileVideoSource(
     private val renderscript: RenderScript by lazy {
         RenderScript.create(application)
     }
-
-    private val compositeListenerVideoSource = CompositeListenerVideoSource()
 
     // Image from MediaCodec arrive in NV12 format, while ScriptIntrinsicYuvToRGB processes NV21,
     // which results in BGR format in the output.
@@ -85,7 +82,6 @@ class FileVideoSource(
 
     override fun attach(videoSourceListener: VideoSourceListener) {
         this.videoSourceListener = videoSourceListener
-        addListener(videoSourceListener)
 
         responseHandler.start()
         handler.start()
@@ -105,22 +101,13 @@ class FileVideoSource(
     }
 
     override fun detach() {
-        videoSourceListener?.let {
-            compositeListenerVideoSource.removeListener(it)
-            videoSourceListener = null
-        }
+        videoSourceListener = null
 
         currentVideo = 0
         videoDecoder.stopPlayback()
         handler.stop()
         responseHandler.stop()
     }
-
-    override fun addListener(observer: VideoSourceListener) =
-        compositeListenerVideoSource.addListener(observer)
-
-    override fun removeListener(observer: VideoSourceListener) =
-        compositeListenerVideoSource.removeListener(observer)
 
     private fun onFrameDecoded(byteBuffer: ByteBuffer, videoProgress: Long) {
         try {
@@ -135,7 +122,7 @@ class FileVideoSource(
                     sourceAllocation.copyFrom(yuvArray)
                     scriptGroup.execute()
                     destinationAllocation.copyTo(rgbaArray)
-                    compositeListenerVideoSource.onNewFrame(
+                    videoSourceListener?.onNewFrame(
                         rgbaArray,
                         ImageFormat.RGBA,
                         ImageSize(width, height)

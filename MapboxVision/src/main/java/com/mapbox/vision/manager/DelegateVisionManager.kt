@@ -15,11 +15,14 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.performance.PerformanceManager
+import com.mapbox.vision.utils.observable.CompositeListener
+import com.mapbox.vision.video.videosource.CompositeListenerVideoSource
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
 
-internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
+internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
+    CompositeListener<VisionEventsListener> {
 
     val externalVideoSourceListener: VideoSourceListener?
     val nativeVisionManagerBase: NativeVisionManagerBase
@@ -30,7 +33,7 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
 
     var visionEventsListener: VisionEventsListener?
     var keepListenerStrongRef: Boolean
-    override var videoSource: T
+    var videoSource: T
 
     fun create(
         nativeVisionManagerBase: NativeVisionManagerBase,
@@ -44,12 +47,18 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
 
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener)
 
+    fun attachVideoSourceListener(videoSourceListener: VideoSourceListener)
+    fun detachVideoSourceListener()
+
     fun setModelPerformanceConfig(modelPerformanceConfig: ModelPerformanceConfig)
 
     fun getFrameStatistics(): FrameStatistics
 
     fun checkManagerCreated()
     fun checkManagerStarted()
+
+    fun addVideoSourceListener(listener: VideoSourceListener)
+    fun removeVideoSourceListener(listener: VideoSourceListener)
 
     fun worldToPixel(worldCoordinate: WorldCoordinate): PixelCoordinate?
     fun pixelToWorld(pixelCoordinate: PixelCoordinate): WorldCoordinate?
@@ -61,6 +70,11 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
         override lateinit var videoSource: T
 
         override var externalVideoSourceListener: VideoSourceListener? = null
+            set(value) {
+                value?.let { compositeListenerVideoSource.addListener(it) }
+                field?.let { compositeListenerVideoSource.removeListener(it) }
+                field = value
+            }
 
         override lateinit var nativeVisionManagerBase: NativeVisionManagerBase
         override lateinit var performanceManager: PerformanceManager
@@ -70,7 +84,7 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
 
         private lateinit var onCountrySet: (Country) -> Unit
 
-        // TODO should be refactored to visionEventsListener by delegateWeakPropertyObservable after 0.9.0. Now we should keep strong link on listener
+        // TODO should be refactored to visionEventsListener by delegateWeakPropertyListener after 0.9.0. Now we should keep strong link on listener
         override var visionEventsListener: VisionEventsListener? by DelegateWeakRef.valueChange { oldValue, newValue ->
             if (keepListenerStrongRef || newValue == null) {
                 visionEventsListenerStrongLink = newValue
@@ -87,6 +101,12 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
                 super.onCountryUpdated(country)
                 onCountrySet(country)
             }
+        }
+
+        private val compositeListenerVideoSource = CompositeListenerVideoSource()
+        private var weakVideoSourceListener by DelegateWeakRef.valueChange<VideoSourceListener> { oldValue, newValue ->
+            oldValue?.let { compositeListenerVideoSource.removeListener(it) }
+            newValue?.let { compositeListenerVideoSource.addListener(it) }
         }
 
         override fun create(
@@ -120,6 +140,12 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
         override fun removeListener(observer: VisionEventsListener) =
             compositeListener.removeListener(observer)
 
+        override fun addVideoSourceListener(listener: VideoSourceListener) =
+            compositeListenerVideoSource.addListener(listener)
+
+        override fun removeVideoSourceListener(listener: VideoSourceListener) =
+            compositeListenerVideoSource.removeListener(listener)
+
         override fun stop() {
             nativeVisionManagerBase.stop()
             isStarted = false
@@ -127,6 +153,17 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager {
 
         override fun destroy() {
             isCreated = false
+        }
+
+        override fun attachVideoSourceListener(videoSourceListener: VideoSourceListener) {
+            weakVideoSourceListener = videoSourceListener
+            videoSource.attach(compositeListenerVideoSource)
+        }
+
+        override fun detachVideoSourceListener() {
+            weakVideoSourceListener = null
+            externalVideoSourceListener = null
+            videoSource.detach()
         }
 
         override fun setVideoSourceListener(videoSourceListener: VideoSourceListener) {

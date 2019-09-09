@@ -4,14 +4,27 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
+import android.util.Log
+import com.mapbox.vision.VisionManager
 import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.VisionArManager
 import com.mapbox.vision.ar.core.VisionArEventsListener
 import com.mapbox.vision.ar.core.models.ArCamera
 import com.mapbox.vision.ar.core.models.ArLane
+import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
+import com.mapbox.vision.mobile.core.models.AuthorizationStatus
+import com.mapbox.vision.mobile.core.models.Camera
 import com.mapbox.vision.mobile.core.models.CameraParameters
+import com.mapbox.vision.mobile.core.models.Country
+import com.mapbox.vision.mobile.core.models.FrameSegmentation
+import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications
+import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
+import com.mapbox.vision.mobile.core.models.position.VehicleState
+import com.mapbox.vision.mobile.core.models.road.RoadDescription
+import com.mapbox.vision.mobile.core.models.world.WorldDescription
+import com.mapbox.vision.utils.observable.CompositeListener
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.lang.ref.WeakReference
 
@@ -60,7 +73,14 @@ constructor(
 
     private fun subscribeWith(visionArManager: VisionArManager) {
         visionArManager.addListener(arViewSupporter)
-        visionArManager.visionManager.videoSource.addListener(arViewSupporter)
+
+        val addListener = visionArManager.visionManager::class.java.getDeclaredMethod("addListener", VisionEventsListener::class.java)
+        addListener.isAccessible = true
+        addListener.invoke(visionArManager.visionManager, arViewSupporter)
+
+        val addVideoSourceListener = visionArManager.visionManager::class.java.getDeclaredMethod("addVideoSourceListener", VideoSourceListener::class.java)
+        addVideoSourceListener.isAccessible = true
+        addVideoSourceListener.invoke(visionArManager.visionManager, arViewSupporter)
     }
 
     private fun unsubscribeWith(visionArManager: VisionArManager?) {
@@ -68,7 +88,14 @@ constructor(
             return
         }
         visionArManager.removeListener(arViewSupporter)
-        visionArManager.visionManager.videoSource.removeListener(arViewSupporter)
+
+        val addListener = visionArManager.visionManager::class.java.getDeclaredMethod("removeListener", VisionEventsListener::class.java)
+        addListener.isAccessible = true
+        addListener.invoke(visionArManager.visionManager, arViewSupporter)
+
+        val removeVideoSourceListener = visionArManager.visionManager::class.java.getDeclaredMethod("removeVideoSourceListener", VideoSourceListener::class.java)
+        removeVideoSourceListener.isAccessible = true
+        removeVideoSourceListener.invoke(visionArManager.visionManager, arViewSupporter)
     }
 
     @Deprecated("Will be removed in 0.9.0")
@@ -99,7 +126,7 @@ constructor(
         render.onNewLaneVisualParams(laneVisualParams)
     }
 
-    private inner class ArViewSupporter : VideoSourceListener, VisionArEventsListener {
+    private inner class ArViewSupporter : VideoSourceListener, VisionArEventsListener, VisionEventsListener {
         override fun onNewFrame(
             rgbaBytes: ByteArray,
             imageFormat: ImageFormat,
@@ -110,12 +137,54 @@ constructor(
 
         override fun onNewCameraParameters(cameraParameters: CameraParameters) = Unit
 
+        /*VisionArEventsListener*/
         override fun onArCameraUpdated(arCamera: ArCamera) {
             render.arCamera = arCamera
         }
 
         override fun onArLaneUpdated(arLane: ArLane) {
             render.arLane = arLane
+        }
+
+        /*VisionArEventsListener*/
+        override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {
+            super.onAuthorizationStatusUpdated(authorizationStatus)
+        }
+
+        override fun onFrameSegmentationUpdated(frameSegmentation: FrameSegmentation) {
+            super.onFrameSegmentationUpdated(frameSegmentation)
+        }
+
+        override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {
+            super.onFrameDetectionsUpdated(frameDetections)
+        }
+
+        override fun onFrameSignClassificationsUpdated(frameSignClassifications: FrameSignClassifications) {
+            super.onFrameSignClassificationsUpdated(frameSignClassifications)
+        }
+
+        override fun onRoadDescriptionUpdated(roadDescription: RoadDescription) {
+            super.onRoadDescriptionUpdated(roadDescription)
+        }
+
+        override fun onWorldDescriptionUpdated(worldDescription: WorldDescription) {
+            super.onWorldDescriptionUpdated(worldDescription)
+        }
+
+        override fun onVehicleStateUpdated(vehicleState: VehicleState) {
+            super.onVehicleStateUpdated(vehicleState)
+        }
+
+        override fun onCameraUpdated(camera: Camera) {
+            super.onCameraUpdated(camera)
+        }
+
+        override fun onCountryUpdated(country: Country) {
+            super.onCountryUpdated(country)
+        }
+
+        override fun onUpdateCompleted() {
+            super.onUpdateCompleted()
         }
     }
 }

@@ -5,10 +5,9 @@ import com.mapbox.vision.ar.core.VisionArEventsListener
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.manager.ModuleInterface
-import com.mapbox.vision.utils.observable.CompositeListener
-import com.mapbox.vision.utils.observable.delegateWeakPropertyObservable
+import com.mapbox.vision.mobile.core.utils.delegate.DelegateWeakRef
 
-object VisionArManager : ModuleInterface, CompositeListener<VisionArEventsListener> {
+object VisionArManager : ModuleInterface {
 
     lateinit var visionManager: BaseVisionManager
         private set
@@ -19,7 +18,10 @@ object VisionArManager : ModuleInterface, CompositeListener<VisionArEventsListen
     private val compositeListenerVisionArEvents = CompositeListenerVisionArEvents()
 
     @JvmStatic
-    var visionArEventsListener by delegateWeakPropertyObservable(this)
+    var visionArEventsListener by DelegateWeakRef.valueChange<VisionArEventsListener> { oldValue, newValue ->
+        oldValue?.let { removeListener(it) }
+        newValue?.let { addListener(it) }
+    }
 
     override fun registerModule(ptr: Long) {
         modulePtr = ptr
@@ -32,7 +34,10 @@ object VisionArManager : ModuleInterface, CompositeListener<VisionArEventsListen
     @JvmStatic
     @Deprecated(
         "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionEventsListener) instead",
-        ReplaceWith("VisionArManager.create(baseVisionManager: BaseVisionManager)", "com.mapbox.vision.manager.BaseVisionManager")
+        ReplaceWith(
+            "VisionArManager.create(baseVisionManager: BaseVisionManager)",
+            "com.mapbox.vision.manager.BaseVisionManager"
+        )
     )
     fun create(
         baseVisionManager: BaseVisionManager,
@@ -68,9 +73,9 @@ object VisionArManager : ModuleInterface, CompositeListener<VisionArEventsListen
         nativeArManager.setLaneLength(laneLength)
     }
 
-    override fun addListener(observer: VisionArEventsListener) =
+    internal fun addListener(observer: VisionArEventsListener) =
         compositeListenerVisionArEvents.addListener(observer)
 
-    override fun removeListener(observer: VisionArEventsListener) =
+    internal fun removeListener(observer: VisionArEventsListener) =
         compositeListenerVisionArEvents.removeListener(observer)
 }

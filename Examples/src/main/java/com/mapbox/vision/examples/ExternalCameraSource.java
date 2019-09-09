@@ -61,12 +61,6 @@ public class ExternalCameraSource extends BaseActivity {
             videoSourceListener = null;
             handlerThread.quitSafely();
         }
-
-        @Override
-        public void removeListener(@NotNull VideoSourceListener observer) { }
-
-        @Override
-        public void addListener(@NotNull VideoSourceListener observer) { }
     };
 
     // VisionEventsListener handles events from Vision SDK on background thread.

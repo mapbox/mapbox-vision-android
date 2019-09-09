@@ -10,7 +10,6 @@ interface CompositeListener<T> {
 
     open class Impl<T> : CompositeListener<T> {
         private val listeners = CopyOnWriteArraySet<WeakReference<T>>()
-        private var needClean = false
 
         override fun addListener(observer: T) {
             listeners.add(WeakReference(observer))
