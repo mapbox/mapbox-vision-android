@@ -15,6 +15,25 @@ internal interface VideoRecorder {
     fun startRecording(path: String)
     fun stopRecording()
     fun release()
+
+    class DummyVideoRecorder : VideoRecorder {
+
+        override fun init(frameWidth: Int, frameHeight: Int, sensorOrientation: Int) {
+            // do nothing
+        }
+
+        override fun startRecording(path: String) {
+            // do nothing
+        }
+
+        override fun stopRecording() {
+            // do nothing
+        }
+
+        override fun release() {
+            // do nothing
+        }
+    }
 }
 
 internal interface SurfaceVideoRecorder : VideoRecorder {
