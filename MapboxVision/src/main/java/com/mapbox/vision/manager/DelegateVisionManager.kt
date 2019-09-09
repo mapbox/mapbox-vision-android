@@ -72,11 +72,13 @@ internal interface DelegateVisionManager : BaseVisionManager {
             this.nativeVisionManagerBase = nativeVisionManagerBase
             this.performanceManager = performanceManager
 
-             this.performanceManager.setModelConfig(
-                ModelPerformanceConfig.Merged(ModelPerformance.On(
-                    mode = ModelPerformanceMode.DYNAMIC,
-                    rate = ModelPerformanceRate.HIGH
-                ))
+            this.performanceManager.setModelConfig(
+                ModelPerformanceConfig.Merged(
+                    ModelPerformance.On(
+                        mode = ModelPerformanceMode.DYNAMIC,
+                        rate = ModelPerformanceRate.HIGH
+                    )
+                )
             )
         }
 
