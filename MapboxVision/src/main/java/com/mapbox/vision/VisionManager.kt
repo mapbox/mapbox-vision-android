@@ -72,7 +72,7 @@ object VisionManager : BaseVisionManager {
     lateinit var mapboxToken: String
         private set
 
-    override val videoSource: VideoSource
+    private val videoSource: VideoSource
         get() = delegate.videoSource
 
     private lateinit var delegate: DelegateVisionManager<VideoSource>
@@ -270,7 +270,7 @@ object VisionManager : BaseVisionManager {
 
         sensorsManager.attach(sensorsListener)
         locationEngine.attach(nativeVisionManager)
-        videoSource.attach(videoSourceListener)
+        delegate.attachVideoSourceListener(videoSourceListener)
         attachableModules.forEach { it.attach() }
     }
 
@@ -301,9 +301,17 @@ object VisionManager : BaseVisionManager {
         attachableModules.forEach { it.attach() }
     }
 
-    override fun addListener(observer: VisionEventsListener) = delegate.addListener(observer)
+    @JvmStatic
+    private fun addListener(listener: VisionEventsListener) = delegate.addListener(listener)
 
-    override fun removeListener(observer: VisionEventsListener) = delegate.removeListener(observer)
+    @JvmStatic
+    private fun removeListener(listener: VisionEventsListener) = delegate.removeListener(listener)
+
+    @JvmStatic
+    private fun addVideoSourceListener(listener: VideoSourceListener) = delegate.addVideoSourceListener(listener)
+
+    @JvmStatic
+    private fun removeVideoSourceListener(listener: VideoSourceListener) = delegate.removeVideoSourceListener(listener)
 
     /**
      * Start recording a session.
@@ -346,7 +354,7 @@ object VisionManager : BaseVisionManager {
 
         delegate.stop()
 
-        videoSource.detach()
+        delegate.detachVideoSourceListener()
 
         locationEngine.detach()
         sensorsManager.detach()
@@ -369,6 +377,7 @@ object VisionManager : BaseVisionManager {
     }
 
     @JvmStatic
+    @Deprecated("Will be removed in 0.10.0")
     fun setVideoSourceListener(videoSourceListener: VideoSourceListener) {
         delegate.setVideoSourceListener(videoSourceListener)
     }
