@@ -1,22 +1,22 @@
-package com.mapbox.vision.utils.observable
+package com.mapbox.vision.utils.listeners
 
 import com.mapbox.vision.mobile.core.utils.delegate.DelegateWeakRef
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArraySet
 
 interface CompositeListener<T> {
-    fun addListener(observer: T)
-    fun removeListener(observer: T)
+    fun addListener(listener: T)
+    fun removeListener(listener: T)
 
-    open class Impl<T> : CompositeListener<T> {
+    open class WeakRefImpl<T> : CompositeListener<T> {
         private val listeners = CopyOnWriteArraySet<WeakReference<T>>()
 
-        override fun addListener(observer: T) {
-            listeners.add(WeakReference(observer))
+        override fun addListener(listener: T) {
+            listeners.add(WeakReference(listener))
         }
 
-        override fun removeListener(observer: T) {
-            listeners.find { it.get() == observer }?.let { listeners.remove(it) }
+        override fun removeListener(listener: T) {
+            listeners.find { it.get() == listener }?.let { listeners.remove(it) }
         }
 
         protected fun forEach(func: T.() -> Unit) {
@@ -32,7 +32,7 @@ interface CompositeListener<T> {
     }
 }
 
-fun <T> delegateWeakPropertyObservable(
+fun <T> delegateWeakPropertyListener(
     compositeListener: CompositeListener<T>,
     initValue: T? = null
 ): DelegateWeakRef<T> =

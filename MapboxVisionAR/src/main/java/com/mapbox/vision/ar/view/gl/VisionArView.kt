@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
-import android.util.Log
-import com.mapbox.vision.VisionManager
 import com.mapbox.vision.ar.LaneVisualParams
 import com.mapbox.vision.ar.VisionArManager
 import com.mapbox.vision.ar.core.VisionArEventsListener
@@ -24,7 +22,6 @@ import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
-import com.mapbox.vision.utils.observable.CompositeListener
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.lang.ref.WeakReference
 
@@ -42,7 +39,7 @@ constructor(
 
     private var visionArManager: WeakReference<VisionArManager>? = null
 
-    private val arViewSupporter = ArViewSupporter()
+    private val arViewSupporter = ArViewListener()
 
     init {
         // FIXME
@@ -62,16 +59,16 @@ constructor(
     }
 
     fun setArManager(visionArManager: VisionArManager?) {
-        unsubscribeWith(this.visionArManager?.get())
+        unsubscribe(this.visionArManager?.get())
         this.visionArManager = null
 
         visionArManager?.let {
-            subscribeWith(it)
+            subscribe(it)
             this.visionArManager = WeakReference(it)
         }
     }
 
-    private fun subscribeWith(visionArManager: VisionArManager) {
+    private fun subscribe(visionArManager: VisionArManager) {
         visionArManager.addListener(arViewSupporter)
 
         val addListener = visionArManager.visionManager::class.java.getDeclaredMethod("addListener", VisionEventsListener::class.java)
@@ -83,32 +80,32 @@ constructor(
         addVideoSourceListener.invoke(visionArManager.visionManager, arViewSupporter)
     }
 
-    private fun unsubscribeWith(visionArManager: VisionArManager?) {
+    private fun unsubscribe(visionArManager: VisionArManager?) {
         if (visionArManager == null) {
             return
         }
         visionArManager.removeListener(arViewSupporter)
 
-        val addListener = visionArManager.visionManager::class.java.getDeclaredMethod("removeListener", VisionEventsListener::class.java)
-        addListener.isAccessible = true
-        addListener.invoke(visionArManager.visionManager, arViewSupporter)
+        val removeListener = visionArManager.visionManager::class.java.getDeclaredMethod("removeListener", VisionEventsListener::class.java)
+        removeListener.isAccessible = true
+        removeListener.invoke(visionArManager.visionManager, arViewSupporter)
 
         val removeVideoSourceListener = visionArManager.visionManager::class.java.getDeclaredMethod("removeVideoSourceListener", VideoSourceListener::class.java)
         removeVideoSourceListener.isAccessible = true
         removeVideoSourceListener.invoke(visionArManager.visionManager, arViewSupporter)
     }
 
-    @Deprecated("Will be removed in 0.9.0")
+    @Deprecated("Will be removed in 0.10.0")
     override fun onArCameraUpdated(arCamera: ArCamera) {
         render.arCamera = arCamera
     }
 
-    @Deprecated("Will be removed in 0.9.0")
+    @Deprecated("Will be removed in 0.10.0")
     override fun onArLaneUpdated(arLane: ArLane) {
         render.arLane = arLane
     }
 
-    @Deprecated("Will be removed in 0.9.0")
+    @Deprecated("Will be removed in 0.10.0")
     override fun onNewFrame(
         rgbaBytes: ByteArray,
         imageFormat: ImageFormat,
@@ -117,7 +114,7 @@ constructor(
         render.onNewBackground(rgbaBytes)
     }
 
-    @Deprecated("Will be removed in 0.9.0")
+    @Deprecated("Will be removed in 0.10.0")
     override fun onNewCameraParameters(cameraParameters: CameraParameters) {
         // TODO change render
     }
@@ -126,7 +123,7 @@ constructor(
         render.onNewLaneVisualParams(laneVisualParams)
     }
 
-    private inner class ArViewSupporter : VideoSourceListener, VisionArEventsListener, VisionEventsListener {
+    private inner class ArViewListener : VideoSourceListener, VisionArEventsListener, VisionEventsListener {
         override fun onNewFrame(
             rgbaBytes: ByteArray,
             imageFormat: ImageFormat,

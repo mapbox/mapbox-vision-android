@@ -12,7 +12,7 @@ object VisionSafetyManager : ModuleInterface {
     private lateinit var visionManager: BaseVisionManager
     private var modulePtr: Long = 0L
 
-    private val compositeListenerVisionEvents = CompositeListenerVisionSafety()
+    private val compositeListenerVisionEvents = CompositeVisionSafetyListener()
 
     @JvmStatic
     var visionSafetyListener by DelegateWeakRef.valueChange<VisionSafetyListener> { oldValue, newValue ->
@@ -30,7 +30,7 @@ object VisionSafetyManager : ModuleInterface {
 
     @JvmStatic
     @Deprecated(
-        "Will be removed in 0.9.0. Use create() and setVisionArEventsListener(VisionSafetyListener) instead",
+        "Will be removed in 0.9.0. Use create(BaseVisionManager) and setVisionSafetyListener(VisionSafetyListener) instead",
         ReplaceWith(
             "VisionSafetyManager.create(baseVisionManager: BaseVisionManager)",
             "com.mapbox.vision.manager.BaseVisionManager"
@@ -77,9 +77,11 @@ object VisionSafetyManager : ModuleInterface {
         nativeSafetyManager.setCollisionMinSpeed(speed)
     }
 
+    @JvmStatic
     internal fun addListener(observer: VisionSafetyListener) =
         compositeListenerVisionEvents.addListener(observer)
 
+    @JvmStatic
     internal fun removeListener(observer: VisionSafetyListener) =
         compositeListenerVisionEvents.removeListener(observer)
 }

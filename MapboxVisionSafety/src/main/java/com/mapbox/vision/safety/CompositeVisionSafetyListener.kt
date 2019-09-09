@@ -3,9 +3,9 @@ package com.mapbox.vision.safety
 import com.mapbox.vision.safety.core.VisionSafetyListener
 import com.mapbox.vision.safety.core.models.CollisionObject
 import com.mapbox.vision.safety.core.models.RoadRestrictions
-import com.mapbox.vision.utils.observable.CompositeListener
+import com.mapbox.vision.utils.listeners.CompositeListener
 
-class CompositeListenerVisionSafety : CompositeListener.Impl<VisionSafetyListener>(),
+class CompositeVisionSafetyListener : CompositeListener.WeakRefImpl<VisionSafetyListener>(),
     VisionSafetyListener {
 
     override fun onCollisionsUpdated(collisions: Array<CollisionObject>) {

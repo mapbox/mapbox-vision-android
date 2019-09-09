@@ -15,8 +15,8 @@ import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.performance.PerformanceManager
-import com.mapbox.vision.utils.observable.CompositeListener
-import com.mapbox.vision.video.videosource.CompositeListenerVideoSource
+import com.mapbox.vision.utils.listeners.CompositeListener
+import com.mapbox.vision.video.videosource.CompositeVideoSourceListener
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
 import com.mapbox.vision.view.VisionView
@@ -71,8 +71,8 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
 
         override var externalVideoSourceListener: VideoSourceListener? = null
             set(value) {
-                value?.let { compositeListenerVideoSource.addListener(it) }
-                field?.let { compositeListenerVideoSource.removeListener(it) }
+                value?.let { compositeVideoSourceListener.addListener(it) }
+                field?.let { compositeVideoSourceListener.removeListener(it) }
                 field = value
             }
 
@@ -96,17 +96,17 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
         // TODO remove after 0.9.0 along with visionEventsListenerStrongLink
         override var keepListenerStrongRef: Boolean = false
 
-        private val compositeListener = object : CompositeListenerVisionEvents() {
+        private val compositeListener = object : CompositeVisionEventsListener() {
             override fun onCountryUpdated(country: Country) {
                 super.onCountryUpdated(country)
                 onCountrySet(country)
             }
         }
 
-        private val compositeListenerVideoSource = CompositeListenerVideoSource()
+        private val compositeVideoSourceListener = CompositeVideoSourceListener()
         private var weakVideoSourceListener by DelegateWeakRef.valueChange<VideoSourceListener> { oldValue, newValue ->
-            oldValue?.let { compositeListenerVideoSource.removeListener(it) }
-            newValue?.let { compositeListenerVideoSource.addListener(it) }
+            oldValue?.let { compositeVideoSourceListener.removeListener(it) }
+            newValue?.let { compositeVideoSourceListener.addListener(it) }
         }
 
         override fun create(
@@ -134,17 +134,17 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
             nativeVisionManagerBase.start(compositeListener)
         }
 
-        override fun addListener(observer: VisionEventsListener) =
-            compositeListener.addListener(observer)
+        override fun addListener(listener: VisionEventsListener) =
+            compositeListener.addListener(listener)
 
-        override fun removeListener(observer: VisionEventsListener) =
-            compositeListener.removeListener(observer)
+        override fun removeListener(listener: VisionEventsListener) =
+            compositeListener.removeListener(listener)
 
         override fun addVideoSourceListener(listener: VideoSourceListener) =
-            compositeListenerVideoSource.addListener(listener)
+            compositeVideoSourceListener.addListener(listener)
 
         override fun removeVideoSourceListener(listener: VideoSourceListener) =
-            compositeListenerVideoSource.removeListener(listener)
+            compositeVideoSourceListener.removeListener(listener)
 
         override fun stop() {
             nativeVisionManagerBase.stop()
@@ -157,7 +157,7 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
 
         override fun attachVideoSourceListener(videoSourceListener: VideoSourceListener) {
             weakVideoSourceListener = videoSourceListener
-            videoSource.attach(compositeListenerVideoSource)
+            videoSource.attach(compositeVideoSourceListener)
         }
 
         override fun detachVideoSourceListener() {
