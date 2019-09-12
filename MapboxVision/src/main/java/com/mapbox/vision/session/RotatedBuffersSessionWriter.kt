@@ -1,7 +1,8 @@
 package com.mapbox.vision.session
 
 import com.mapbox.vision.mobile.core.NativeVisionManager
-import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.mobile.core.models.video.VideoClip
+import com.mapbox.vision.mobile.core.models.video.VideoClipPro
 import com.mapbox.vision.models.video.VideoCombined
 import com.mapbox.vision.models.video.mapToTelemetry
 import com.mapbox.vision.models.video.mapToVisionPro
@@ -64,12 +65,14 @@ internal class RotatedBuffersSessionWriter(
         nativeVisionManager.stopTelemetrySavingSession()
         telemetryImageSaverImpl.stop()
 
-        val clipsCombined = nativeVisionManager.getClips().toClipsCombined()
-
+        val clips = nativeVisionManager.getClips()
         nativeVisionManager.resetClips()
 
+        val clipsPro = nativeVisionManager.getClipsPro()
+        nativeVisionManager.resetClipsPro()
+
         sessionWriterListener.onSessionStop(
-            clips = clipsCombined,
+            clips = videosToCombined(clips, clipsPro),
             videoPath = buffers.getBuffer(),
             cachedTelemetryPath = sessionCacheDir,
             coreSessionStartMillis = coreSessionStartMillis
@@ -77,18 +80,11 @@ internal class RotatedBuffersSessionWriter(
         buffers.rotate()
     }
 
-    private fun Array<VideoClip>.toClipsCombined(): VideoCombined = this.let { clips ->
-        val telemetryProClips =
-            clips.filter { it.metadata == null }.map { it.mapToTelemetry() }.ifEmpty { null }
-                ?.toTypedArray()
-        val visionProClips =
-            clips.filter { it.metadata != null }.mapNotNull { it.mapToVisionPro() }.ifEmpty { null }
-                ?.toTypedArray()
+    private fun videosToCombined(clips: Array<VideoClip>, clipsPro: Array<VideoClipPro>): VideoCombined =
         VideoCombined(
-            telemetries = telemetryProClips,
-            visionPros = visionProClips
+            telemetries = clips.map { it.mapToTelemetry() }.toTypedArray().ifEmpty { null },
+            visionPros = clipsPro.map { it.mapToVisionPro() }.toTypedArray().ifEmpty { null }
         )
-    }
 
     private fun generateCacheDirForCurrentTime() {
         sessionCacheDir =

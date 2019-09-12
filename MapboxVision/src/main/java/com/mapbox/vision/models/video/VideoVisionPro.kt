@@ -1,18 +1,16 @@
 package com.mapbox.vision.models.video
 
-import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.mobile.core.models.video.VideoClipPro
 
-internal data class VideoVisionPro(val startSecond: Float, val endSecond: Float, val metadata: VideoMetadata)
+internal data class VideoVisionPro(
+    val startSecond: Float,
+    val endSecond: Float,
+    val metadata: VideoMetadata
+)
 
-internal fun VideoClip.mapToVisionPro(): VideoVisionPro? {
-    val metadata = metadata
-    return if (metadata == null) {
-        null
-    } else {
-        VideoVisionPro(
-            startSecond = startSeconds,
-            endSecond = endSeconds,
-            metadata = metadata.toLocal()
-        )
-    }
-}
+internal fun VideoClipPro.mapToVisionPro(): VideoVisionPro =
+    VideoVisionPro(
+        startSecond = startSeconds,
+        endSecond = endSeconds,
+        metadata = metadata.mapToVideoMetadata(url = url)
+    )

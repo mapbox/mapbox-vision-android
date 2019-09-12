@@ -16,6 +16,7 @@ import com.mapbox.vision.sync.telemetry.TelemetryImageSaverImpl
 import com.mapbox.vision.sync.telemetry.TelemetryMetaGenerator
 import com.mapbox.vision.sync.telemetry.TelemetryQueue
 import com.mapbox.vision.sync.telemetry.TelemetrySyncManager
+import com.mapbox.vision.sync.util.JsonMapper
 import com.mapbox.vision.sync.util.TelemetryEnvironment
 import com.mapbox.vision.sync.util.VideoMetadataJsonMapper
 import com.mapbox.vision.sync.util.VisionProEnvironment
@@ -76,7 +77,7 @@ internal interface SessionManager {
         init {
             videoProcessor = VideoProcessor.Impl()
 
-            val videoMetadataJsonMapper = VideoMetadataJsonMapper.Impl(gson)
+            val videoMetadataJsonMapper = VideoMetadataJsonMapper.Impl(JsonMapper(gson))
 
             val telemetrySyncFileProvider = SyncDirectoriesProvider.Impl(
                 application,

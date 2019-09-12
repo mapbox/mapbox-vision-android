@@ -1,6 +1,6 @@
 package com.mapbox.vision.models.video
 
-import com.mapbox.vision.mobile.core.models.VideoClip
+import com.mapbox.vision.mobile.core.models.video.VideoClip
 
 internal data class VideoTelemetry(val startSeconds: Float, val endSeconds: Float)
 
