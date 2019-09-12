@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
-import android.util.Log
-import android.view.SurfaceHolder
 import com.mapbox.vision.R
 import com.mapbox.vision.manager.BaseVisionManager
 import com.mapbox.vision.mobile.core.models.CameraParameters

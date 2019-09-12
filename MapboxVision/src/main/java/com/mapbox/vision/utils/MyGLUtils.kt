@@ -141,7 +141,7 @@ internal object MyGLUtils {
 
     }
 
-    fun createFloatBuffer(coords: FloatArray): FloatBuffer {
+    private fun createFloatBuffer(coords: FloatArray): FloatBuffer {
         val bb = ByteBuffer.allocateDirect(coords.size * 4)
         bb.order(ByteOrder.nativeOrder())
         val fb = bb.asFloatBuffer()

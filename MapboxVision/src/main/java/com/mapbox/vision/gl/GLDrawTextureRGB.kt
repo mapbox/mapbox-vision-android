@@ -5,7 +5,7 @@ import com.mapbox.vision.utils.MyGLUtils
 
 class GLDrawTextureRGB : GLReleasable {
 
-    private val SHADER_VEC = " " +
+    private val vertexShader = " " +
             "  uniform mat4 uTexMatrix;                        \n" +
             "  attribute vec4 a_position;                      \n" +
             "  attribute vec2 a_texCoord;                      \n" +
@@ -18,7 +18,7 @@ class GLDrawTextureRGB : GLReleasable {
             "  }                                               \n"
 
 
-    private val SHADER_FRAG = " " +
+    private val fragmentShader = " " +
             "  precision mediump float;                             \n" +
             "  varying vec2 v_texCoord;                             \n" +
             "  uniform sampler2D s_baseMap;                         \n" +
@@ -27,25 +27,25 @@ class GLDrawTextureRGB : GLReleasable {
             "     gl_FragColor = texture2D(s_baseMap, v_texCoord);  \n" +
             "  }                                                    \n"
 
-    private val DEPTH = 0.0f
+    private val depth = 0.0f
 
-    private val RECTANGLE_VERTEX = floatArrayOf(
-            -1.0f, -1.0f, DEPTH, // 0 bottom left
-            1.0f, -1.0f, DEPTH, // 1 bottom right
-            -1.0f, 1.0f, DEPTH, // 2 top left
-            1.0f, 1.0f, DEPTH)  // 3 top right
+    private val rectVertex = floatArrayOf(
+            -1.0f, -1.0f, depth, // 0 bottom left
+            1.0f, -1.0f, depth, // 1 bottom right
+            -1.0f, 1.0f, depth, // 2 top left
+            1.0f, 1.0f, depth)  // 3 top right
 
-    private val RECTANGLE_TEXTURE_UV = floatArrayOf(
+    private val rectTex = floatArrayOf(
             0.0f, 0.0f, // 0 bottom left
             1.0f, 0.0f, // 1 bottom right
             0.0f, 1.0f, // 2 top left
             1.0f, 1.0f  // 3 top right
     )
 
-    private val COORDS_PER_VERTEX = 3
-    private val COORDS_UV_PER_TEXTURE = 2
-    private val VERTEX_STRIDE = COORDS_PER_VERTEX * 4
-    private val TEXTURE_STRIDE = COORDS_UV_PER_TEXTURE * 4
+    private val coordsPerVertex = 3
+    private val coordsPerTex = 2
+    private val vertexStride = coordsPerVertex * 4
+    private val texStride = coordsPerTex * 4
 
     private val mVertexCount: Int
     private val mProgramHandle: Int
@@ -57,10 +57,10 @@ class GLDrawTextureRGB : GLReleasable {
 
     init {
 
-        mVertexCount = RECTANGLE_VERTEX.size / COORDS_PER_VERTEX
-        mVBO = MyGLUtils.setupVertexTextureBuffers(RECTANGLE_VERTEX, RECTANGLE_TEXTURE_UV)
+        mVertexCount = rectVertex.size / coordsPerVertex
+        mVBO = MyGLUtils.setupVertexTextureBuffers(rectVertex, rectTex)
 
-        mProgramHandle = MyGLUtils.loadProgram(SHADER_VEC, SHADER_FRAG)
+        mProgramHandle = MyGLUtils.loadProgram(vertexShader, fragmentShader)
 
         // Vertex shader
         mAttributePosition = GLES20.glGetAttribLocation(mProgramHandle, "a_position")
@@ -79,11 +79,11 @@ class GLDrawTextureRGB : GLReleasable {
 
         // Vertex Shader Buffers
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, mVBO[0])
-        GLES20.glVertexAttribPointer(mAttributePosition, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, VERTEX_STRIDE, 0)
+        GLES20.glVertexAttribPointer(mAttributePosition, coordsPerVertex, GLES20.GL_FLOAT, false, vertexStride, 0)
         GLES20.glEnableVertexAttribArray(mAttributePosition)
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, mVBO[1])
-        GLES20.glVertexAttribPointer(mAttributeTextureCoord, COORDS_UV_PER_TEXTURE, GLES20.GL_FLOAT, false, TEXTURE_STRIDE, 0)
+        GLES20.glVertexAttribPointer(mAttributeTextureCoord, coordsPerTex, GLES20.GL_FLOAT, false, texStride, 0)
         GLES20.glEnableVertexAttribArray(mAttributeTextureCoord)
 
         // Vertex Shader - Uniforms

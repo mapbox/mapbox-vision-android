@@ -8,7 +8,7 @@ import java.nio.FloatBuffer
 
 class GLDrawRect : GLReleasable {
 
-    private val SHADER_VEC = " " +
+    private val vertexShader = " " +
             "  uniform mat4 uMatrix;                                                        \n" +
             "  attribute vec2 a_position;                                                   \n" +
             "  void main()                                                                  \n" +
@@ -17,7 +17,7 @@ class GLDrawRect : GLReleasable {
             "  }                                                                            \n"
 
 
-    private val SHADER_FRAG = " " +
+    private val fragmentShader = " " +
             "  precision mediump float;                                                        \n" +
             "  uniform vec4 uBorderColor;                                                      \n" +
             "  void main()                                                                     \n" +
@@ -46,7 +46,7 @@ class GLDrawRect : GLReleasable {
         GLES20.glGetFloatv(GLES20.GL_LINE_WIDTH, mDefaultLineWidth, 0)
         GLES20.glLineWidth(5f)
 
-        mProgramHandle = MyGLUtils.loadProgram(SHADER_VEC, SHADER_FRAG)
+        mProgramHandle = MyGLUtils.loadProgram(vertexShader, fragmentShader)
 
         // Vertex shader
         mAttributePosition = GLES20.glGetAttribLocation(mProgramHandle, "a_position")

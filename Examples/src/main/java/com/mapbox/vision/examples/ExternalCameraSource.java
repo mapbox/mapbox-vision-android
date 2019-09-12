@@ -51,12 +51,7 @@ public class ExternalCameraSource extends BaseActivity {
             // video source is attached, we can start decoding frames from video and feeding them to Vision SDK.
             ExternalCameraSource.this.videoSourceListener = videoSourceListener;
             handlerThread.start();
-            new Handler(handlerThread.getLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    startFileVideoSource();
-                }
-            });
+            new Handler(handlerThread.getLooper()).post(() -> startFileVideoSource());
         }
 
         @Override
