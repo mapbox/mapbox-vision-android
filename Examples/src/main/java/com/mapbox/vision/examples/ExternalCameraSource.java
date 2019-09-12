@@ -2,6 +2,7 @@ package com.mapbox.vision.examples;
 
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -20,7 +21,7 @@ import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.video.videosource.VideoSource;
 import com.mapbox.vision.video.videosource.VideoSourceListener;
-import com.mapbox.vision.view.VisionView;
+import com.mapbox.vision.view.VisionViewListener;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +34,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class ExternalCameraSource extends BaseActivity {
 
-    // Video file that will be processed.
-    private static final String PATH_TO_VIDEO_FILE = "path_to_video_file";
+    /* Video file that will be processed. */
+//    private static final String PATH_TO_VIDEO_FILE = Environment.getExternalStorageDirectory().getPath() + "/Telemetry/minsk/video0.mp4";
+    private static final String PATH_TO_VIDEO_FILE = Environment.getExternalStorageDirectory().getPath() + "/Telemetry/2019-08-27_09-48-52+0800/video0.mp4";
+
 
     private VideoSourceListener videoSourceListener;
-    private VisionView visionView;
+    private VisionViewListener visionViewListener;
     private HandlerThread handlerThread = new HandlerThread("VideoDecode");
     private boolean visionManagerWasInit = false;
 
@@ -76,7 +79,7 @@ public class ExternalCameraSource extends BaseActivity {
 
         @Override
         public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
-            visionView.setDetections(frameDetections);
+            visionViewListener.setDetections(frameDetections);
         }
 
         @Override
@@ -111,7 +114,8 @@ public class ExternalCameraSource extends BaseActivity {
     @Override
     protected void initViews() {
         setContentView(R.layout.activity_main);
-        visionView = findViewById(R.id.vision_view);
+//        visionViewListener = findViewById(R.id.vision_view);
+        visionViewListener = findViewById(R.id.vision_gl_view);
     }
 
     @Override
@@ -136,7 +140,7 @@ public class ExternalCameraSource extends BaseActivity {
             VisionManager.create(customVideoSource);
             VisionManager.start(visionEventsListener);
 
-            VisionManager.setVideoSourceListener(visionView);
+            VisionManager.setVideoSourceListener(visionViewListener);
 
             visionManagerWasInit = true;
         }
@@ -146,7 +150,6 @@ public class ExternalCameraSource extends BaseActivity {
         if (visionManagerWasInit) {
             VisionManager.stop();
             VisionManager.destroy();
-
             visionManagerWasInit = false;
         }
     }

@@ -19,6 +19,7 @@ import com.mapbox.vision.utils.listeners.CompositeListener
 import com.mapbox.vision.video.videosource.CompositeVideoSourceListener
 import com.mapbox.vision.video.videosource.VideoSource
 import com.mapbox.vision.video.videosource.VideoSourceListener
+import com.mapbox.vision.view.VisionGLView
 import com.mapbox.vision.view.VisionView
 
 internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
@@ -170,6 +171,8 @@ internal interface DelegateVisionManager<T : VideoSource> : BaseVisionManager,
             this.externalVideoSourceListener = videoSourceListener
             // FIXME
             if (videoSourceListener is VisionView) {
+                videoSourceListener.baseVisionManager = this
+            } else if (videoSourceListener is VisionGLView) {
                 videoSourceListener.baseVisionManager = this
             }
         }

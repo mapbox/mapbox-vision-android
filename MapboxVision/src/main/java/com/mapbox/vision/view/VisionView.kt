@@ -12,16 +12,15 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.drawer.detections.DetectionDrawerImpl
-import com.mapbox.vision.video.videosource.VideoSourceListener
 import java.nio.ByteBuffer
 
 class VisionView
 @JvmOverloads
 constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-) : ImageView(context, attrs, defStyleAttr), VideoSourceListener {
+        context: Context,
+        attrs: AttributeSet? = null,
+        defStyleAttr: Int = 0
+) : ImageView(context, attrs, defStyleAttr), VisionViewListener {
 
     private val detectionDrawer = DetectionDrawerImpl()
 
@@ -46,16 +45,16 @@ constructor(
         val btm = bitmap
         if (btm == null || btm.width != imageSize.imageWidth || btm.height != imageSize.imageHeight) {
             bitmap = Bitmap.createBitmap(
-                imageSize.imageWidth,
-                imageSize.imageHeight,
-                Bitmap.Config.ARGB_8888
+                    imageSize.imageWidth,
+                    imageSize.imageHeight,
+                    Bitmap.Config.ARGB_8888
             )
         }
 
         bitmap?.copyPixelsFromBuffer(ByteBuffer.wrap(rgbaBytes))
     }
 
-    fun setDetections(frameDetections: FrameDetections) {
+    override fun setDetections(frameDetections: FrameDetections) {
         if (visualizationMode != VisualizationMode.Detections) {
             return
         }
@@ -76,7 +75,7 @@ constructor(
         }
     }
 
-    fun setSegmentation(frameSegmentation: FrameSegmentation) {
+    override fun setSegmentation(frameSegmentation: FrameSegmentation) {
         if (visualizationMode != VisualizationMode.Segmentation) {
             return
         }
@@ -90,9 +89,9 @@ constructor(
     }
 
     override fun onNewFrame(
-        rgbaBytes: ByteArray,
-        imageFormat: ImageFormat,
-        imageSize: ImageSize
+            rgbaBytes: ByteArray,
+            imageFormat: ImageFormat,
+            imageSize: ImageSize
     ) {
         if (visualizationMode != VisualizationMode.Clear) {
             return
