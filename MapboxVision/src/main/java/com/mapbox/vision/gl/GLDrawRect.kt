@@ -44,8 +44,7 @@ class GLDrawRect : GLReleasable {
         GLES20.glGenBuffers(1, mVBO, 0)
 
         GLES20.glGetFloatv(GLES20.GL_LINE_WIDTH, mDefaultLineWidth, 0)
-        val mDesiredLineWidth = 4f
-        GLES20.glLineWidth(mDesiredLineWidth)
+        GLES20.glLineWidth(5f)
 
         mProgramHandle = MyGLUtils.loadProgram(SHADER_VEC, SHADER_FRAG)
 

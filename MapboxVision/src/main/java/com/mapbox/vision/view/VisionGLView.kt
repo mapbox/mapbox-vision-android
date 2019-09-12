@@ -20,6 +20,8 @@ class VisionGLView
 ) : GLSurfaceView(context, attrs), VisionViewListener {
 
     private val mRenderer : VisionGLRenderer
+    private val mDefaultTexWidth = 640
+    private val mDefaultTexHeight = 360
     internal var baseVisionManager: BaseVisionManager? = null
     private var visualizationMode = VisualizationMode.Clear
 
@@ -33,8 +35,7 @@ class VisionGLView
         }
         typedArray.recycle()
 
-        // TODO workaround fixed sizes
-        mRenderer = VisionGLRenderer(1280, 720)
+        mRenderer = VisionGLRenderer(mDefaultTexWidth, mDefaultTexHeight)
         holder.setFormat(PixelFormat.TRANSLUCENT)
         setEGLContextClientVersion(2)
         setRenderer(mRenderer)
@@ -48,7 +49,7 @@ class VisionGLView
 
         val rgbaBytes = baseVisionManager?.getSegmentationImage(frameSegmentation)
         if (rgbaBytes?.isNotEmpty() == true) {
-            queueEvent { mRenderer.onNewBackgroundFrame(rgbaBytes) }
+            queueEvent { mRenderer.onNewBackgroundFrame(rgbaBytes, frameSegmentation.segmentation.size) }
         }
     }
 
@@ -61,7 +62,7 @@ class VisionGLView
         if (rgbaBytes?.isNotEmpty() == true) {
             queueEvent {
                 mRenderer.run {
-                    onNewBackgroundFrame(rgbaBytes)
+                    onNewBackgroundFrame(rgbaBytes, frameDetections.frame.image.size)
                     if (frameDetections.detections.isNotEmpty()) {
                         onNewFrameDetections(frameDetections.detections)
                     }
@@ -74,7 +75,7 @@ class VisionGLView
         if (visualizationMode != VisualizationMode.Clear) {
             return
         }
-        queueEvent { mRenderer.onNewBackgroundFrame(rgbaBytes) }
+        queueEvent { mRenderer.onNewBackgroundFrame(rgbaBytes, imageSize) }
     }
 
     override fun onNewCameraParameters(cameraParameters: CameraParameters) = Unit

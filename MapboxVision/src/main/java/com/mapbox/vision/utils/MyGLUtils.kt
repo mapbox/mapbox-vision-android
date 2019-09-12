@@ -99,7 +99,7 @@ internal object MyGLUtils {
         return shader
     }
 
-    fun createTexture(w: Int, h: Int, internalFormat: Int): Int {
+    fun createTexture(w: Int, h: Int): Int {
         val textureHandle = IntArray(1)
 
         GLES20.glGenTextures(1, textureHandle, 0)
@@ -113,7 +113,6 @@ internal object MyGLUtils {
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE.toFloat())
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE.toFloat())
 
-//            GLES31.glTexStorage2D(GLES31.GL_TEXTURE_2D, 1, internalFormat, w, h)
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, w, h, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
         }
 

@@ -8,6 +8,7 @@ import com.mapbox.vision.gl.GLDrawRect
 import com.mapbox.vision.gl.GLDrawTextureRGB
 import com.mapbox.vision.gl.GLReleasable
 import com.mapbox.vision.mobile.core.models.detection.Detection
+import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.utils.MyGLUtils
 import com.mapbox.vision.utils.VisionLogger
 import java.nio.ByteBuffer
@@ -61,6 +62,24 @@ class VisionGLRenderer (
         Matrix.setIdentityM(mRectMatrix, 0)
     }
 
+    private fun updateTexture(width: Int, height: Int) {
+        VisionLogger.i(TAG, "Tex updated ($mTextureWidth , $mTextureHeight) -> ($width , $height)")
+
+        mTextureWidth = width
+        mTextureHeight = height
+
+        val viewportAspect = mViewportWidth.toFloat() / mViewportHeight.toFloat()
+        val textureAspect = mTextureWidth.toFloat() / mTextureHeight.toFloat()
+
+        mTextureByteBuffer = ByteBuffer.allocateDirect(mTextureWidth * mTextureHeight * 4)
+                .order(ByteOrder.nativeOrder())
+
+        MyGLUtils.calculateMvpMatrix(mBackgroundMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                0.5f, 1.0f, textureAspect / viewportAspect)
+        MyGLUtils.calculateMvpMatrix(mRectMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                0.0f, 1.0f, viewportAspect / textureAspect)
+    }
+
     override fun onDrawFrame(p0: GL10?) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
@@ -84,17 +103,12 @@ class VisionGLRenderer (
         VisionLogger.d(TAG, "$width $height")
         mViewportWidth = width
         mViewportHeight = height
-        val viewportAspect = mViewportWidth.toFloat() / mViewportHeight.toFloat()
-        val textureAspect = mTextureWidth.toFloat() / mTextureHeight.toFloat()
-        MyGLUtils.calculateMvpMatrix(mBackgroundMatrix, 0, MyGLUtils.Flip.FlipVertical,
-                0.5f, 1.0f, textureAspect / viewportAspect)
-        MyGLUtils.calculateMvpMatrix(mRectMatrix, 0, MyGLUtils.Flip.FlipVertical,
-                0.0f, 1.0f, viewportAspect / textureAspect)
+        updateTexture(mTextureWidth, mTextureHeight)
         GLES20.glViewport(0, 0, mViewportWidth, mViewportHeight)
     }
 
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 0.5f)
+        GLES20.glClearColor(0.8f, 0.8f, 0.8f, 0.5f)
 
         val renderer = GLES20.glGetString(GLES20.GL_RENDERER).toUpperCase(Locale.ENGLISH)
         val vendor = GLES20.glGetString(GLES20.GL_VENDOR).toUpperCase(Locale.ENGLISH)
@@ -107,20 +121,21 @@ class VisionGLRenderer (
         MyGLUtils.setupBlend()
         GLES20.glEnable(GLES20.GL_BLEND)
 
-        mTextureId = MyGLUtils.createTexture(mTextureWidth, mTextureHeight, GLES20.GL_RGBA)
-        mTextureByteBuffer = ByteBuffer.allocateDirect(mTextureWidth * mTextureHeight * 4).order(ByteOrder.nativeOrder())
+        mTextureId = MyGLUtils.createTexture(mTextureWidth, mTextureHeight)
 
         mRGBDrawer = GLDrawTextureRGB()
         mRectDrawer = GLDrawRect()
 
     }
 
+
     // runs on render thread so no need for explicit synchronization
-    fun onNewBackgroundFrame(rgbaByteArray: ByteArray) {
+    fun onNewBackgroundFrame(rgbaByteArray: ByteArray, imageSize : ImageSize) {
         mCurrentDetections.clear()
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureId)
-        // this solution may cause drop of couple first frames because of renderer not
-        // been yet initialized while frames from main thread are already pushed
+        if (imageSize.imageHeight != mTextureHeight || imageSize.imageWidth != mTextureWidth) {
+            updateTexture(imageSize.imageWidth, imageSize.imageHeight)
+        }
         if (::mTextureByteBuffer.isInitialized) {
             mTextureByteBuffer.let {
                 it.rewind()
@@ -130,6 +145,8 @@ class VisionGLRenderer (
                         mTextureWidth, mTextureHeight, 0,
                         GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, it)
             }
+        } else {
+            VisionLogger.i(TAG, "skipped frame, size = ${rgbaByteArray.size}")
         }
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
     }
