@@ -74,10 +74,17 @@ class VisionGLRenderer (
         mTextureByteBuffer = ByteBuffer.allocateDirect(mTextureWidth * mTextureHeight * 4)
                 .order(ByteOrder.nativeOrder())
 
-        MyGLUtils.calculateMvpMatrix(mBackgroundMatrix, 0, MyGLUtils.Flip.FlipVertical,
-                0.5f, 1.0f, textureAspect / viewportAspect)
-        MyGLUtils.calculateMvpMatrix(mRectMatrix, 0, MyGLUtils.Flip.FlipVertical,
-                0.0f, 1.0f, viewportAspect / textureAspect)
+        if (viewportAspect >= textureAspect) {
+            MyGLUtils.calculateMvpMatrix(mBackgroundMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                    0.5f, 1.0f, textureAspect / viewportAspect)
+            MyGLUtils.calculateMvpMatrix(mRectMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                    0.0f, 1.0f, viewportAspect / textureAspect)
+        } else {
+            MyGLUtils.calculateMvpMatrix(mBackgroundMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                    0.5f, viewportAspect / textureAspect, 1.0f)
+            MyGLUtils.calculateMvpMatrix(mRectMatrix, 0, MyGLUtils.Flip.FlipVertical,
+                    0.0f, textureAspect / viewportAspect, 1.0f)
+        }
     }
 
     override fun onDrawFrame(p0: GL10?) {
@@ -100,9 +107,10 @@ class VisionGLRenderer (
     }
 
     override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {
-        VisionLogger.d(TAG, "$width $height")
         mViewportWidth = width
         mViewportHeight = height
+        VisionLogger.d(TAG, "onSurfaceChanged $mViewportWidth $mViewportHeight," +
+                " aspect = ${(mViewportWidth.toFloat() / mViewportHeight.toFloat())}")
         updateTexture(mTextureWidth, mTextureHeight)
         GLES20.glViewport(0, 0, mViewportWidth, mViewportHeight)
     }
