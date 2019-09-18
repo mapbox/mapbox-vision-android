@@ -20,7 +20,7 @@
 ## v0.8.1
 
 ### Vision
-- Fixed crash
+- Fixed crash on `VisionManager.create()` with custom `VideoSource`
 
 ## v0.8.0
 
