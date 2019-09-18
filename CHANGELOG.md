@@ -17,6 +17,10 @@
 - Changed `Ar Lane` appearance
 - Moved `Ar` rendering to native
 
+## Safety
+- Added to `VisionSafetyManager` method `create(BaseVisionManager)`, property `visionSafetyListener`. `visionSafetyListener` holds weak reference.
+- Deprecated `VisionSafetyManager` method `create(BaseVisionManager, VisionSafetyListener)`
+
 ## v0.8.1
 
 ### Vision
