@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.9.0
+
+### Vision
+- Added to `VisionManager` method start(), property `visionEventsListener`. `visionEventsListener` holds weak reference.
+- Added to `VisionReplayManager` method start(), property `visionEventsListener`. `visionEventsListener` holds weak reference.
+- Deprecated `VisionManager` method `start(VisionEventsListener)`
+- Deprecated `VisionReplayManager` method `start(VisionEventsListener)`
+- Added new `SignType`s: `RegulatoryKeepLeftPicture`, `RegulatoryKeepLeftText`,`AheadSpeedLimit`,`WarningSpeedLimit`,`RegulatoryNoUTurnRight`,`WarningTurnRightOnlyArrow`
+
+### Ar
+- Added to `VisionArManager` method `create(BaseVisionManager)`, property `visionArEventsListener`. `visionArEventsListener` holds weak reference.
+- Deprecated `VisionArManager` method `create(BaseVisionManager, VisionArEventsListener)`
+- Changed `Ar Lane` API, `VisionArView`: `setArManager(VisionArManager)`
+- Removed from `VisionArView` following methods: `onArCameraUpdated`, `onArLaneUpdated`, `onNewFrame`, `onNewCameraParameters`
+- Changed `Ar Lane` appearance
+- Moved `Ar` rendering to native
+
 ## v0.8.1
 
 ### Vision
