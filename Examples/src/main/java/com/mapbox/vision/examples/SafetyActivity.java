@@ -123,13 +123,15 @@ public class SafetyActivity extends BaseActivity {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             // Create and start VisionManager.
             VisionManager.create();
-            VisionManager.start(visionEventsListener);
+            VisionManager.start();
+            VisionManager.setVisionEventsListener(visionEventsListener);
 
             VisionView visionView = findViewById(R.id.vision_view);
             VisionManager.setVideoSourceListener(visionView);
 
             // Create and start VisionManager.
-            VisionSafetyManager.create(VisionManager.INSTANCE, visionSafetyListener);
+            VisionSafetyManager.create(VisionManager.INSTANCE);
+            VisionSafetyManager.setVisionSafetyListener(visionSafetyListener);
 
             visionManagerWasInit = true;
         }
