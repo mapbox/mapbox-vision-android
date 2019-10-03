@@ -1,7 +1,6 @@
 package com.mapbox.vision.examples;
 
 import android.location.Location;
-import android.os.Bundle;
 import android.os.Looper;
 import android.widget.Toast;
 
@@ -112,56 +111,54 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
             // Create and start VisionManager.
             VisionManager.create();
             VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.DYNAMIC, ModelPerformanceRate.LOW)));
-            VisionManager.start(
-                    new VisionEventsListener() {
+            VisionManager.start();
+            VisionManager.setVisionEventsListener(new VisionEventsListener() {
+                @Override
+                public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {
+                }
 
-                        @Override
-                        public void onAuthorizationStatusUpdated(@NotNull AuthorizationStatus authorizationStatus) {
-                        }
+                @Override
+                public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {
+                }
 
-                        @Override
-                        public void onFrameSegmentationUpdated(@NotNull FrameSegmentation frameSegmentation) {
-                        }
+                @Override
+                public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
+                }
 
-                        @Override
-                        public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
-                        }
+                @Override
+                public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {
+                }
 
-                        @Override
-                        public void onFrameSignClassificationsUpdated(@NotNull FrameSignClassifications frameSignClassifications) {
-                        }
+                @Override
+                public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {
+                }
 
-                        @Override
-                        public void onRoadDescriptionUpdated(@NotNull RoadDescription roadDescription) {
-                        }
+                @Override
+                public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {
+                }
 
-                        @Override
-                        public void onWorldDescriptionUpdated(@NotNull WorldDescription worldDescription) {
-                        }
+                @Override
+                public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
+                }
 
-                        @Override
-                        public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
-                        }
+                @Override
+                public void onCameraUpdated(@NotNull Camera camera) {
+                }
 
-                        @Override
-                        public void onCameraUpdated(@NotNull Camera camera) {
-                        }
+                @Override
+                public void onCountryUpdated(@NotNull Country country) {
+                }
 
-                        @Override
-                        public void onCountryUpdated(@NotNull Country country) {
-                        }
-
-                        @Override
-                        public void onUpdateCompleted() {
-                        }
-                    }
-            );
+                @Override
+                public void onUpdateCompleted() {
+                }
+            });
 
             VisionArView visionArView = findViewById(R.id.mapbox_ar_view);
-            VisionManager.setVideoSourceListener(visionArView);
 
             // Create VisionArManager.
-            VisionArManager.create(VisionManager.INSTANCE, visionArView);
+            VisionArManager.create(VisionManager.INSTANCE);
+            visionArView.setArManager(VisionArManager.INSTANCE);
 
             visionManagerWasInit = true;
         }

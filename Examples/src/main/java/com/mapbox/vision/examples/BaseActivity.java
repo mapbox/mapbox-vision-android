@@ -44,6 +44,8 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         initViews();
 
+        setTitle(getString(R.string.app_name) + " " + this.getClass().getSimpleName());
+
         if (!allPermissionsGranted() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(getRequiredPermissions(), PERMISSIONS_REQUEST_CODE);
         } else {

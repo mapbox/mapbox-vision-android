@@ -112,12 +112,12 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
                     )
                 )
             )
-            VisionManager.start(visionEventsListener = object : VisionEventsListener {})
-
-            VisionManager.setVideoSourceListener(mapbox_ar_view)
+            VisionManager.start()
+            VisionManager.visionEventsListener = object : VisionEventsListener {}
 
             // Create VisionArManager.
-            VisionArManager.create(VisionManager, mapbox_ar_view)
+            VisionArManager.create(VisionManager)
+            mapbox_ar_view.setArManager(VisionArManager)
 
             visionManagerWasInit = true
         }

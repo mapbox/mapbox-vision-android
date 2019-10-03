@@ -102,7 +102,8 @@ class ExternalCameraSourceKt : BaseActivity() {
     private fun startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create(customVideoSource)
-            VisionManager.start(visionEventsListener)
+            VisionManager.start()
+            VisionManager.visionEventsListener = visionEventsListener
             VisionManager.setVideoSourceListener(vision_view)
 
             visionManagerWasInit = true

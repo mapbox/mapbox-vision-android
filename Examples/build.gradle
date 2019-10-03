@@ -54,18 +54,9 @@ dependencies {
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
-    if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        implementation project(path: ':Vision')
-        implementation project(path: ':VisionAr')
-        implementation project(path: ':VisionSafety')
-        implementation project(path: ':CoreAr')
-        implementation project(path: ':CoreSdk')
-        implementation project(path: ':CoreSafety')
-    } else {
-        implementation "com.mapbox.vision:mapbox-android-vision:$vision"
-        implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision"
-        implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision"
-    }
+    implementation "com.mapbox.vision:mapbox-android-vision:$vision"
+    implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision"
+    implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

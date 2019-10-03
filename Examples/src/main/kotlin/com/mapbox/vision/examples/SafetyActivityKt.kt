@@ -96,10 +96,12 @@ class SafetyActivityKt : BaseActivity() {
     private fun startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create()
-            VisionManager.start(visionEventsListener)
+            VisionManager.start()
+            VisionManager.visionEventsListener = visionEventsListener
             VisionManager.setVideoSourceListener(vision_view)
 
-            VisionSafetyManager.create(VisionManager, visionSafetyListener)
+            VisionSafetyManager.create(VisionManager)
+            VisionSafetyManager.visionSafetyListener = visionSafetyListener
 
             visionManagerWasInit = true
         }

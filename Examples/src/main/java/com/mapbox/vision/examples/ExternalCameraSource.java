@@ -134,7 +134,8 @@ public class ExternalCameraSource extends BaseActivity {
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create(customVideoSource);
-            VisionManager.start(visionEventsListener);
+            VisionManager.start();
+            VisionManager.setVisionEventsListener(visionEventsListener);
 
             VisionManager.setVideoSourceListener(visionView);
 
