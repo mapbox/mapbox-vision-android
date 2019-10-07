@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.0
+
+- Add support for Snapdragon 855
+
 ## v0.9.0
 
 ### Vision
