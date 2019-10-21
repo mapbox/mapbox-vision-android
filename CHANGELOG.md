@@ -2,7 +2,18 @@
 
 ## v0.10.0
 
-- Add support for Snapdragon 855
+- Added support for Snapdragon 855
+- `VisionView` renders now with OpenGL ES
+- Changed public API of `VisionView`
+- Changed `VisionView` lifecycle if `VisionManager` is set
+- Change internal camera lifecycle
+- Fixed memory leak on `VisionManager.destroy()`
+- Fixed gpu memory leak
+- Fixed issues with destroying VisionManager
+- Renamed `VisualizationMode.Detections` to `VisualizationMode.Detection`
+- Added detection of construction cones
+- Improved quality of detection/segmentation, especially at night
+- Improved segmentation, now it's more focused on road specific elements. New segmentation model recognizes the following classes: Crosswalk, Hood, MarkupDashed, MarkupDouble, MarkupOther, MarkupSolid, Other, Road, RoadEdge, Sidewalk
 
 ## v0.9.0
 

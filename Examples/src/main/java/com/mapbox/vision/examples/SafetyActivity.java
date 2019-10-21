@@ -28,6 +28,7 @@ public class SafetyActivity extends BaseActivity {
 
     private Float maxAllowedSpeed = -1f;
     private boolean visionManagerWasInit = false;
+    private VisionView visionView;
 
     // this listener handles events from Vision SDK
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
@@ -100,6 +101,7 @@ public class SafetyActivity extends BaseActivity {
     @Override
     protected void initViews() {
         setContentView(R.layout.activity_main);
+        visionView = findViewById(R.id.vision_view);
     }
 
     @Override
@@ -119,17 +121,25 @@ public class SafetyActivity extends BaseActivity {
         stopVisionManager();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        visionView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        visionView.onPause();
+    }
+
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
-            // Create and start VisionManager.
             VisionManager.create();
+            visionView.setVisionManager(VisionManager.INSTANCE);
             VisionManager.start();
             VisionManager.setVisionEventsListener(visionEventsListener);
 
-            VisionView visionView = findViewById(R.id.vision_view);
-            VisionManager.setVideoSourceListener(visionView);
-
-            // Create and start VisionManager.
             VisionSafetyManager.create(VisionManager.INSTANCE);
             VisionSafetyManager.setVisionSafetyListener(visionSafetyListener);
 
