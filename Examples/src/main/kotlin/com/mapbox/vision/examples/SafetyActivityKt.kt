@@ -93,12 +93,22 @@ class SafetyActivityKt : BaseActivity() {
         stopVisionManager()
     }
 
+    override fun onResume() {
+        super.onResume()
+        vision_view.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        vision_view.onPause()
+    }
+
     private fun startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create()
+            vision_view.setVisionManager(VisionManager)
             VisionManager.start()
             VisionManager.visionEventsListener = visionEventsListener
-            VisionManager.setVideoSourceListener(vision_view)
 
             VisionSafetyManager.create(VisionManager)
             VisionSafetyManager.visionSafetyListener = visionSafetyListener

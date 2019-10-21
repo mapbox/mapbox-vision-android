@@ -2,7 +2,9 @@
 
 ## v0.10.0
 
-- Add support for Snapdragon 855
+- Added support for Snapdragon 855
+- Improved `VisionView` lifecycle management
+- Updated API of `VisionManager`
 
 ## v0.9.0
 

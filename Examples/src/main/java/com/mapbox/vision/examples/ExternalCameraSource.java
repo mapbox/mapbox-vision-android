@@ -76,7 +76,7 @@ public class ExternalCameraSource extends BaseActivity {
 
         @Override
         public void onFrameDetectionsUpdated(@NotNull FrameDetections frameDetections) {
-            visionView.setDetections(frameDetections);
+
         }
 
         @Override
@@ -131,13 +131,24 @@ public class ExternalCameraSource extends BaseActivity {
         stopVisionManager();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        visionView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        visionView.onPause();
+    }
+
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create(customVideoSource);
-            VisionManager.start();
+            visionView.setVisionManager(VisionManager.INSTANCE);
             VisionManager.setVisionEventsListener(visionEventsListener);
-
-            VisionManager.setVideoSourceListener(visionView);
+            VisionManager.start();
 
             visionManagerWasInit = true;
         }
