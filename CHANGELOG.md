@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.1
+
+- Fixed bug with session not being recorded
+
 ## v0.10.0
 
 - Added support for Snapdragon 855
