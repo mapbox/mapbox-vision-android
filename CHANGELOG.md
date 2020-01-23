@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.11.0
+
+### Vision
+- Added `Germany` country
+- Added new `SignTypes`:
+`InformationCarWashing`, `InformationBusStop`, `RegulatoryPedestriansCrossingUp`,
+`RegulatoryPedestriansCrossingDown`, `InformationAutoService`, `InformationFood`,
+`InformationTown`, `InformationTownEnd`, `RegulatoryControl`,
+`RegulatoryDoubleUTurn`, `SpeedLimitZone`, `SpeedLimitEndZone`
+- Added an ability to work with image data as direct `ByteBuffer`'s
+- Added an ability to copy `Image` pixel data to `ByteArray`/`ByteBuffer`
+- Added proguard consumer config to allow obfuscation on client side
+- Added `armeabi-v7a` ABI to abiFilters to build older architecture
+- Fixed a crash happening on `VisionManager.destroy`
+
+### Ar
+- Added new `Fence` AR style
+- Added `FenceVisualParams` class and `VisionArView.setFenceVisualParams` method for customization of `Fence` rendering
+- Added `VisionArView.setArQuality` method to set overall quality of AR objects
+- Added `VisionArView.setFenceVisible`/`VisionArView.isFenceVisible`/
+`VisionArView.setLaneVisible`/`VisionArView.isLaneVisible` to manage displayed AR features
+- Added `VisionArView.onPause` method, that should be called when view is
+hidden or detached
+
 ## v0.10.1
 
 - Fixed bug with session not being recorded
