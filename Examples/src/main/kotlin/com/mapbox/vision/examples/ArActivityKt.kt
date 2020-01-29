@@ -286,7 +286,7 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
         return PolylineUtils.decode(this, Constants.PRECISION_6)
     }
 
-    fun String?.mapToManeuverType(): ManeuverType = when(this) {
+    private fun String?.mapToManeuverType(): ManeuverType = when (this) {
         "turn" -> ManeuverType.Turn
         "depart" -> ManeuverType.Depart
         "arrive" -> ManeuverType.Arrive
