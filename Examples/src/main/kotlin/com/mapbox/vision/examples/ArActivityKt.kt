@@ -21,6 +21,7 @@ import com.mapbox.services.android.navigation.v5.routeprogress.ProgressChangeLis
 import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress
 import com.mapbox.vision.VisionManager
 import com.mapbox.vision.ar.VisionArManager
+import com.mapbox.vision.ar.core.models.ManeuverType
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.ar.core.models.RoutePoint
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
@@ -257,7 +258,8 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
                     GeoCoordinate(
                         latitude = step.maneuver().location().latitude(),
                         longitude = step.maneuver().location().longitude()
-                    )
+                    ),
+                    step.maneuver().type().mapToManeuverType()
                 )
                 routePoints.add(maneuverPoint)
 
@@ -282,5 +284,25 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
 
     private fun String.buildStepPointsFromGeometry(): List<Point> {
         return PolylineUtils.decode(this, Constants.PRECISION_6)
+    }
+
+    fun String?.mapToManeuverType(): ManeuverType = when(this) {
+        "turn" -> ManeuverType.Turn
+        "depart" -> ManeuverType.Depart
+        "arrive" -> ManeuverType.Arrive
+        "merge" -> ManeuverType.Merge
+        "on ramp" -> ManeuverType.OnRamp
+        "off ramp" -> ManeuverType.OffRamp
+        "fork" -> ManeuverType.Fork
+        "roundabout" -> ManeuverType.Roundabout
+        "exit roundabout" -> ManeuverType.RoundaboutExit
+        "end of road" -> ManeuverType.EndOfRoad
+        "new name" -> ManeuverType.NewName
+        "continue" -> ManeuverType.Continue
+        "rotary" -> ManeuverType.Rotary
+        "roundabout turn" -> ManeuverType.RoundaboutTurn
+        "notification" -> ManeuverType.Notification
+        "exit rotary" -> ManeuverType.RoundaboutExit
+        else -> ManeuverType.None
     }
 }

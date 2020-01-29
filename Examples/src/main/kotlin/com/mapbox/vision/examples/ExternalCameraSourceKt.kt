@@ -165,7 +165,7 @@ class ExternalCameraSourceKt : BaseActivity() {
                 bitmap.copyPixelsToBuffer(rgbaByteBuffer)
 
                 videoSourceListener!!.onNewFrame(
-                    rgbaByteBuffer.array(),
+                    VideoSourceListener.FrameHolder.ByteBufferHolder(rgbaByteBuffer),
                     ImageFormat.RGBA,
                     imageSize
                 )

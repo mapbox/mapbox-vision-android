@@ -5,7 +5,7 @@ import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
+import androidx.annotation.Nullable;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
@@ -28,6 +28,7 @@ import com.mapbox.services.android.navigation.v5.routeprogress.ProgressChangeLis
 import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress;
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.ar.VisionArManager;
+import com.mapbox.vision.ar.core.models.ManeuverType;
 import com.mapbox.vision.ar.core.models.Route;
 import com.mapbox.vision.ar.core.models.RoutePoint;
 import com.mapbox.vision.ar.view.gl.VisionArView;
@@ -320,7 +321,7 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
                         RoutePoint point = new RoutePoint((new GeoCoordinate(
                                 step.maneuver().location().latitude(),
                                 step.maneuver().location().longitude()
-                        )));
+                        )), mapToManeuverType(step.maneuver().type()));
 
                         routePoints.add(point);
 
@@ -329,7 +330,7 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
                             point = new RoutePoint((new GeoCoordinate(
                                     geometryPoint.latitude(),
                                     geometryPoint.longitude()
-                            )));
+                            )), ManeuverType.None);
 
                             routePoints.add(point);
                         }
@@ -343,5 +344,47 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
 
     private List<Point> buildStepPointsFromGeometry(String geometry) {
         return PolylineUtils.decode(geometry, Constants.PRECISION_6);
+    }
+
+    private ManeuverType mapToManeuverType(@Nullable String maneuver) {
+        if (maneuver == null) {
+            return ManeuverType.None;
+        }
+        switch (maneuver) {
+            case "turn":
+                return ManeuverType.Turn;
+            case "depart":
+                return ManeuverType.Depart;
+            case "arrive":
+                return ManeuverType.Arrive;
+            case "merge":
+                return ManeuverType.Merge;
+            case "on ramp":
+                return ManeuverType.OnRamp;
+            case "off ramp":
+                return ManeuverType.OffRamp;
+            case "fork":
+                return ManeuverType.Fork;
+            case "roundabout":
+                return ManeuverType.Roundabout;
+            case "exit roundabout":
+                return ManeuverType.RoundaboutExit;
+            case "end of road":
+                return ManeuverType.EndOfRoad;
+            case "new name":
+                return ManeuverType.NewName;
+            case "continue":
+                return ManeuverType.Continue;
+            case "rotary":
+                return ManeuverType.Rotary;
+            case "roundabout turn":
+                return ManeuverType.RoundaboutTurn;
+            case "notification":
+                return ManeuverType.Notification;
+            case "exit rotary":
+                return ManeuverType.RotaryExit;
+            default:
+                return ManeuverType.None;
+        }
     }
 }
