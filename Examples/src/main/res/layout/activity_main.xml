@@ -9,6 +9,6 @@
             android:id="@+id/vision_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:visualization_mode="detection"/>
+            app:visualization_mode="clear"/>
 
 </FrameLayout>

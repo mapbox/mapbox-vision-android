@@ -25,6 +25,9 @@ You can also check more details at [Vision SDK FAQ](https://vision.mapbox.com/#f
 ## Installation and setup
 
 All examples are located in module `Examples`. 
+
+Note: `MapboxVision*` directories are deprecated and will be removed soon.
+
 Main steps for setup:
 1. Sign up or log in to your Mapbox account and grab a [Mapbox access token](https://www.mapbox.com/help/define-access-token/)
 1. Set your Mapbox token as environmental variable `MAPBOX_ACCESS_TOKEN`

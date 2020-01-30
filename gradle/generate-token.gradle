@@ -2,14 +2,15 @@
 // Configuration file for adding a developer-config.xml containing the MAPBOX_ACCESS_TOKEN env. variable.
 //
 task accessToken {
-    final TOKEN_DIR = "/src/main/res/values"
+    final TOKEN_FILE = "developer-config.xml"
+    final TOKEN_DIR = "src/main/res/values"
     final MAPBOX_ACCESS_TOKEN = "mapbox_access_token"
 
-    def tokenDir = new File("${projectDir}" + TOKEN_DIR)
+    def tokenDir = new File("${projectDir}/${TOKEN_DIR}")
     if (!tokenDir.exists()) {
         tokenDir.mkdir()
     }
-    def tokenFile = new File("${projectDir}" + TOKEN_DIR + "/developer-config.xml")
+    def tokenFile = new File("${projectDir}/${TOKEN_DIR}/${TOKEN_FILE}")
     String token
     if (tokenFile.exists()) {
         def startPos = tokenFile.text.indexOf(MAPBOX_ACCESS_TOKEN) + MAPBOX_ACCESS_TOKEN.length() + 2
@@ -30,7 +31,7 @@ task accessToken {
     }
     if (token == "") {
         throw new InvalidUserDataException("You haven't set MAPBOX_ACCESS_TOKEN.\n" +
-                "Please set it in <module>/src/main/res/values/developer-config.xml")
+                "Please set it in <module>/${TOKEN_DIR}/${TOKEN_FILE}")
     }
 }
 

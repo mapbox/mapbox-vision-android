@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
  * other source of frames - video, set of pictures, etc.
  */
-public class ExternalCameraSource extends BaseActivity {
+public class ExternalVideoSourceActivity extends BaseActivity {
 
     // Video file that will be processed.
     private static final String PATH_TO_VIDEO_FILE = "path_to_video_file";
@@ -46,7 +46,7 @@ public class ExternalCameraSource extends BaseActivity {
         @Override
         public void attach(@NotNull VideoSourceListener videoSourceListener) {
             // video source is attached, we can start decoding frames from video and feeding them to Vision SDK.
-            ExternalCameraSource.this.videoSourceListener = videoSourceListener;
+            ExternalVideoSourceActivity.this.videoSourceListener = videoSourceListener;
             handlerThread.start();
             new Handler(handlerThread.getLooper()).post(() -> startFileVideoSource());
         }

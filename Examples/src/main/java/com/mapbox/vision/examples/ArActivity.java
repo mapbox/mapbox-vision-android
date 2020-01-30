@@ -3,7 +3,6 @@ package com.mapbox.vision.examples;
 import android.location.Location;
 import android.os.Looper;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.mapbox.android.core.location.LocationEngine;
@@ -48,14 +47,9 @@ import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
 import com.mapbox.vision.utils.VisionLogger;
-
 import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -348,29 +342,45 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
         return PolylineUtils.decode(geometry, Constants.PRECISION_6);
     }
 
-    private static final Map<String, ManeuverType> maneuversMap = new HashMap<>();
-
-    static {
-        maneuversMap.put("turn", ManeuverType.Turn);
-        maneuversMap.put("depart", ManeuverType.Depart);
-        maneuversMap.put("arrive", ManeuverType.Arrive);
-        maneuversMap.put("merge", ManeuverType.Merge);
-        maneuversMap.put("on ramp", ManeuverType.OnRamp);
-        maneuversMap.put("off ramp", ManeuverType.OffRamp);
-        maneuversMap.put("fork", ManeuverType.Fork);
-        maneuversMap.put("roundabout", ManeuverType.Roundabout);
-        maneuversMap.put("exit roundabout", ManeuverType.RoundaboutExit);
-        maneuversMap.put("end of road", ManeuverType.EndOfRoad);
-        maneuversMap.put("new name", ManeuverType.NewName);
-        maneuversMap.put("continue", ManeuverType.Continue);
-        maneuversMap.put("rotary", ManeuverType.Rotary);
-        maneuversMap.put("roundabout turn", ManeuverType.RoundaboutTurn);
-        maneuversMap.put("notification", ManeuverType.Notification);
-        maneuversMap.put("exit rotary", ManeuverType.RotaryExit);
-    }
-
-    private ManeuverType mapToManeuverType(@Nullable final String maneuver) {
-        final ManeuverType maneuverType = maneuversMap.get(maneuver);
-        return (maneuver == null || maneuverType == null) ? ManeuverType.None : maneuverType;
+    private ManeuverType mapToManeuverType(@Nullable String maneuver) {
+        if (maneuver == null) {
+            return ManeuverType.None;
+        }
+        switch (maneuver) {
+            case "turn":
+                return ManeuverType.Turn;
+            case "depart":
+                return ManeuverType.Depart;
+            case "arrive":
+                return ManeuverType.Arrive;
+            case "merge":
+                return ManeuverType.Merge;
+            case "on ramp":
+                return ManeuverType.OnRamp;
+            case "off ramp":
+                return ManeuverType.OffRamp;
+            case "fork":
+                return ManeuverType.Fork;
+            case "roundabout":
+                return ManeuverType.Roundabout;
+            case "exit roundabout":
+                return ManeuverType.RoundaboutExit;
+            case "end of road":
+                return ManeuverType.EndOfRoad;
+            case "new name":
+                return ManeuverType.NewName;
+            case "continue":
+                return ManeuverType.Continue;
+            case "rotary":
+                return ManeuverType.Rotary;
+            case "roundabout turn":
+                return ManeuverType.RoundaboutTurn;
+            case "notification":
+                return ManeuverType.Notification;
+            case "exit rotary":
+                return ManeuverType.RotaryExit;
+            default:
+                return ManeuverType.None;
+        }
     }
 }
