@@ -28,7 +28,7 @@ import kotlinx.android.synthetic.main.activity_main.*
  * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
  * other source of frames - video, set of pictures, etc.
  */
-class ExternalCameraSourceKt : BaseActivity() {
+class ExternalVideoSourceActivityKt : BaseActivity() {
 
     companion object {
         // Video file that will be processed.
@@ -42,7 +42,7 @@ class ExternalCameraSourceKt : BaseActivity() {
     // VideoSource that will play the file.
     private val customVideoSource = object : VideoSource {
         override fun attach(videoSourceListener: VideoSourceListener) {
-            this@ExternalCameraSourceKt.videoSourceListener = videoSourceListener
+            this@ExternalVideoSourceActivityKt.videoSourceListener = videoSourceListener
             handlerThread.start()
             Handler(handlerThread.looper).post { startFileVideoSource() }
         }
@@ -165,7 +165,7 @@ class ExternalCameraSourceKt : BaseActivity() {
                 bitmap.copyPixelsToBuffer(rgbaByteBuffer)
 
                 videoSourceListener!!.onNewFrame(
-                    rgbaByteBuffer.array(),
+                    VideoSourceListener.FrameHolder.ByteBufferHolder(rgbaByteBuffer),
                     ImageFormat.RGBA,
                     imageSize
                 )

@@ -10,18 +10,6 @@ for your car. In doing so, the Vision SDK enables the following user-facing feat
 - Semantic segmentation of the roadway into 14 different classes (other, road, road_markup, flat_non_road, sky, building, car, cycle, person, road_markings_other, curb, double_yellow, traffic_sign, traffic_light)
 - Distance detection that indicates spacing to lead vehicle
 
-#### Components of the Vision SDK
-There are three components to the Vision SDK: Vision, VisionAr, and VisionSafety.
-
-[Vision](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVision) is the primary SDK, needed for any application of Mapbox Vision. 
-Its components enable camera configuration, display of classification, detection, and segmentation layers, lane feature extraction, and other interfaces. 
-Vision accesses real-time inference running in VisionCore.
-
-[Vision Ar](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVisionAR) is an add-on module for Vision used to create customizable augmented reality experiences. 
-It allows configuration of the user’s route visualization: lane material (shaders, textures), lane geometry, occlusion, custom objects, and more. 
-
-[Vision Safety](https://github.com/mapbox/mapbox-vision-android/tree/dev/MapboxVisionSafety) is an add-on module for Vision used to create customizable alerts for speeding, nearby vehicles, cyclists, pedestrians, lane departures, and more. 
-
 #### Hardware requirements
 
 VisionSDK requires Android 6 (API 23) and higher, with QC Snapdragon 650 // 710 // 8xx with Open CL support
@@ -36,5 +24,14 @@ You can also check more details at [Vision SDK FAQ](https://vision.mapbox.com/#f
 
 ## Installation and setup
 
-Follow [installation instructions](https://vision.mapbox.com/install/) to install Vision.
-Check [the rest of documentation](https://docs.mapbox.com/android/vision/overview/).
+All examples are located in module `Examples`. 
+
+Note: `MapboxVision*` directories are deprecated and will be removed soon.
+
+Main steps for setup:
+1. Sign up or log in to your Mapbox account and grab a [Mapbox access token](https://www.mapbox.com/help/define-access-token/)
+1. Set your Mapbox token as environmental variable `MAPBOX_ACCESS_TOKEN`
+1. Set your [Maven credentials](https://vision.mapbox.com/install/)
+
+For detailed information follow [installation instructions](https://vision.mapbox.com/install/) to install Vision and 
+check [the rest of documentation](https://docs.mapbox.com/android/vision/overview/).
