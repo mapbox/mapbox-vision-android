@@ -146,7 +146,7 @@ class ExternalVideoSourceActivityKt : BaseActivity() {
             Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT))
         val imageSize = ImageSize(frameWidth, frameHeight)
         // ByteBuffer to hold RGBA bytes.
-        val rgbaByteBuffer = ByteBuffer.wrap(ByteArray(frameWidth * frameHeight * 4))
+        val rgbaByteBuffer = ByteBuffer.allocateDirect(frameWidth * frameHeight * 4)
 
         // Get duration.
         val duration =

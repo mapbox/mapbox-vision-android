@@ -156,6 +156,7 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
             // Create VisionArManager.
             VisionArManager.create(VisionManager.INSTANCE);
             visionArView.setArManager(VisionArManager.INSTANCE);
+            visionArView.setFenceVisible(true);
 
             visionManagerWasInit = true;
         }

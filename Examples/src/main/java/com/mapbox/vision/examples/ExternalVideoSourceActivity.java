@@ -173,7 +173,7 @@ public class ExternalVideoSourceActivity extends BaseActivity {
         int frameHeight = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
         ImageSize imageSize = new ImageSize(frameWidth, frameHeight);
         // ByteBuffer to hold RGBA bytes.
-        ByteBuffer rgbaByteBuffer = ByteBuffer.wrap(new byte[frameWidth * frameHeight * 4]);
+        ByteBuffer rgbaByteBuffer = ByteBuffer.allocateDirect(frameWidth * frameHeight * 4);
 
         // Get duration.
         long duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));

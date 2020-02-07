@@ -119,6 +119,7 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
             // Create VisionArManager.
             VisionArManager.create(VisionManager)
             mapbox_ar_view.setArManager(VisionArManager)
+            mapbox_ar_view.setFenceVisible(true)
 
             visionManagerWasInit = true
         }
