@@ -16,7 +16,7 @@ buildscript {
     }
     configurations.maybeCreate("pitest")
     dependencies {
-        classpath "com.android.tools.build:gradle:3.6.1"
+        classpath "com.android.tools.build:gradle:$gradle_plugin"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$dokka_version"
         classpath "com.github.dcendents:android-maven-gradle-plugin:$android_maven_plugin_version"
