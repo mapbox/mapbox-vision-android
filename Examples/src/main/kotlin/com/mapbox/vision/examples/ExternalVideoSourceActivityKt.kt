@@ -41,6 +41,7 @@ class ExternalVideoSourceActivityKt : BaseActivity() {
 
     // VideoSource that will play the file.
     private val customVideoSource = object : VideoSource {
+
         override fun attach(videoSourceListener: VideoSourceListener) {
             this@ExternalVideoSourceActivityKt.videoSourceListener = videoSourceListener
             handlerThread.start()
