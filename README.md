@@ -5,11 +5,7 @@ This repository shows couple of Vision SDK usage examples:
 - Basic Vision AR functions
 - Basic Vision Safety functions
 
-For more information and frequently asked questions please visit [Vision SDK FAQ](https://vision.mapbox.com/#faq).
-
 ## Installation and setup
-
-All examples are located in module `Examples`. 
 
 Main steps for setup:
 1. Sign up or log in to your Mapbox account and grab a [Mapbox access token](https://www.mapbox.com/help/define-access-token/)
