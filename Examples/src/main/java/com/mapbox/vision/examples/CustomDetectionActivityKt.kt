@@ -1,6 +1,10 @@
 package com.mapbox.vision.examples
 
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.os.Bundle
 import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
@@ -18,11 +22,10 @@ import com.mapbox.vision.performance.ModelPerformance
 import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
-import kotlinx.android.synthetic.main.activity_custom_detection.*
 import java.nio.ByteBuffer
 import kotlin.math.pow
 import kotlin.math.sqrt
-
+import kotlinx.android.synthetic.main.activity_custom_detection.*
 
 class CustomDetectionActivityKt : BaseActivity() {
 
@@ -41,7 +44,8 @@ class CustomDetectionActivityKt : BaseActivity() {
             val frame = Bitmap.createBitmap(
                 originalImage.size.imageWidth,
                 originalImage.size.imageHeight,
-                Bitmap.Config.ARGB_8888)
+                Bitmap.Config.ARGB_8888
+            )
             // prepare direct ByteBuffer that will hold camera frame data
             val buffer = ByteBuffer.allocateDirect(originalImage.sizeInBytes())
             // we need to lock pixels  explicitly because we will draw in another (main) thread
@@ -72,8 +76,10 @@ class CustomDetectionActivityKt : BaseActivity() {
                         relativeBbox.bottom * frame.height
                     )
                     // we want to draw circle bounds, we need radius and center for that
-                    val radius = sqrt((absoluteBbox.centerX() - absoluteBbox.left).pow(2)
-                            + (absoluteBbox.centerY() - absoluteBbox.top).pow(2))
+                    val radius = sqrt(
+                        (absoluteBbox.centerX() - absoluteBbox.left).pow(2) +
+                                (absoluteBbox.centerY() - absoluteBbox.top).pow(2)
+                    )
                     canvas.drawCircle(
                         absoluteBbox.centerX(),
                         absoluteBbox.centerY(),
@@ -132,7 +138,8 @@ class CustomDetectionActivityKt : BaseActivity() {
             VisionManager.create()
             VisionManager.setModelPerformanceConfig(
                 ModelPerformanceConfig.Merged(
-                    ModelPerformance.On(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH
+                    ModelPerformance.On(
+                        ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH
                     )
                 )
             )
