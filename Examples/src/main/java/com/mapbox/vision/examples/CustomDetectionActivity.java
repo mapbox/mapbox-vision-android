@@ -61,7 +61,7 @@ public class CustomDetectionActivity extends BaseActivity {
                 // we will draw only detected cars
                 // and filter detections which we are not confident with
                 if (detection.getDetectionClass() == DetectionClass.Car && detection.getConfidence() > 0.6) {
-                    drawSingleCarDetection(canvas, detection);
+                    drawSingleDetection(canvas, detection);
                 }
             }
             runOnUiThread(() -> {
@@ -170,7 +170,7 @@ public class CustomDetectionActivity extends BaseActivity {
         return bitmap;
     }
 
-    private void drawSingleCarDetection(final Canvas canvas, final Detection detection) {
+    private void drawSingleDetection(final Canvas canvas, final Detection detection) {
         // first thing we get coordinates of bounding box
         final RectF relativeBbox = detection.getBoundingBox();
         // we need to transform them from relative (range [0, 1]) to absolute in terms of canvas(frame) size

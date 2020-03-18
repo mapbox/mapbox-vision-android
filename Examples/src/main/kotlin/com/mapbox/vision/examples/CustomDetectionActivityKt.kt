@@ -59,7 +59,7 @@ class CustomDetectionActivityKt : BaseActivity() {
                 return bitmap
             }
 
-            fun drawSingleCarDetection(canvas: Canvas, detection: Detection) {
+            fun drawSingleDetection(canvas: Canvas, detection: Detection) {
                 // first thing we get coordinates of bounding box
                 val relativeBbox = detection.boundingBox
                 // we need to transform them from relative (range [0, 1]) to absolute in terms of canvas(frame) size
@@ -90,7 +90,7 @@ class CustomDetectionActivityKt : BaseActivity() {
                 // we will draw only detected cars
                 // and filter detections which we are not confident with
                 if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
-                    drawSingleCarDetection(canvas, detection)
+                    drawSingleDetection(canvas, detection)
                 }
             }
             runOnUiThread {
