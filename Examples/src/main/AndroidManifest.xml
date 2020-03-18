@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mapbox.vision.examples">
 
@@ -36,11 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ExternalVideoSourceActivity"
             android:screenOrientation="landscape" />
-
         <activity
             android:name=".SafetyActivityKt"
             android:label="@string/safety_example"
@@ -51,11 +50,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".SafetyActivity"
             android:screenOrientation="landscape" />
-
         <activity
             android:name=".ArActivityKt"
             android:label="@string/ar_example"
@@ -66,12 +63,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ArActivity"
             android:screenOrientation="landscape" />
-
-        <activity android:name=".CustomDetectionActivityKt"
+        <activity
+            android:name=".CustomDetectionActivityKt"
             android:label="@string/custom_detections_example"
             android:screenOrientation="landscape">
             <intent-filter>
@@ -80,6 +76,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".CustomDetectionActivity"
+            android:screenOrientation="landscape" />
     </application>
+
 </manifest>
