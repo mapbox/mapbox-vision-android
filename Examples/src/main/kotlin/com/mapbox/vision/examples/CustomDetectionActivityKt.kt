@@ -13,8 +13,10 @@ import com.mapbox.vision.mobile.core.models.Camera
 import com.mapbox.vision.mobile.core.models.Country
 import com.mapbox.vision.mobile.core.models.FrameSegmentation
 import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications
+import com.mapbox.vision.mobile.core.models.detection.Detection
 import com.mapbox.vision.mobile.core.models.detection.DetectionClass
 import com.mapbox.vision.mobile.core.models.detection.FrameDetections
+import com.mapbox.vision.mobile.core.models.frame.Image
 import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
@@ -30,6 +32,7 @@ import kotlinx.android.synthetic.main.activity_custom_detection.*
 class CustomDetectionActivityKt : BaseActivity() {
 
     private var visionManagerWasInit = false
+    private lateinit var paint: Paint
 
     // VisionEventsListener handles events from Vision SDK on background thread.
     private val visionEventsListener = object : VisionEventsListener {
@@ -39,60 +42,60 @@ class CustomDetectionActivityKt : BaseActivity() {
         override fun onFrameSegmentationUpdated(frameSegmentation: FrameSegmentation) {}
 
         override fun onFrameDetectionsUpdated(frameDetections: FrameDetections) {
-            // prepare camera frame first thing
-            val originalImage = frameDetections.frame.image
-            val frame = Bitmap.createBitmap(
-                originalImage.size.imageWidth,
-                originalImage.size.imageHeight,
-                Bitmap.Config.ARGB_8888
-            )
-            // prepare direct ByteBuffer that will hold camera frame data
-            val buffer = ByteBuffer.allocateDirect(originalImage.sizeInBytes())
-            // we need to lock pixels  explicitly because we will draw in another (main) thread
-            originalImage.lockPixels()
-            // associate underlying native ByteBuffer with our buffer
-            originalImage.copyPixels(buffer)
-            buffer.rewind()
-            // copy ByteBuffer to bitmap
-            frame.copyPixelsFromBuffer(buffer)
-            // now we will draw current detections on canvas
-            val canvas = Canvas(frame)
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            paint.color = Color.GREEN
-            paint.strokeWidth = 5f
-            paint.style = Paint.Style.STROKE
+
+            fun convertImageToBitmap(originalImage: Image): Bitmap {
+                val bitmap = Bitmap.createBitmap(
+                    originalImage.size.imageWidth,
+                    originalImage.size.imageHeight,
+                    Bitmap.Config.ARGB_8888
+                )
+                // prepare direct ByteBuffer that will hold camera frame data
+                val buffer = ByteBuffer.allocateDirect(originalImage.sizeInBytes())
+                // associate underlying native ByteBuffer with our buffer
+                originalImage.copyPixels(buffer)
+                buffer.rewind()
+                // copy ByteBuffer to bitmap
+                bitmap.copyPixelsFromBuffer(buffer)
+                return bitmap
+            }
+
+            fun drawSingleCarDetection(canvas: Canvas, detection: Detection) {
+                // first thing we get coordinates of bounding box
+                val relativeBbox = detection.boundingBox
+                // we need to transform them from relative (range [0, 1]) to absolute in terms of canvas(frame) size
+                // we do not care about screen resolution at all - we will use cropCenter mode
+                val absoluteBbox = RectF(
+                    relativeBbox.left * canvas.width,
+                    relativeBbox.top * canvas.height,
+                    relativeBbox.right * canvas.width,
+                    relativeBbox.bottom * canvas.height
+                )
+                // we want to draw circle bounds, we need radius and center for that
+                val radius = sqrt(
+                    (absoluteBbox.centerX() - absoluteBbox.left).pow(2) +
+                            (absoluteBbox.centerY() - absoluteBbox.top).pow(2)
+                )
+                canvas.drawCircle(
+                    absoluteBbox.centerX(),
+                    absoluteBbox.centerY(),
+                    radius,
+                    paint
+                )
+            }
+
+            val frameBitmap = convertImageToBitmap(frameDetections.frame.image)
+            // now we will draw current detections on canvas with frame bitmap
+            val canvas = Canvas(frameBitmap)
             for (detection in frameDetections.detections) {
                 // we will draw only detected cars
                 // and filter detections which we are not confident with
                 if (detection.detectionClass == DetectionClass.Car && detection.confidence > 0.6) {
-                    // first thing we get coordinates of bounding box
-                    val relativeBbox = detection.boundingBox
-                    // we need to transform them from relative (range [0, 1]) to absolute in terms of frame size
-                    // we do not care about screen resolution at all - we will use cropCenter mode
-                    val absoluteBbox = RectF(
-                        relativeBbox.left * frame.width,
-                        relativeBbox.top * frame.height,
-                        relativeBbox.right * frame.width,
-                        relativeBbox.bottom * frame.height
-                    )
-                    // we want to draw circle bounds, we need radius and center for that
-                    val radius = sqrt(
-                        (absoluteBbox.centerX() - absoluteBbox.left).pow(2) +
-                                (absoluteBbox.centerY() - absoluteBbox.top).pow(2)
-                    )
-                    canvas.drawCircle(
-                        absoluteBbox.centerX(),
-                        absoluteBbox.centerY(),
-                        radius,
-                        paint
-                    )
+                    drawSingleCarDetection(canvas, detection)
                 }
             }
             runOnUiThread {
                 // finally we update our image view on main thread
-                detections_view.setImageBitmap(frame)
-                // and we could safely release underlying pixels
-                originalImage.unlockPixels()
+                detections_view.setImageBitmap(frameBitmap)
             }
         }
 
@@ -113,6 +116,7 @@ class CustomDetectionActivityKt : BaseActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        preparePaint()
     }
 
     override fun onPermissionsGranted() {
@@ -155,5 +159,12 @@ class CustomDetectionActivityKt : BaseActivity() {
             VisionManager.destroy()
             visionManagerWasInit = false
         }
+    }
+
+    private fun preparePaint() {
+        paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = Color.GREEN
+        paint.strokeWidth = 5f
+        paint.style = Paint.Style.STROKE
     }
 }
