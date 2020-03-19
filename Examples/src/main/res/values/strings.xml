@@ -4,4 +4,5 @@
     <string name="safety_example">Safety Example</string>
     <string name="ar_example">AR Example</string>
     <string name="custom_detections_example">Custom Detections Example</string>
+    <string name="poi_example">POI Example</string>
 </resources>
