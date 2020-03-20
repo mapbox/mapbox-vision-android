@@ -146,16 +146,9 @@ class POIActivityKt : BaseActivity() {
         return arrayListOf(poiHamburgers, poiGasStation, poiHighWay, poiCarWash)
     }
 
-    private fun getBitmapFromAssets(asset: String): Bitmap? {
+    private fun getBitmapFromAssets(asset: String): Bitmap {
         val assetManager = this.assets
-        val stream: InputStream
-        var bitmap: Bitmap? = null
-        try {
-            stream = assetManager.open(asset)
-            bitmap = BitmapFactory.decodeStream(stream)
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        return bitmap
+        val stream = assetManager.open(asset)
+        return BitmapFactory.decodeStream(stream)
     }
 }
