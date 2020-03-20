@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.os.Environment
 import android.view.View.GONE
 import com.mapbox.vision.VisionReplayManager
+import com.mapbox.vision.examples.poi.POI
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
 import com.mapbox.vision.mobile.core.models.Camera
@@ -104,12 +105,6 @@ class POIActivityKt : BaseActivity() {
             visionReplayManagerWasInit = true
         }
     }
-
-    data class POI(
-        val longitude: Double,
-        val latitude: Double,
-        val bitmap: Bitmap
-    )
 
     private fun stopVisionManager() {
         if (visionReplayManagerWasInit) {

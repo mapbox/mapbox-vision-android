@@ -1,7 +1,6 @@
-package com.mapbox.vision.examples
+package com.mapbox.vision.examples.poi
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -10,7 +9,6 @@ import android.util.AttributeSet
 import android.view.View
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.vision.VisionReplayManager
-import com.mapbox.vision.examples.POIActivityKt.POI
 import com.mapbox.vision.mobile.core.models.frame.ImageSize
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.mobile.core.models.position.GeoLocation
@@ -41,14 +39,6 @@ constructor(
     private val paint = Paint()
     private val uiHandler = Handler()
     private var poiDrawDataList: MutableList<POIDrawData> = mutableListOf()
-
-    data class POIState(val poi: POI, val distanceToVehicle: Int, val worldCoordinate: WorldCoordinate)
-
-    private data class POIDrawData(
-        val poiBitmap: Bitmap,
-        val poiBitmapRect: Rect,
-        val poiBitmapAlpha: Int
-    )
 
     fun updatePOIState(newVehicleLocation: GeoLocation) {
         if (poiList.isEmpty()) {

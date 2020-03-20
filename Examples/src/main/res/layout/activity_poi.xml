@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         app:visualization_mode="clear" />
 
-    <com.mapbox.vision.examples.POIView
+    <com.mapbox.vision.examples.poi.POIView
         android:id="@+id/poi_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
