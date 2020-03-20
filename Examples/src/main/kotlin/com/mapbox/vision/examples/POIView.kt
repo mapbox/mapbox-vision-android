@@ -70,14 +70,12 @@ constructor(
     }
 
     // Calculate POI distance to vehicle and WorldCoordinates regarding the vehicle
-    private fun calculatePOIStateListRegardingVehicle(currentVehicleLatLng: LatLng): List<POIState> {
-        return poiList.map {
+    private fun calculatePOIStateListRegardingVehicle(currentVehicleLatLng: LatLng) = poiList.map {
             val latLng = LatLng(it.latitude, it.longitude)
             val worldCoordinate = VisionReplayManager.geoToWorld(GeoCoordinate(latLng.latitude, latLng.longitude))
             val distanceToVehicle = latLng.distanceTo(currentVehicleLatLng).toInt()
             POIState(it, distanceToVehicle, worldCoordinate)
         }
-    }
 
     // Show only POI which is close enough and behind the car
     private fun filterPOIStateListToShow(poiStateList: List<POIState>) =  poiStateList.filter {
