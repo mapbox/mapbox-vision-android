@@ -80,13 +80,11 @@ constructor(
     }
 
     // Show only POI which is close enough and behind the car
-    private fun filterPOIStateListToShow(poiStateList: List<POIState>): List<POIState> {
-        return poiStateList.filter {
+    private fun filterPOIStateListToShow(poiStateList: List<POIState>) =  poiStateList.filter {
             val x = it.worldCoordinate?.x ?: 0.0
             // Check if POI is behind vehicle and close enough to start appearing
             (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
         }
-    }
 
     private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> {
         val poiDrawDataList = mutableListOf<POIDrawData>()
