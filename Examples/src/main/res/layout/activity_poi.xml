@@ -11,10 +11,11 @@
         android:layout_height="match_parent"
         app:visualization_mode="clear" />
 
-    <com.mapbox.vision.examples.poi.POIView
+    <ImageView
         android:id="@+id/poi_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:scaleType="centerCrop"
         android:background="@android:color/transparent"/>
 
     <TextView
