@@ -1,6 +1,10 @@
 package com.mapbox.vision.examples
 
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
 import android.os.Environment
 import android.view.View.GONE
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -21,9 +25,9 @@ import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldCoordinate
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
+import kotlin.math.min
 import kotlinx.android.synthetic.main.activity_main.vision_view
 import kotlinx.android.synthetic.main.activity_poi.*
-import kotlin.math.min
 
 class POIActivityKt : BaseActivity() {
 
@@ -67,7 +71,7 @@ class POIActivityKt : BaseActivity() {
             if (camera.calibrationProgress == 1.0f && !cameraCalibrated) {
                 cameraCalibrated = true
                 bitmapCameraFrame = Bitmap.createBitmap(camera.frameWidth, camera.frameHeight, Bitmap.Config.ARGB_8888)
-                runOnUiThread{
+                runOnUiThread {
                     camera_calibration_text.visibility = GONE
                 }
             } else {
@@ -114,7 +118,7 @@ class POIActivityKt : BaseActivity() {
         }
 
         // Show only POI which is close enough and behind the car
-        private fun filterPOIStateListToShow(poiStateList: List<POIState>) =  poiStateList.filter {
+        private fun filterPOIStateListToShow(poiStateList: List<POIState>) = poiStateList.filter {
             val x = it.worldCoordinate.x
             // Check if POI is behind vehicle and close enough to start appearing
             (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
