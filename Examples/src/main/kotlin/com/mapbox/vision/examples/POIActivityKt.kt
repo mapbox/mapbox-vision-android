@@ -3,6 +3,7 @@ package com.mapbox.vision.examples
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
+import android.view.View.GONE
 import com.mapbox.vision.VisionReplayManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
@@ -49,9 +50,16 @@ class POIActivityKt : BaseActivity() {
         }
 
         override fun onCameraUpdated(camera: Camera) {
-            if (camera.calibrationProgress == 1.0f) {
+            if (camera.calibrationProgress == 1.0f && !cameraCalibrated) {
                 cameraCalibrated = true
                 poi_view.onCameraCalibrated(camera.frameWidth, camera.frameHeight)
+                runOnUiThread{
+                    camera_calibration_text.visibility = GONE
+                }
+            } else {
+                runOnUiThread {
+                    camera_calibration_text.text = getString(R.string.camera_calibration_progress, (camera.calibrationProgress * 100).toInt())
+                }
             }
         }
 
@@ -118,22 +126,22 @@ class POIActivityKt : BaseActivity() {
         val poiHamburgers = POI(
                 27.68255352973938,
                 53.94267477012304,
-                getBitmap("ic_hamburger.png"))
+                getBitmapFromAssets("ic_hamburger.png"))
 
         val poiGasStation = POI(
                 27.674764394760132,
                 53.9405971055192,
-                getBitmap("ic_gas_station.png"))
+                getBitmapFromAssets("ic_gas_station.png"))
 
         val poiHighWay = POI(
                 27.673187255859375,
                 53.940477115649095,
-                getBitmap("ic_highway.png"))
+                getBitmapFromAssets("ic_highway.png"))
 
         val poiCarWash = POI(
                 27.675944566726685,
                 53.94105180084251,
-                getBitmap("ic_car_wash.png"))
+                getBitmapFromAssets("ic_car_wash.png"))
 
         return arrayListOf(poiHamburgers, poiGasStation, poiHighWay, poiCarWash)
     }

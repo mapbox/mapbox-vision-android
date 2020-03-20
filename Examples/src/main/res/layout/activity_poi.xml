@@ -17,4 +17,14 @@
         android:layout_height="match_parent"
         android:background="@android:color/transparent"/>
 
+    <TextView
+        android:id="@+id/camera_calibration_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="top|start"
+        android:layout_margin="10dp"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:background="@android:color/transparent" />
+
 </FrameLayout>
