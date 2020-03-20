@@ -89,12 +89,11 @@ constructor(
         val poiDrawDataList = mutableListOf<POIDrawData>()
         for (poiState in poiStateList) {
             val worldCoordinate = poiState.worldCoordinate ?: continue
-            val poiBitmap = poiState.poi.bitmap ?: continue
 
             // Prepare bounding rect for POI in mobile screen coordinates
             val poiBitmapRect = calculatePOIScreenRect(worldCoordinate)
             val poiLabelAlpha = calculatePOILabelAlpha(poiState)
-            val poiDrawData = POIDrawData(poiBitmap, poiBitmapRect, poiLabelAlpha)
+            val poiDrawData = POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
             poiDrawDataList.add(poiDrawData)
         }
         return poiDrawDataList

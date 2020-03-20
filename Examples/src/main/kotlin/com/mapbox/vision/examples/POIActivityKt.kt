@@ -15,8 +15,6 @@ import com.mapbox.vision.mobile.core.models.detection.FrameDetections
 import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
-import java.io.IOException
-import java.io.InputStream
 import kotlinx.android.synthetic.main.activity_main.vision_view
 import kotlinx.android.synthetic.main.activity_poi.*
 
@@ -110,7 +108,7 @@ class POIActivityKt : BaseActivity() {
     data class POI(
         val longitude: Double,
         val latitude: Double,
-        val bitmap: Bitmap?
+        val bitmap: Bitmap
     )
 
     private fun stopVisionManager() {
