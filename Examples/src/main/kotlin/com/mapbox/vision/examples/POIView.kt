@@ -62,7 +62,8 @@ constructor(
         }
         val pointsDrawDataList = preparePOIDrawData(poiStateListToShow)
         uiHandler.post {
-            this.poiDrawDataList = mutableListOf<POIDrawData>().apply {
+            with(this.poiDrawDataList) {
+                clear()
                 addAll(pointsDrawDataList)
             }
             invalidate()
