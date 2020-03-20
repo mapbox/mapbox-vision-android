@@ -42,7 +42,7 @@ constructor(
     private val uiHandler = Handler()
     private var poiDrawDataList: MutableList<POIDrawData> = mutableListOf()
 
-    data class POIState(val poi: POI, val distanceToVehicle: Int, val worldCoordinate: WorldCoordinate?)
+    data class POIState(val poi: POI, val distanceToVehicle: Int, val worldCoordinate: WorldCoordinate)
 
     private data class POIDrawData(
         val poiBitmap: Bitmap,
@@ -71,16 +71,17 @@ constructor(
     }
 
     // Calculate POI distance to vehicle and WorldCoordinates regarding the vehicle
-    private fun calculatePOIStateListRegardingVehicle(currentVehicleLatLng: LatLng) = poiList.map {
-            val latLng = LatLng(it.latitude, it.longitude)
-            val worldCoordinate = VisionReplayManager.geoToWorld(GeoCoordinate(latLng.latitude, latLng.longitude))
-            val distanceToVehicle = latLng.distanceTo(currentVehicleLatLng).toInt()
-            POIState(it, distanceToVehicle, worldCoordinate)
-        }
+    private fun calculatePOIStateListRegardingVehicle(currentVehicleLatLng: LatLng) = poiList.mapNotNull {
+        val latLng = LatLng(it.latitude, it.longitude)
+        val geoCoordinate = GeoCoordinate(latLng.latitude, latLng.longitude)
+        val worldCoordinate = VisionReplayManager.geoToWorld(geoCoordinate) ?: return@mapNotNull null
+        val distanceToVehicle = latLng.distanceTo(currentVehicleLatLng).toInt()
+        POIState(it, distanceToVehicle, worldCoordinate)
+    }
 
     // Show only POI which is close enough and behind the car
     private fun filterPOIStateListToShow(poiStateList: List<POIState>) =  poiStateList.filter {
-            val x = it.worldCoordinate?.x ?: 0.0
+            val x = it.worldCoordinate.x
             // Check if POI is behind vehicle and close enough to start appearing
             (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
         }
@@ -88,10 +89,8 @@ constructor(
     private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> {
         val poiDrawDataList = mutableListOf<POIDrawData>()
         for (poiState in poiStateList) {
-            val worldCoordinate = poiState.worldCoordinate ?: continue
-
             // Prepare bounding rect for POI in mobile screen coordinates
-            val poiBitmapRect = calculatePOIScreenRect(worldCoordinate)
+            val poiBitmapRect = calculatePOIScreenRect(poiState.worldCoordinate)
             val poiLabelAlpha = calculatePOILabelAlpha(poiState)
             val poiDrawData = POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
             poiDrawDataList.add(poiDrawData)
