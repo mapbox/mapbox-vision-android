@@ -28,10 +28,10 @@ constructor(
     companion object {
 
         // POI will start to appear at this distance, starting with transparent and appearing gradually
-        private const val DRAW_LABEL_MIN_DISTANCE_METERS = 250
+        private const val DRAW_LABEL_MIN_DISTANCE_METERS = 400
 
         // POI will start to appear from transparent to non-transparent during this first meters of showing distance
-        private const val DISTANCE_FOR_ALPHA_APPEAR_METERS = 50
+        private const val DISTANCE_FOR_ALPHA_APPEAR_METERS = 150
         private const val LABEL_SIZE_METERS = 8
         private const val LABEL_ABOVE_GROUND_METERS = 4
     }
