@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -48,7 +49,7 @@ public class POIActivity extends BaseActivity {
     private static final int DISTANCE_FOR_ALPHA_APPEAR_METERS = 150;
     private static final int LABEL_SIZE_METERS = 8;
     private static final int LABEL_ABOVE_GROUND_METERS = 4;
-    private static final String SESSION_PATH = "${Environment.getExternalStorageDirectory().absolutePath}/session";
+    private static final String SESSION_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/session";
 
     private List<POI> poiList = new ArrayList<>();
     private boolean visionReplayManagerWasInit = false;
