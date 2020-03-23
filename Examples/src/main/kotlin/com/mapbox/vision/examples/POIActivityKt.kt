@@ -42,7 +42,9 @@ class POIActivityKt : BaseActivity() {
         private const val LABEL_ABOVE_GROUND_METERS = 4
     }
 
-    private var poiList = listOf<POI>()
+    private var poiList: listOf<POI> by lazy{
+        providePOIList()
+    }
 
     private var visionReplayManagerWasInit = false
 
