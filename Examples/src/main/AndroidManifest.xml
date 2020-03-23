@@ -80,6 +80,12 @@
             android:screenOrientation="landscape" />
 
         <activity
+            android:name=".POIActivity"
+            android:label="@string/poi_example"
+            android:screenOrientation="landscape">
+        </activity>
+
+        <activity
             android:name=".POIActivityKt"
             android:label="@string/poi_example"
             android:screenOrientation="landscape">
