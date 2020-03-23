@@ -5,13 +5,12 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.os.Environment
 import android.view.View.GONE
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.vision.VisionReplayManager
-import com.mapbox.vision.examples.poi.POI
-import com.mapbox.vision.examples.poi.POIDrawData
-import com.mapbox.vision.examples.poi.POIState
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus
 import com.mapbox.vision.mobile.core.models.Camera
@@ -34,7 +33,7 @@ class POIActivityKt : BaseActivity() {
     companion object {
 
         // POI will start to appear at this distance, starting with transparent and appearing gradually
-        private const val DRAW_LABEL_MIN_DISTANCE_METERS = 400
+        private const val MIN_DISTANCE_METERS_FOR_DRAW_LABEL = 400
 
         // POI will start to appear from transparent to non-transparent during this first meters of showing distance
         private const val DISTANCE_FOR_ALPHA_APPEAR_METERS = 150
@@ -91,37 +90,40 @@ class POIActivityKt : BaseActivity() {
 
         override fun onUpdateCompleted() {}
 
-        private fun updatePOIStateAndDraw(newVehicleLocation: GeoLocation) {
+        private fun updatePOIStateAndDraw(newVehicleGeoLocation: GeoLocation) {
             if (poiList.isEmpty()) {
                 return
             }
-            val currentVehicleLatLng = LatLng(newVehicleLocation.geoCoordinate.latitude, newVehicleLocation.geoCoordinate.longitude)
-            val poiStateList = calculatePOIStateListRegardingVehicle(currentVehicleLatLng)
-            val poiStateListToShow = filterPOIStateListToShow(poiStateList)
+
+            val poiStateList = calculatePOIStateListRegardingVehicle(newVehicleGeoLocation.geoCoordinate)
+            val poiStateListToShow = filterPOIByDistance(poiStateList)
             if (poiStateListToShow.isEmpty()) {
                 return
             }
             val poiDrawDataList = preparePOIDrawData(poiStateListToShow)
-            val bitmap = createBitmapByPOIList(poiDrawDataList)
+            updateBitmapByPOIList(bitmapCameraFrame, poiDrawDataList)
             runOnUiThread {
-                poi_view.setImageBitmap(bitmap)
+                poi_view.setImageBitmap(bitmapCameraFrame)
             }
         }
 
         // Calculate POI distance to vehicle and WorldCoordinates regarding the vehicle
-        private fun calculatePOIStateListRegardingVehicle(currentVehicleLatLng: LatLng) = poiList.mapNotNull {
-            val latLng = LatLng(it.latitude, it.longitude)
-            val geoCoordinate = GeoCoordinate(latLng.latitude, latLng.longitude)
-            val worldCoordinate = VisionReplayManager.geoToWorld(geoCoordinate) ?: return@mapNotNull null
-            val distanceToVehicle = latLng.distanceTo(currentVehicleLatLng).toInt()
-            POIState(it, distanceToVehicle, worldCoordinate)
+        private fun calculatePOIStateListRegardingVehicle(currentVehicleGeoCoordinate: GeoCoordinate): List<POIState> {
+            val currentVehicleLatLng = LatLng(currentVehicleGeoCoordinate.latitude, currentVehicleGeoCoordinate.longitude)
+            return poiList.mapNotNull {
+                val latLng = LatLng(it.latitude, it.longitude)
+                val geoCoordinate = GeoCoordinate(latLng.latitude, latLng.longitude)
+                val worldCoordinate = VisionReplayManager.geoToWorld(geoCoordinate) ?: return@mapNotNull null
+                val distanceToVehicle = latLng.distanceTo(currentVehicleLatLng).toInt()
+                POIState(it, distanceToVehicle, worldCoordinate)
+            }
         }
 
         // Show only POI which is close enough and behind the car
-        private fun filterPOIStateListToShow(poiStateList: List<POIState>) = poiStateList.filter {
+        private fun filterPOIByDistance(poiStateList: List<POIState>) = poiStateList.filter {
             val x = it.worldCoordinate.x
             // Check if POI is behind vehicle and close enough to start appearing
-            (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
+            (x > 0) && (it.distanceToVehicle < MIN_DISTANCE_METERS_FOR_DRAW_LABEL)
         }
 
         private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> = poiStateList.map { poiState ->
@@ -130,7 +132,6 @@ class POIActivityKt : BaseActivity() {
             val poiLabelAlpha = calculatePOILabelAlpha(poiState)
             POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
         }
-
 
         private fun calculatePOIScreenRect(poiWorldCoordinate: WorldCoordinate): Rect {
             // Calculate left top coordinate of POI in real world using POI world coordinate
@@ -161,20 +162,19 @@ class POIActivityKt : BaseActivity() {
         }
 
         private fun calculatePOILabelAlpha(poiState: POIState): Int {
-            val minDistance = min(DRAW_LABEL_MIN_DISTANCE_METERS - poiState.distanceToVehicle, DISTANCE_FOR_ALPHA_APPEAR_METERS)
+            val minDistance = min(MIN_DISTANCE_METERS_FOR_DRAW_LABEL - poiState.distanceToVehicle, DISTANCE_FOR_ALPHA_APPEAR_METERS)
             return ((minDistance / DISTANCE_FOR_ALPHA_APPEAR_METERS.toFloat()) * 255).toInt()
         }
 
-        private fun createBitmapByPOIList(poiDrawDataList: List<POIDrawData>): Bitmap {
-            val bitmap = Bitmap.createBitmap(bitmapCameraFrame)
+        private fun updateBitmapByPOIList(bitmap: Bitmap, poiDrawDataList: List<POIDrawData>) {
             val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             for (p in poiDrawDataList) {
                 with(p) {
                     paint.alpha = poiBitmapAlpha
                     canvas.drawBitmap(poiBitmap, null, poiBitmapRect, paint)
                 }
             }
-            return bitmap
         }
     }
 
@@ -232,19 +232,19 @@ class POIActivityKt : BaseActivity() {
                 bitmap = getBitmapFromAssets("ic_hamburger.png"))
 
         val poiGasStation = POI(
-                27.674764394760132,
-                53.9405971055192,
-                getBitmapFromAssets("ic_gas_station.png"))
+                longitude = 27.674764394760132,
+                latitude = 53.9405971055192,
+                bitmap = getBitmapFromAssets("ic_gas_station.png"))
 
         val poiHighWay = POI(
-                27.673187255859375,
-                53.940477115649095,
-                getBitmapFromAssets("ic_highway.png"))
+                longitude = 27.673187255859375,
+                latitude = 53.940477115649095,
+                bitmap = getBitmapFromAssets("ic_highway.png"))
 
         val poiCarWash = POI(
-                27.675944566726685,
-                53.94105180084251,
-                getBitmapFromAssets("ic_car_wash.png"))
+                longitude = 27.675944566726685,
+                latitude = 53.94105180084251,
+                bitmap = getBitmapFromAssets("ic_car_wash.png"))
 
         return arrayListOf(poiHamburgers, poiGasStation, poiHighWay, poiCarWash)
     }
@@ -254,4 +254,10 @@ class POIActivityKt : BaseActivity() {
         val stream = assetManager.open(asset)
         return BitmapFactory.decodeStream(stream)
     }
+
+    data class POI(val longitude: Double, val latitude: Double, val bitmap: Bitmap)
+
+    data class POIDrawData(val poiBitmap: Bitmap, val poiBitmapRect: Rect, val poiBitmapAlpha: Int)
+
+    data class POIState(val poi: POI, val distanceToVehicle: Int, val worldCoordinate: WorldCoordinate)
 }
