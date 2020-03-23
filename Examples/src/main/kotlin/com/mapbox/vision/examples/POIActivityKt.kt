@@ -3,10 +3,10 @@ package com.mapbox.vision.examples
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PorterDuff
+import android.graphics.Rect
 import android.os.Environment
 import android.view.View.GONE
 import com.mapbox.mapboxsdk.geometry.LatLng
