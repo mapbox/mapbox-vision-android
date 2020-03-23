@@ -42,9 +42,7 @@ class POIActivityKt : BaseActivity() {
         private const val LABEL_ABOVE_GROUND_METERS = 4
     }
 
-    private var poiList: listOf<POI> by lazy{
-        providePOIList()
-    }
+    private val poiList: List<POI> by lazy { providePOIList() }
 
     private var visionReplayManagerWasInit = false
 
@@ -85,7 +83,7 @@ class POIActivityKt : BaseActivity() {
 
         override fun onVehicleStateUpdated(vehicleState: VehicleState) {
             if (cameraCalibrated) {
-                updateAndDrawPOI(vehicleState.geoLocation)
+                updatePOIStateAndDraw(vehicleState.geoLocation)
             }
         }
 
@@ -93,7 +91,7 @@ class POIActivityKt : BaseActivity() {
 
         override fun onUpdateCompleted() {}
 
-        private fun updateAndDrawPOI(newVehicleLocation: GeoLocation) {
+        private fun updatePOIStateAndDraw(newVehicleLocation: GeoLocation) {
             if (poiList.isEmpty()) {
                 return
             }
@@ -104,7 +102,7 @@ class POIActivityKt : BaseActivity() {
                 return
             }
             val poiDrawDataList = preparePOIDrawData(poiStateListToShow)
-            val bitmap = drawPOIList(poiDrawDataList)
+            val bitmap = createBitmapByPOIList(poiDrawDataList)
             runOnUiThread {
                 poi_view.setImageBitmap(bitmap)
             }
@@ -126,15 +124,13 @@ class POIActivityKt : BaseActivity() {
             (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
         }
 
-        private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> = poiStateList.map 
-        { poiState ->
-                // Prepare bounding rect for POI in mobile screen coordinates
-                val poiBitmapRect = calculatePOIScreenRect(poiState.worldCoordinate)
-                val poiLabelAlpha = calculatePOILabelAlpha(poiState)
-                val poiDrawData = POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
-                poiDrawDataList.add(poiDrawData)
-            }
-   }
+        private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> = poiStateList.map { poiState ->
+            // Prepare bounding rect for POI in mobile screen coordinates
+            val poiBitmapRect = calculatePOIScreenRect(poiState.worldCoordinate)
+            val poiLabelAlpha = calculatePOILabelAlpha(poiState)
+            POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
+        }
+
 
         private fun calculatePOIScreenRect(poiWorldCoordinate: WorldCoordinate): Rect {
             // Calculate left top coordinate of POI in real world using POI world coordinate
@@ -164,7 +160,7 @@ class POIActivityKt : BaseActivity() {
             return poiBitmapRect
         }
 
-        private fun calculatePOILabelAlpha(poiState: POIState, @IntRange(from=1) val distanceForAlphaApperMeters: Int): Int {
+        private fun calculatePOILabelAlpha(poiState: POIState): Int {
             val minDistance = min(DRAW_LABEL_MIN_DISTANCE_METERS - poiState.distanceToVehicle, DISTANCE_FOR_ALPHA_APPEAR_METERS)
             return ((minDistance / DISTANCE_FOR_ALPHA_APPEAR_METERS.toFloat()) * 255).toInt()
         }
@@ -188,7 +184,6 @@ class POIActivityKt : BaseActivity() {
 
     override fun initViews() {
         setContentView(R.layout.activity_poi)
-        poiList = buildPOIList()
     }
 
     override fun onStart() {
