@@ -126,17 +126,15 @@ class POIActivityKt : BaseActivity() {
             (x > 0) && (it.distanceToVehicle < DRAW_LABEL_MIN_DISTANCE_METERS)
         }
 
-        private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> {
-            val poiDrawDataList = mutableListOf<POIDrawData>()
-            for (poiState in poiStateList) {
+        private fun preparePOIDrawData(poiStateList: List<POIState>): List<POIDrawData> = poiStateList.map 
+        { poiState ->
                 // Prepare bounding rect for POI in mobile screen coordinates
                 val poiBitmapRect = calculatePOIScreenRect(poiState.worldCoordinate)
                 val poiLabelAlpha = calculatePOILabelAlpha(poiState)
                 val poiDrawData = POIDrawData(poiState.poi.bitmap, poiBitmapRect, poiLabelAlpha)
                 poiDrawDataList.add(poiDrawData)
             }
-            return poiDrawDataList
-        }
+   }
 
         private fun calculatePOIScreenRect(poiWorldCoordinate: WorldCoordinate): Rect {
             // Calculate left top coordinate of POI in real world using POI world coordinate
