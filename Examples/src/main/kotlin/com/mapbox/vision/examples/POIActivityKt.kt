@@ -164,7 +164,7 @@ class POIActivityKt : BaseActivity() {
             return poiBitmapRect
         }
 
-        private fun calculatePOILabelAlpha(poiState: POIState): Int {
+        private fun calculatePOILabelAlpha(poiState: POIState, @IntRange(from=1) val distanceForAlphaApperMeters: Int): Int {
             val minDistance = min(DRAW_LABEL_MIN_DISTANCE_METERS - poiState.distanceToVehicle, DISTANCE_FOR_ALPHA_APPEAR_METERS)
             return ((minDistance / DISTANCE_FOR_ALPHA_APPEAR_METERS.toFloat()) * 255).toInt()
         }
