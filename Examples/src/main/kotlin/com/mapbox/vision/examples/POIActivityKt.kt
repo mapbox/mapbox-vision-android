@@ -234,9 +234,9 @@ class POIActivityKt : BaseActivity() {
     private fun providePOIList(): List<POI> {
 
         val poiHamburgers = POI(
-                27.68255352973938,
-                53.94267477012304,
-                getBitmapFromAssets("ic_hamburger.png"))
+                longitude = 27.68255352973938,
+                latitude = 53.94267477012304,
+                bitmap = getBitmapFromAssets("ic_hamburger.png"))
 
         val poiGasStation = POI(
                 27.674764394760132,
