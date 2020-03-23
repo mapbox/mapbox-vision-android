@@ -231,7 +231,7 @@ class POIActivityKt : BaseActivity() {
         }
     }
 
-    private fun buildPOIList(): List<POI> {
+    private fun providePOIList(): List<POI> {
 
         val poiHamburgers = POI(
                 27.68255352973938,
