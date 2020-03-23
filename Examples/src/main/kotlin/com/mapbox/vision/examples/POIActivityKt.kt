@@ -171,7 +171,7 @@ class POIActivityKt : BaseActivity() {
             return ((minDistance / DISTANCE_FOR_ALPHA_APPEAR_METERS.toFloat()) * 255).toInt()
         }
 
-        private fun drawPOIList(poiDrawDataList: List<POIDrawData>): Bitmap {
+        private fun createBitmapByPOIList(poiDrawDataList: List<POIDrawData>): Bitmap {
             val bitmap = Bitmap.createBitmap(bitmapCameraFrame)
             val canvas = Canvas(bitmap)
             for (p in poiDrawDataList) {
