@@ -3,28 +3,13 @@ buildscript {
         apply from: "${rootDir}/gradle/versions.gradle"
     }
     
-    ext {
-        dokka_version = '0.9.17'
-        android_maven_plugin_version = '2.0'
-        gradle_bintray_plugin = '1.8.0'
-        jacoco_version = '0.8.0'
-    }
-
     repositories {
         google()
         jcenter()
     }
-    configurations.maybeCreate("pitest")
     dependencies {
         classpath "com.android.tools.build:gradle:$gradle_plugin"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$dokka_version"
-        classpath "com.github.dcendents:android-maven-gradle-plugin:$android_maven_plugin_version"
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$gradle_bintray_plugin"
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:$mannodermaus_junit5_version"
-        pitest "org.pitest:pitest-junit5-plugin:$pitest_junit5_plugin_version"
-        classpath "org.jacoco:org.jacoco.core:$jacoco_version"
-        classpath "pl.droidsonroids.gradle:gradle-pitest-plugin:0.2.1"
     }
 }
 
@@ -46,5 +31,7 @@ allprojects {
 
             url 'https://api.mapbox.com/downloads/v1/vision/android/maven'
         }
+
+        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
     }
 }

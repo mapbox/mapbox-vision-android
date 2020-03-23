@@ -42,10 +42,14 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
+    implementation("com.serenegiant:common:$uvccamera_common") {
+        exclude module: 'support-v4'
+    }
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "androidx.appcompat:appcompat:$android_x_appcompat"
-    implementation "androidx.constraintlayout:constraintlayout:$android_x_constraint_layout"
 
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapbox_sdk"
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:$mapbox_navigation"
@@ -57,6 +61,4 @@ dependencies {
     implementation "com.mapbox.vision:mapbox-android-vision:$vision"
     implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision"
     implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision"
-
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
