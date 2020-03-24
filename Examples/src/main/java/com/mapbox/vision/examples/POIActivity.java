@@ -134,7 +134,7 @@ public class POIActivity extends BaseActivity {
         private List<POIState> calculatePOIStateListRegardingVehicle(@NonNull GeoCoordinate currentVehicleGeoCoordinate) {
             final List<POIState> poiStateList = new ArrayList<>();
             final LatLng currentVehicleLatLng = new LatLng(currentVehicleGeoCoordinate.getLatitude(), currentVehicleGeoCoordinate.getLongitude());
-            for (POI p: poiList) {
+            for (POI poi: poiList) {
                 final LatLng latLng = new LatLng(p.getLatitude(), p.getLongitude());
                 final GeoCoordinate geoCoordinate = new GeoCoordinate(latLng.getLatitude(), latLng.getLongitude());
                 final WorldCoordinate worldCoordinate = VisionReplayManager.geoToWorld(geoCoordinate);
