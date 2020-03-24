@@ -219,7 +219,7 @@ public class POIActivity extends BaseActivity {
 
         private void updateBitmapByPOIList(@NonNull List<POIDrawData> poiDrawDataList) {
             canvasCameraFrame.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-            for (POIDrawData p : poiDrawDataList) {
+            for (POIDrawData drawPoi : poiDrawDataList) {
                 paint.setAlpha(p.getPOIBitmapAlpha());
                 canvasCameraFrame.drawBitmap(p.getPOIBitmap(), null, p.getPOIBitmapRect(), paint);
             }
