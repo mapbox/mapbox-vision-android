@@ -49,6 +49,7 @@ public class POIActivity extends BaseActivity {
     private static final int DISTANCE_FOR_ALPHA_APPEAR_METERS = 150;
     private static final int LABEL_SIZE_METERS = 8;
     private static final int LABEL_ABOVE_GROUND_METERS = 4;
+    // Download session from tutorial and push to device
     private static final String SESSION_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/session";
 
     private List<POI> poiList = new ArrayList<>();
@@ -61,13 +62,11 @@ public class POIActivity extends BaseActivity {
     @Nullable
     private TextView cameraCalibrationView = null;
 
-    // Download session from tutorial and push to device
-
-
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
 
         private boolean cameraCalibrated = false;
         private Paint paint = new Paint();
+        private Canvas canvasCameraFrame = new Canvas();
         private Bitmap bitmapCameraFrame = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
 
         public void onAuthorizationStatusUpdated(@NonNull AuthorizationStatus authorizationStatus) { }
@@ -86,6 +85,7 @@ public class POIActivity extends BaseActivity {
             if (camera.getCalibrationProgress() == 1.0f && !cameraCalibrated) {
                 cameraCalibrated = true;
                 bitmapCameraFrame = Bitmap.createBitmap(camera.getFrameWidth(), camera.getFrameHeight(), Bitmap.Config.ARGB_8888);
+                canvasCameraFrame = new Canvas(bitmapCameraFrame);
                 runOnUiThread (() -> {
                     if (cameraCalibrationView != null) {
                         cameraCalibrationView.setVisibility(GONE);
@@ -122,7 +122,7 @@ public class POIActivity extends BaseActivity {
                 return;
             }
             final List<POIDrawData> poiDrawDataList = preparePOIDrawData(poiStateList);
-            updateBitmapByPOIList(bitmapCameraFrame, poiDrawDataList);
+            updateBitmapByPOIList(poiDrawDataList);
             runOnUiThread(() -> {
                 if (poiView != null) {
                     poiView.setImageBitmap(bitmapCameraFrame);
@@ -217,12 +217,11 @@ public class POIActivity extends BaseActivity {
             return (int)((minDistance / (float)DISTANCE_FOR_ALPHA_APPEAR_METERS) * 255);
         }
 
-        private void updateBitmapByPOIList(@NonNull Bitmap bitmap, @NonNull List<POIDrawData> poiDrawDataList) {
-            final Canvas canvas = new Canvas(bitmap);
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        private void updateBitmapByPOIList(@NonNull List<POIDrawData> poiDrawDataList) {
+            canvasCameraFrame.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             for (POIDrawData p : poiDrawDataList) {
                 paint.setAlpha(p.getPOIBitmapAlpha());
-                canvas.drawBitmap(p.getPOIBitmap(), null, p.getPOIBitmapRect(), paint);
+                canvasCameraFrame.drawBitmap(p.getPOIBitmap(), null, p.getPOIBitmapRect(), paint);
             }
         }
     };

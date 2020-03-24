@@ -53,6 +53,7 @@ class POIActivityKt : BaseActivity() {
         private var cameraCalibrated = false
         private val paint = Paint()
         private var bitmapCameraFrame = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        private var canvasCameraFrame = Canvas()
 
         override fun onAuthorizationStatusUpdated(authorizationStatus: AuthorizationStatus) {}
 
@@ -70,6 +71,7 @@ class POIActivityKt : BaseActivity() {
             if (camera.calibrationProgress == 1.0f && !cameraCalibrated) {
                 cameraCalibrated = true
                 bitmapCameraFrame = Bitmap.createBitmap(camera.frameWidth, camera.frameHeight, Bitmap.Config.ARGB_8888)
+                canvasCameraFrame = Canvas(bitmapCameraFrame)
                 runOnUiThread {
                     camera_calibration_text.visibility = GONE
                 }
@@ -167,12 +169,11 @@ class POIActivityKt : BaseActivity() {
         }
 
         private fun updateBitmapByPOIList(bitmap: Bitmap, poiDrawDataList: List<POIDrawData>) {
-            val canvas = Canvas(bitmap)
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+            canvasCameraFrame.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
             for (p in poiDrawDataList) {
                 with(p) {
                     paint.alpha = poiBitmapAlpha
-                    canvas.drawBitmap(poiBitmap, null, poiBitmapRect, paint)
+                    canvasCameraFrame.drawBitmap(poiBitmap, null, poiBitmapRect, paint)
                 }
             }
         }
