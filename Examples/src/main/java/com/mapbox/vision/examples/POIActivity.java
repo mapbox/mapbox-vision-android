@@ -135,14 +135,14 @@ public class POIActivity extends BaseActivity {
             final List<POIState> poiStateList = new ArrayList<>();
             final LatLng currentVehicleLatLng = new LatLng(currentVehicleGeoCoordinate.getLatitude(), currentVehicleGeoCoordinate.getLongitude());
             for (POI poi: poiList) {
-                final LatLng latLng = new LatLng(p.getLatitude(), p.getLongitude());
+                final LatLng latLng = new LatLng(poi.getLatitude(), poi.getLongitude());
                 final GeoCoordinate geoCoordinate = new GeoCoordinate(latLng.getLatitude(), latLng.getLongitude());
                 final WorldCoordinate worldCoordinate = VisionReplayManager.geoToWorld(geoCoordinate);
                 if (worldCoordinate == null) {
                     continue;
                 }
                 int distanceToVehicle = (int)latLng.distanceTo(currentVehicleLatLng);
-                POIState poiState = new POIState(p, distanceToVehicle, worldCoordinate);
+                POIState poiState = new POIState(poi, distanceToVehicle, worldCoordinate);
                 poiStateList.add(poiState);
             }
             return poiStateList;
@@ -220,8 +220,8 @@ public class POIActivity extends BaseActivity {
         private void updateBitmapByPOIList(@NonNull List<POIDrawData> poiDrawDataList) {
             canvasCameraFrame.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
             for (POIDrawData drawPoi : poiDrawDataList) {
-                paint.setAlpha(p.getPOIBitmapAlpha());
-                canvasCameraFrame.drawBitmap(p.getPOIBitmap(), null, p.getPOIBitmapRect(), paint);
+                paint.setAlpha(drawPoi.getPOIBitmapAlpha());
+                canvasCameraFrame.drawBitmap(drawPoi.getPOIBitmap(), null, drawPoi.getPOIBitmapRect(), paint);
             }
         }
     };
