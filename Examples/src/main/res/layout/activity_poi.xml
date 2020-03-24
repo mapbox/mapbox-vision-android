@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <com.mapbox.vision.view.VisionView
+        android:id="@+id/vision_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:visualization_mode="clear" />
+
+    <ImageView
+        android:id="@+id/poi_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/camera_calibration_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="top|start"
+        android:layout_margin="10dp"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:background="@android:color/transparent" />
+
+</FrameLayout>

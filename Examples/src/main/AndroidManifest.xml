@@ -78,6 +78,23 @@
         </activity>
         <activity android:name=".CustomDetectionActivity"
             android:screenOrientation="landscape" />
+
+        <activity
+            android:name=".POIActivity"
+            android:label="@string/poi_example"
+            android:screenOrientation="landscape">
+        </activity>
+
+        <activity
+            android:name=".POIActivityKt"
+            android:label="@string/poi_example"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
