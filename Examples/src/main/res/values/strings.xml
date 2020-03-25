@@ -6,4 +6,5 @@
     <string name="custom_detections_example">Custom Detections Example</string>
     <string name="poi_example">POI Example</string>
     <string name="camera_calibration_progress">Camera calibration: %1$d %%</string>
+    <string name="usb_video_source_example">Usb Camera Example</string>
 </resources>
