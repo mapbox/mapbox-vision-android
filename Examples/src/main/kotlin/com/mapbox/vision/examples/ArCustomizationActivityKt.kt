@@ -14,11 +14,10 @@ class ArCustomizationActivityKt : ArActivityKt() {
         // Set the desired lane length in meters.
         VisionArManager.setLaneLength(40f)
 
-        // Create an instance of LaneVisualParams
         val laneVisualParams = LaneVisualParams(
-            // Set the color
+            // Set red lane color
             color = Color(1.0f, 0.0f, 0.0f, 1.0f),
-            // Set the width
+            // Set lane width in meters
             width = 1f,
             // Set the length of the chevrons in meters
             arrowLength = 2.5f
@@ -29,9 +28,8 @@ class ArCustomizationActivityKt : ArActivityKt() {
         // Enable fence rendering
         visionArView.setFenceVisible(true)
 
-        // Create an instance of `FenceVisualParams`
         val fenceVisualParams = FenceVisualParams(
-            // Set the color of the fence
+            // Set yellow fence color
             color = Color(1.0f, 1.0f, 0.0f, 1.0f),
             // Set the height of the fence in meters
             height = 2f,

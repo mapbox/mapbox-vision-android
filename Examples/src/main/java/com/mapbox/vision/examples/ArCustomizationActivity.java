@@ -17,11 +17,10 @@ public class ArCustomizationActivity extends ArActivity {
         // Set the desired lane length in meters.
         VisionArManager.setLaneLength(40f);
 
-        // Create an instance of LaneVisualParams
         final LaneVisualParams laneVisualParams = new LaneVisualParams(
-                // Set the color
+                // Set red lane color
                 new Color(1.0f, 0.0f, 0.0f, 1.0f),
-                // Set the width
+                // Set lane width in meters
                 1f,
                 // Set the length of the chevrons in meters
                 2.5f
@@ -32,9 +31,8 @@ public class ArCustomizationActivity extends ArActivity {
         // Enable fence rendering
         visionArView.setFenceVisible(true);
 
-        // Create an instance of `FenceVisualParams`
         final FenceVisualParams fenceVisualParams = new FenceVisualParams(
-                // Set the color of the fence
+                // Set yellow fence color
                 new Color(1.0f, 1.0f, 0.0f, 1.0f),
                 // Set the height of the fence in meters
                 2f,
