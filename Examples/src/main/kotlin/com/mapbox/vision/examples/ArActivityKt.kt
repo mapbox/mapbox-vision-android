@@ -24,6 +24,7 @@ import com.mapbox.vision.ar.VisionArManager
 import com.mapbox.vision.ar.core.models.ManeuverType
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.ar.core.models.RoutePoint
+import com.mapbox.vision.ar.view.gl.VisionArView
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.performance.ModelPerformance
@@ -40,7 +41,7 @@ import retrofit2.Response
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
-class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
+open class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
 
     companion object {
         private var TAG = ArActivityKt::class.java.simpleName
@@ -79,6 +80,11 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
     // source and target locations.
     private val ROUTE_ORIGIN = Point.fromLngLat(27.654285, 53.928057)
     private val ROUTE_DESTINATION = Point.fromLngLat(27.655637, 53.935712)
+
+    protected open fun setArRenderOptions(visionArView: VisionArView) {
+        // enable fence rendering
+        visionArView.setFenceVisible(true)
+    }
 
     override fun onPermissionsGranted() {
         startVisionManager()
@@ -119,7 +125,7 @@ class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffR
             // Create VisionArManager.
             VisionArManager.create(VisionManager)
             mapbox_ar_view.setArManager(VisionArManager)
-            mapbox_ar_view.setFenceVisible(true)
+            setArRenderOptions(mapbox_ar_view)
 
             visionManagerWasInit = true
         }

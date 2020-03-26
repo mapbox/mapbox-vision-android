@@ -83,6 +83,10 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
         setContentView(R.layout.activity_ar_navigation);
     }
 
+    protected void setArRenderOptions(@NotNull final VisionArView visionArView) {
+        visionArView.setFenceVisible(true);
+    }
+
     @Override
     protected void onPermissionsGranted() {
         startVisionManager();
@@ -156,7 +160,7 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
             // Create VisionArManager.
             VisionArManager.create(VisionManager.INSTANCE);
             visionArView.setArManager(VisionArManager.INSTANCE);
-            visionArView.setFenceVisible(true);
+            setArRenderOptions(visionArView);
 
             visionManagerWasInit = true;
         }

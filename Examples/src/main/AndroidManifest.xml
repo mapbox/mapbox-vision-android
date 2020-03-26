@@ -29,7 +29,7 @@
 
         <activity
             android:name=".ExternalVideoSourceActivityKt"
-            android:label="@string/ext_camera_example"
+            android:label="@string/ext_video_example"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -112,6 +112,21 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ArCustomizationActivityKt"
+            android:label="@string/ar_customization_example"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ArCustomizationActivity"
+            android:screenOrientation="landscape">
+        </activity>
     </application>
 
 </manifest>
