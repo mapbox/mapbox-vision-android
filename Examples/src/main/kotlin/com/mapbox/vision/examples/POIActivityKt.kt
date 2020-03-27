@@ -37,16 +37,16 @@ class POIActivityKt : BaseActivity() {
 
         // POI will start to appear from transparent to non-transparent during this first meters of showing distance
         private const val DISTANCE_FOR_ALPHA_APPEAR_METERS = 150
-        private const val LABEL_SIZE_METERS = 8
-        private const val LABEL_ABOVE_GROUND_METERS = 4
+        private const val LABEL_SIZE_METERS = 16
+        private const val LABEL_ABOVE_GROUND_METERS = 8
+
+        // Download session from tutorial and push to device
+        private val SESSION_PATH = "${Environment.getExternalStorageDirectory().absolutePath}/session"
     }
 
     private val poiList: List<POI> by lazy { providePOIList() }
 
     private var visionReplayManagerWasInit = false
-
-    // Download session from tutorial and push to device
-    private var sessionPath = "${Environment.getExternalStorageDirectory().absolutePath}/session"
 
     private val visionEventsListener = object : VisionEventsListener {
 
@@ -209,7 +209,7 @@ class POIActivityKt : BaseActivity() {
 
     private fun startVisionManager() {
         if (allPermissionsGranted() && !visionReplayManagerWasInit) {
-            VisionReplayManager.create(sessionPath)
+            VisionReplayManager.create(SESSION_PATH)
             VisionReplayManager.visionEventsListener = visionEventsListener
             vision_view.setVisionManager(VisionReplayManager)
             VisionReplayManager.start()
@@ -227,27 +227,17 @@ class POIActivityKt : BaseActivity() {
 
     private fun providePOIList(): List<POI> {
 
-        val poiHamburgers = POI(
-                longitude = 27.68255352973938,
-                latitude = 53.94267477012304,
-                bitmap = getBitmapFromAssets("ic_hamburger.png"))
-
         val poiGasStation = POI(
                 longitude = 27.674764394760132,
                 latitude = 53.9405971055192,
                 bitmap = getBitmapFromAssets("ic_gas_station.png"))
-
-        val poiHighWay = POI(
-                longitude = 27.673187255859375,
-                latitude = 53.940477115649095,
-                bitmap = getBitmapFromAssets("ic_highway.png"))
 
         val poiCarWash = POI(
                 longitude = 27.675944566726685,
                 latitude = 53.94105180084251,
                 bitmap = getBitmapFromAssets("ic_car_wash.png"))
 
-        return arrayListOf(poiHamburgers, poiGasStation, poiHighWay, poiCarWash)
+        return arrayListOf(poiGasStation, poiCarWash)
     }
 
     private fun getBitmapFromAssets(asset: String): Bitmap {
