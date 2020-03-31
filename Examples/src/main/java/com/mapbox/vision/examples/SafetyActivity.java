@@ -2,8 +2,11 @@ package com.mapbox.vision.examples;
 
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
+
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
@@ -33,6 +36,20 @@ public class SafetyActivity extends BaseActivity {
     private VisionView visionView;
     private FrameLayout speedAlertView;
     private TextView speedLimitValueView;
+    private ImageView speedLimitSignView;
+
+    private static class SpeedLimit {
+        private int imageResId;
+        private int textColorId;
+
+        SpeedLimit(final int imageResId, final int textColorId) {
+            this.imageResId = imageResId;
+            this.textColorId = textColorId;
+        }
+    }
+
+    private final SpeedLimit overspeeding = new SpeedLimit(R.drawable.speed_limit_overspeeding, android.R.color.white);
+    private final SpeedLimit normal = new SpeedLimit(R.drawable.speed_limit_normal, android.R.color.black);
 
     // this listener handles events from Vision SDK
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
@@ -63,24 +80,20 @@ public class SafetyActivity extends BaseActivity {
 
         @Override
         public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
+            // do nothing if we did not find any speed limit signs
+            if (maxAllowedSpeed == -1f) return;
+
             // current speed of our car
             final float mySpeed = vehicleState.getSpeed();
-            // check if we are overspeeding
-            if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
-                // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
-                runOnUiThread(() -> {
-                    // show current speed limits in view
-                    speedAlertView.setVisibility(View.VISIBLE);
-                    // notify user by Toast that he's overspeeding
-                    Toast.makeText(
-                            SafetyActivity.this,
-                            "Overspeeding! Current speed : " + mySpeed,
-                            Toast.LENGTH_LONG).show();
-                });
-            } else {
-                // hide speeding view
-                runOnUiThread(() -> speedAlertView.setVisibility(View.GONE));
-            }
+            final SpeedLimit currentSpeedState = (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) ? overspeeding : normal;
+            // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
+            runOnUiThread(() -> {
+                speedLimitSignView.setImageResource(currentSpeedState.imageResId);
+                speedLimitValueView.setTextColor(ContextCompat.getColor(
+                        SafetyActivity.this,
+                        currentSpeedState.textColorId)
+                );
+            });
         }
 
         @Override
@@ -104,10 +117,14 @@ public class SafetyActivity extends BaseActivity {
         @Override
         public void onRoadRestrictionsUpdated(@NotNull RoadRestrictions roadRestrictions) {
             maxAllowedSpeed = roadRestrictions.getSpeedLimits().getCar().getMax();
-            // set speed value to view to show it if overspeeding occurs
-            runOnUiThread(() -> {
-                speedLimitValueView.setText(String.valueOf(maxAllowedSpeed));
-            });
+            if (maxAllowedSpeed != -1f) {
+                runOnUiThread(() -> {
+                    // set speed limit
+                    speedLimitValueView.setText(String.valueOf((int) maxAllowedSpeed));
+                    // start showing alert view
+                    speedAlertView.setVisibility(View.VISIBLE);
+                });
+            }
         }
     };
 
@@ -117,6 +134,7 @@ public class SafetyActivity extends BaseActivity {
         visionView = findViewById(R.id.vision_view);
         speedAlertView = findViewById(R.id.speed_alert_view);
         speedLimitValueView = findViewById(R.id.speed_value_view);
+        speedLimitSignView = findViewById(R.id.speed_sign_view);
     }
 
     @Override
