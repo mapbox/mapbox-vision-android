@@ -150,7 +150,6 @@ public class SafetyActivity extends BaseActivity {
 
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
-            speedLimitValueView.setVisibility(View.VISIBLE);
             VisionManager.create();
             visionView.setVisionManager(VisionManager.INSTANCE);
             VisionManager.start();
