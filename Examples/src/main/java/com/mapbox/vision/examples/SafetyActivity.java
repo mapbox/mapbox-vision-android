@@ -1,7 +1,9 @@
 package com.mapbox.vision.examples;
 
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
@@ -26,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SafetyActivity extends BaseActivity {
 
-    private Float maxAllowedSpeed = -1f;
+    private float maxAllowedSpeed = -1f;
     private boolean visionManagerWasInit = false;
     private VisionView visionView;
+    private FrameLayout speedAlertView;
+    private TextView speedLimitValueView;
 
     // this listener handles events from Vision SDK
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
@@ -60,17 +64,22 @@ public class SafetyActivity extends BaseActivity {
         @Override
         public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
             // current speed of our car
-            Float mySpeed = vehicleState.getSpeed();
-
-            // display toast with overspeed warning if our speed is greater than maximum allowed speed
+            final float mySpeed = vehicleState.getSpeed();
+            // check if we are overspeeding
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
                 // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
-                runOnUiThread(() -> Toast.makeText(
-                        SafetyActivity.this,
-                        "Overspeeding! Current speed : " + mySpeed +
-                                ", allowed speed : " + maxAllowedSpeed,
-                        Toast.LENGTH_LONG
-                ).show());
+                runOnUiThread(() -> {
+                    // show current speed limits in view
+                    speedAlertView.setVisibility(View.VISIBLE);
+                    // notify user by Toast that he's overspeeding
+                    Toast.makeText(
+                            SafetyActivity.this,
+                            "Overspeeding! Current speed : " + mySpeed,
+                            Toast.LENGTH_LONG).show();
+                });
+            } else {
+                // hide speeding view
+                runOnUiThread(() -> speedAlertView.setVisibility(View.GONE));
             }
         }
 
@@ -95,6 +104,10 @@ public class SafetyActivity extends BaseActivity {
         @Override
         public void onRoadRestrictionsUpdated(@NotNull RoadRestrictions roadRestrictions) {
             maxAllowedSpeed = roadRestrictions.getSpeedLimits().getCar().getMax();
+            // set speed value to view to show it if overspeeding occurs
+            runOnUiThread(() -> {
+                speedLimitValueView.setText(String.valueOf(maxAllowedSpeed));
+            });
         }
     };
 
@@ -102,6 +115,8 @@ public class SafetyActivity extends BaseActivity {
     protected void initViews() {
         setContentView(R.layout.activity_main);
         visionView = findViewById(R.id.vision_view);
+        speedAlertView = findViewById(R.id.speed_alert_view);
+        speedLimitValueView = findViewById(R.id.speed_value_view);
     }
 
     @Override
@@ -135,6 +150,7 @@ public class SafetyActivity extends BaseActivity {
 
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
+            speedLimitValueView.setVisibility(View.VISIBLE);
             VisionManager.create();
             visionView.setVisionManager(VisionManager.INSTANCE);
             VisionManager.start();

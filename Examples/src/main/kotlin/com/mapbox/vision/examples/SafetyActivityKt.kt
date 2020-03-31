@@ -1,5 +1,6 @@
 package com.mapbox.vision.examples
 
+import android.view.View
 import android.widget.Toast
 import com.mapbox.vision.VisionManager
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
@@ -45,16 +46,20 @@ class SafetyActivityKt : BaseActivity() {
             // current speed of our car
             val mySpeed = vehicleState.speed
 
-            // display toast with overspeed warning if our speed is greater than maximum allowed speed
             if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
                 // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
                 runOnUiThread {
+                    // show current speed limits in view
+
+                    // notify user by Toast that he's overspeeding
                     Toast.makeText(
                         this@SafetyActivityKt,
-                        "Overspeeding! Current speed : $mySpeed, allowed speed : $maxAllowedSpeed",
-                        Toast.LENGTH_LONG
-                    ).show()
+                        "Overspeeding! Current speed : $mySpeed",
+                        Toast.LENGTH_LONG).show()
                 }
+            } else {
+                // hide speeding view
+                runOnUiThread { speed_alert_view.visibility = View.GONE }
             }
         }
 
@@ -72,6 +77,8 @@ class SafetyActivityKt : BaseActivity() {
 
         override fun onRoadRestrictionsUpdated(roadRestrictions: RoadRestrictions) {
             maxAllowedSpeed = roadRestrictions.speedLimits.car.max
+            // set speed value to view to show it if overspeeding occurs
+            runOnUiThread { speed_value_view.text = maxAllowedSpeed.toString() }
         }
     }
 
