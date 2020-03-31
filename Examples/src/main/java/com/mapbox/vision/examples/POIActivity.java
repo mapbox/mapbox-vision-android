@@ -47,8 +47,8 @@ public class POIActivity extends BaseActivity {
 
     // POI will start to appear from transparent to non-transparent during this first meters of showing distance
     private static final int DISTANCE_FOR_ALPHA_APPEAR_METERS = 150;
-    private static final int LABEL_SIZE_METERS = 8;
-    private static final int LABEL_ABOVE_GROUND_METERS = 4;
+    private static final int LABEL_SIZE_METERS = 16;
+    private static final int LABEL_ABOVE_GROUND_METERS = 8;
     // Download session from tutorial and push to device
     private static final String SESSION_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/session";
 
@@ -287,11 +287,9 @@ public class POIActivity extends BaseActivity {
     }
 
     private List<POI> providePOIList() {
-        POI poiHamburgers = new POI(27.68255352973938, 53.94267477012304, getBitmapFromAssets("ic_hamburger.png"));
         POI poiGasStation = new POI(27.674764394760132, 53.9405971055192, getBitmapFromAssets("ic_gas_station.png"));
-        POI poiHighWay = new POI(27.673187255859375, 53.940477115649095, getBitmapFromAssets("ic_highway.png"));
         POI poiCarWash = new POI(27.675944566726685, 53.94105180084251, getBitmapFromAssets("ic_car_wash.png"));
-        return Arrays.asList(poiHamburgers, poiGasStation, poiHighWay, poiCarWash);
+        return Arrays.asList(poiGasStation, poiCarWash);
     }
 
     private Bitmap getBitmapFromAssets(@NonNull String asset) {
