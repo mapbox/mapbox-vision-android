@@ -1,6 +1,11 @@
 package com.mapbox.vision.examples;
 
-import android.widget.Toast;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
@@ -26,9 +31,25 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SafetyActivity extends BaseActivity {
 
-    private Float maxAllowedSpeed = -1f;
+    private float maxAllowedSpeed = -1f;
     private boolean visionManagerWasInit = false;
     private VisionView visionView;
+    private FrameLayout speedAlertView;
+    private TextView speedLimitValueView;
+    private ImageView speedLimitSignView;
+
+    private static class SpeedLimit {
+        private int imageResId;
+        private int textColorId;
+
+        SpeedLimit(final int imageResId, final int textColorId) {
+            this.imageResId = imageResId;
+            this.textColorId = textColorId;
+        }
+    }
+
+    private final SpeedLimit overspeeding = new SpeedLimit(R.drawable.speed_limit_overspeeding, android.R.color.white);
+    private final SpeedLimit normal = new SpeedLimit(R.drawable.speed_limit_normal, android.R.color.black);
 
     // this listener handles events from Vision SDK
     private VisionEventsListener visionEventsListener = new VisionEventsListener() {
@@ -59,19 +80,20 @@ public class SafetyActivity extends BaseActivity {
 
         @Override
         public void onVehicleStateUpdated(@NotNull VehicleState vehicleState) {
-            // current speed of our car
-            Float mySpeed = vehicleState.getSpeed();
+            // do nothing if we did not find any speed limit signs
+            if (maxAllowedSpeed == -1f) return;
 
-            // display toast with overspeed warning if our speed is greater than maximum allowed speed
-            if (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) {
-                // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
-                runOnUiThread(() -> Toast.makeText(
+            // current speed of our car
+            final float mySpeed = vehicleState.getSpeed();
+            final SpeedLimit currentSpeedState = (mySpeed > maxAllowedSpeed && maxAllowedSpeed > 0) ? overspeeding : normal;
+            // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
+            runOnUiThread(() -> {
+                speedLimitSignView.setImageResource(currentSpeedState.imageResId);
+                speedLimitValueView.setTextColor(ContextCompat.getColor(
                         SafetyActivity.this,
-                        "Overspeeding! Current speed : " + mySpeed +
-                                ", allowed speed : " + maxAllowedSpeed,
-                        Toast.LENGTH_LONG
-                ).show());
-            }
+                        currentSpeedState.textColorId)
+                );
+            });
         }
 
         @Override
@@ -95,6 +117,14 @@ public class SafetyActivity extends BaseActivity {
         @Override
         public void onRoadRestrictionsUpdated(@NotNull RoadRestrictions roadRestrictions) {
             maxAllowedSpeed = roadRestrictions.getSpeedLimits().getCar().getMax();
+            if (maxAllowedSpeed != -1f) {
+                runOnUiThread(() -> {
+                    // set speed limit
+                    speedLimitValueView.setText(String.valueOf((int) maxAllowedSpeed));
+                    // start showing alert view
+                    speedAlertView.setVisibility(View.VISIBLE);
+                });
+            }
         }
     };
 
@@ -102,6 +132,9 @@ public class SafetyActivity extends BaseActivity {
     protected void initViews() {
         setContentView(R.layout.activity_main);
         visionView = findViewById(R.id.vision_view);
+        speedAlertView = findViewById(R.id.speed_alert_view);
+        speedLimitValueView = findViewById(R.id.speed_value_view);
+        speedLimitSignView = findViewById(R.id.speed_sign_view);
     }
 
     @Override
