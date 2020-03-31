@@ -50,7 +50,7 @@ class SafetyActivityKt : BaseActivity() {
                 // all VisionListener callbacks are executed on a background thread. Need switch to a main thread
                 runOnUiThread {
                     // show current speed limits in view
-
+                    speed_alert_view.visibility = View.VISIBLE
                     // notify user by Toast that he's overspeeding
                     Toast.makeText(
                         this@SafetyActivityKt,
