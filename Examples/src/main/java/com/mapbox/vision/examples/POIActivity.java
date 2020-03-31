@@ -47,8 +47,8 @@ public class POIActivity extends BaseActivity {
 
     // POI will start to appear from transparent to non-transparent during this first meters of showing distance
     private static final int DISTANCE_FOR_ALPHA_APPEAR_METERS = 150;
-    private static final int LABEL_SIZE_METERS = 8;
-    private static final int LABEL_ABOVE_GROUND_METERS = 4;
+    private static final int LABEL_SIZE_METERS = 16;
+    private static final int LABEL_ABOVE_GROUND_METERS = 8;
     // Download session from tutorial and push to device
     private static final String SESSION_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/session";
 
