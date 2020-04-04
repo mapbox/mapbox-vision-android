@@ -1,16 +1,8 @@
 # Mapbox Vision Android Examples
 
-This repository shows couple of Vision SDK usage examples:
-- Using video file as video source
-- Basic Vision AR functions
-- Basic Vision Safety functions
+This repository contains examples of the Mapbox Vision SDK for Android usage.
+The examples are hosted and further described at https://docs.mapbox.com/help/tutorials/#vision and https://docs.mapbox.com/android/vision/examples/.  
 
 ## Installation and setup
 
-Main steps for setup:
-1. Sign up or log in to your Mapbox account and grab a [Mapbox access token](https://www.mapbox.com/help/define-access-token/)
-1. Set your Mapbox token as environmental variable `MAPBOX_ACCESS_TOKEN`
-1. Set your [Maven credentials](https://vision.mapbox.com/install/)
-
-For detailed information follow [installation instructions](https://vision.mapbox.com/install/) to install Vision and 
-check [the rest of documentation](https://docs.mapbox.com/android/vision/overview/).
+To install the examples follow the [installation instructions](https://docs.mapbox.com/android/vision/overview/install-and-configure/).
