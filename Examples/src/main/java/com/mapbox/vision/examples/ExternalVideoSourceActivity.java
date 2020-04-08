@@ -9,6 +9,7 @@ import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
 import com.mapbox.vision.mobile.core.models.Camera;
+import com.mapbox.vision.mobile.core.models.CameraParameters;
 import com.mapbox.vision.mobile.core.models.Country;
 import com.mapbox.vision.mobile.core.models.FrameSegmentation;
 import com.mapbox.vision.mobile.core.models.classification.FrameSignClassifications;
@@ -28,8 +29,13 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Example shows how Vision SDK can work with external video source. This can be some custom camera implementation or any
- * other source of frames - video, set of pictures, etc.
+ * Example shows how Vision SDK can work with external video source.
+ * This can be some custom camera implementation or any other source of frames - video, set of pictures, etc.
+ * <p>
+ * **Important:** To enable most of the features of Vision SDK like world description, AR and Safety,
+ * the custom {@link VideoSource} should also provide {@link CameraParameters}.
+ * Note, however, that this features still won't work for this particular example
+ * since video file played will not correspond to the realtime sensors (GPS, motion sensors) of the device.
  */
 public class ExternalVideoSourceActivity extends BaseActivity {
 
@@ -195,6 +201,17 @@ public class ExternalVideoSourceActivity extends BaseActivity {
                         ImageFormat.RGBA,
                         imageSize
                 );
+                // Set CameraParameters them each time they change.
+                // Note, however, that AR/Safety still won't work for this particular example
+                // since video file played will not correspond to the realtime sensors (GPS, motion sensors) of the device.
+//                videoSourceListener.onNewCameraParameters(
+//                        new CameraParameters(
+//                                width,
+//                                height,
+//                                focalX,
+//                                focalY
+//                        )
+//                );
                 rgbaByteBuffer.clear();
             }
         } catch (RuntimeException e) {
