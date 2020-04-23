@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.12.0
+
+### Device support
+- Added support for non-Snapdragon powered devices. Most chips on the market are supported now, 
+including Exynos by Samsung, Kirin by Huawei, Mediatek, etc.
+
+### Vision
+- Added `Japan` country and support for the detection of Japanese traffic signs
+- Added new `SignType`s:
+  - `InformationRestrictedParking`
+  - `RegulatorySchoolZone`
+  - `RegulatoryBicyclesAndPedestriansCrossing`
+  - `RegulatoryNoBusesAndHeavyVechicles`
+- Added `setProgress`/`getProgress` to VisionReplayManager to control session playback progress
+- Added `getDuration` to VisionReplayManager
+- Changed VisionReplayManager's behaviour:
+  - method start continues session replay from the current progress
+  - method stop stops session replay without changing the progress
+- Deprecated separate detection and segmentation models configuration. 
+Use `setModelPerformance` instead of `setModelPerformanceConfig` to customize performance of the SDK. 
+- Improved camera calibration algorithm speed
+- Improved lanes detection algorithm
+- Utilized new ML models that reduce resource consumption
+
+### AR
+- Added `VisionArEventsListener.onRouteUpdated` callback
+
 ## v0.11.0
 
 ### Vision
