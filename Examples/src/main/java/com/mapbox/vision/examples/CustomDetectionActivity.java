@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.widget.ImageView;
+
 import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener;
 import com.mapbox.vision.mobile.core.models.AuthorizationStatus;
@@ -22,11 +23,12 @@ import com.mapbox.vision.mobile.core.models.position.VehicleState;
 import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.performance.ModelPerformance;
-import com.mapbox.vision.performance.ModelPerformanceConfig;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
-import java.nio.ByteBuffer;
+
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.ByteBuffer;
 
 public class CustomDetectionActivity extends BaseActivity {
 
@@ -133,12 +135,10 @@ public class CustomDetectionActivity extends BaseActivity {
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create();
-            VisionManager.setModelPerformanceConfig(
-                    new ModelPerformanceConfig.Merged(
-                            new ModelPerformance.On(
-                                    ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH
-                            )
-                    )
+            VisionManager.setModelPerformance(
+                new ModelPerformance.On(
+                        ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH.INSTANCE
+                )
             );
             VisionManager.setVisionEventsListener(visionEventsListener);
             VisionManager.start();

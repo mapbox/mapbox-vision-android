@@ -28,7 +28,6 @@ import com.mapbox.vision.ar.view.gl.VisionArView
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.performance.ModelPerformance
-import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.utils.VisionLogger
@@ -111,12 +110,10 @@ open class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener,
         if (allPermissionsGranted() && !visionManagerWasInit) {
             // Create and start VisionManager.
             VisionManager.create()
-            VisionManager.setModelPerformanceConfig(
-                ModelPerformanceConfig.Merged(
-                    ModelPerformance.On(
-                        ModelPerformanceMode.DYNAMIC,
-                        ModelPerformanceRate.LOW
-                    )
+            VisionManager.setModelPerformance(
+                ModelPerformance.On(
+                    ModelPerformanceMode.DYNAMIC,
+                    ModelPerformanceRate.LOW
                 )
             )
             VisionManager.start()
