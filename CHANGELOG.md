@@ -12,7 +12,7 @@ including Exynos by Samsung, Kirin by Huawei, Mediatek, etc.
   - `InformationRestrictedParking`
   - `RegulatorySchoolZone`
   - `RegulatoryBicyclesAndPedestriansCrossing`
-  - `RegulatoryNoBusesAndHeavyVechicles`
+  - `RegulatoryNoBusesAndHeavyVehicles`
 - Added `setProgress`/`getProgress` to VisionReplayManager to control session playback progress
 - Added `getDuration` to VisionReplayManager
 - Changed VisionReplayManager's behaviour:

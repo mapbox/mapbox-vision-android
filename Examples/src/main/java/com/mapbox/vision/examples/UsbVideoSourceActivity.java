@@ -13,7 +13,6 @@ import com.mapbox.vision.VisionManager;
 import com.mapbox.vision.mobile.core.models.frame.ImageFormat;
 import com.mapbox.vision.mobile.core.models.frame.ImageSize;
 import com.mapbox.vision.performance.ModelPerformance;
-import com.mapbox.vision.performance.ModelPerformanceConfig;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
 import com.mapbox.vision.video.videosource.VideoSource;
@@ -137,10 +136,8 @@ public class UsbVideoSourceActivity extends BaseActivity {
     private void startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create(usbVideoSource);
-            VisionManager.setModelPerformanceConfig(
-                    new ModelPerformanceConfig.Merged(
-                            new ModelPerformance.On(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH)
-                    )
+            VisionManager.setModelPerformance(
+                new ModelPerformance.On(ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH.INSTANCE)
             );
             visionView.setVisionManager(VisionManager.INSTANCE);
             VisionManager.start();

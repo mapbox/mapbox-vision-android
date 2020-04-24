@@ -21,7 +21,6 @@ import com.mapbox.vision.mobile.core.models.position.VehicleState
 import com.mapbox.vision.mobile.core.models.road.RoadDescription
 import com.mapbox.vision.mobile.core.models.world.WorldDescription
 import com.mapbox.vision.performance.ModelPerformance
-import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import java.nio.ByteBuffer
@@ -140,11 +139,9 @@ class CustomDetectionActivityKt : BaseActivity() {
     private fun startVisionManager() {
         if (allPermissionsGranted() && !visionManagerWasInit) {
             VisionManager.create()
-            VisionManager.setModelPerformanceConfig(
-                ModelPerformanceConfig.Merged(
-                    ModelPerformance.On(
-                        ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH
-                    )
+            VisionManager.setModelPerformance(
+                ModelPerformance.On(
+                    ModelPerformanceMode.FIXED, ModelPerformanceRate.HIGH
                 )
             )
             VisionManager.visionEventsListener = visionEventsListener

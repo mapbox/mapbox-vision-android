@@ -3,8 +3,10 @@ package com.mapbox.vision.examples;
 import android.location.Location;
 import android.os.Looper;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineProvider;
@@ -43,13 +45,15 @@ import com.mapbox.vision.mobile.core.models.position.VehicleState;
 import com.mapbox.vision.mobile.core.models.road.RoadDescription;
 import com.mapbox.vision.mobile.core.models.world.WorldDescription;
 import com.mapbox.vision.performance.ModelPerformance.On;
-import com.mapbox.vision.performance.ModelPerformanceConfig.Merged;
 import com.mapbox.vision.performance.ModelPerformanceMode;
 import com.mapbox.vision.performance.ModelPerformanceRate;
 import com.mapbox.vision.utils.VisionLogger;
+
 import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -111,7 +115,7 @@ public class ArActivity extends BaseActivity implements RouteListener, ProgressC
         if (allPermissionsGranted() && !visionManagerWasInit) {
             // Create and start VisionManager.
             VisionManager.create();
-            VisionManager.setModelPerformanceConfig(new Merged(new On(ModelPerformanceMode.DYNAMIC, ModelPerformanceRate.LOW)));
+            VisionManager.setModelPerformance(new On(ModelPerformanceMode.DYNAMIC, ModelPerformanceRate.LOW.INSTANCE));
             VisionManager.start();
             VisionManager.setVisionEventsListener(new VisionEventsListener() {
                 @Override
