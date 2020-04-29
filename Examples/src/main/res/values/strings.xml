@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Vision Examples</string>
+    <string name="ext_video_example">External Video Source Example</string>
+    <string name="safety_example">Safety Example</string>
+    <string name="ar_example">AR Example</string>
+    <string name="ar_customization_example">AR Customization Example</string>
+    <string name="custom_detections_example">Custom Detections Example</string>
+    <string name="poi_example">POI Example</string>
+    <string name="camera_calibration_progress">Camera calibration: %1$d %%</string>
+    <string name="usb_video_source_example">Usb Camera Example</string>
 </resources>

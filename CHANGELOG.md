@@ -1,5 +1,121 @@
 # Changelog
 
+## v0.12.0
+
+### Device support
+- Added support for non-Snapdragon powered devices. Most chips on the market are supported now, 
+including Exynos by Samsung, Kirin by Huawei, Mediatek, etc.
+
+### Vision
+- Added `Japan` country and support for the detection of Japanese traffic signs
+- Added new `SignType`s:
+  - `InformationRestrictedParking`
+  - `RegulatorySchoolZone`
+  - `RegulatoryBicyclesAndPedestriansCrossing`
+  - `RegulatoryNoBusesAndHeavyVehicles`
+- Added `setProgress`/`getProgress` to VisionReplayManager to control session playback progress
+- Added `getDuration` to VisionReplayManager
+- Changed VisionReplayManager's behaviour:
+  - method start continues session replay from the current progress
+  - method stop stops session replay without changing the progress
+- Deprecated separate detection and segmentation models configuration. 
+Use `setModelPerformance` instead of `setModelPerformanceConfig` to customize performance of the SDK. 
+- Improved camera calibration algorithm speed
+- Improved lanes detection algorithm
+- Utilized new ML models that reduce resource consumption
+
+### AR
+- Added `VisionArEventsListener.onRouteUpdated` callback
+
+## v0.11.0
+
+### Vision
+- Added `Germany` country
+- Added new `SignTypes`:
+`InformationCarWashing`, `InformationBusStop`, `RegulatoryPedestriansCrossingUp`,
+`RegulatoryPedestriansCrossingDown`, `InformationAutoService`, `InformationFood`,
+`InformationTown`, `InformationTownEnd`, `RegulatoryControl`,
+`RegulatoryDoubleUTurn`, `SpeedLimitZone`, `SpeedLimitEndZone`
+- Added an ability to work with image data as direct `ByteBuffer`'s
+- Added an ability to copy `Image` pixel data to `ByteArray`/`ByteBuffer`
+- Added proguard consumer config to allow obfuscation on client side
+- Added `armeabi-v7a` ABI to abiFilters to build older architecture
+- Fixed a crash happening on `VisionManager.destroy`
+
+### Ar
+- Added new `Fence` AR style
+- Added `FenceVisualParams` class and `VisionArView.setFenceVisualParams` method for customization of `Fence` rendering
+- Added `VisionArView.setArQuality` method to set overall quality of AR objects
+- Added `VisionArView.setFenceVisible`/`VisionArView.isFenceVisible`/
+`VisionArView.setLaneVisible`/`VisionArView.isLaneVisible` to manage displayed AR features
+- Added `VisionArView.onPause` method, that should be called when view is
+hidden or detached
+
+## v0.10.1
+
+- Fixed bug with session not being recorded
+
+## v0.10.0
+
+- Added support for Snapdragon 855
+- `VisionView` renders now with OpenGL ES
+- Changed public API of `VisionView`
+- Changed `VisionView` lifecycle if `VisionManager` is set
+- Change internal camera lifecycle
+- Fixed memory leak on `VisionManager.destroy()`
+- Fixed gpu memory leak
+- Fixed issues with destroying VisionManager
+- Renamed `VisualizationMode.Detections` to `VisualizationMode.Detection`
+- Added detection of construction cones
+- Improved quality of detection/segmentation, especially at night
+- Improved segmentation, now it's more focused on road specific elements. New segmentation model recognizes the following classes: Crosswalk, Hood, MarkupDashed, MarkupDouble, MarkupOther, MarkupSolid, Other, Road, RoadEdge, Sidewalk
+
+## v0.9.0
+
+### Vision
+- Added to `VisionManager` method `start()`, property `visionEventsListener`. `visionEventsListener` is held as a weak reference.
+- Added to `VisionReplayManager` method `start()`, property `visionEventsListener`. `visionEventsListener` is held as a weak reference.
+- Deprecated `VisionManager` method `start(VisionEventsListener)`
+- Deprecated `VisionReplayManager` method `start(VisionEventsListener)`
+- Added new `SignType`s: `RegulatoryKeepLeftPicture`, `RegulatoryKeepLeftText`,`AheadSpeedLimit`,`WarningSpeedLimit`,`RegulatoryNoUTurnRight`,`WarningTurnRightOnlyArrow`
+
+### Ar
+- Added to `VisionArManager` method `create(BaseVisionManager)`, property `visionArEventsListener`. `visionArEventsListener` is held as a weak reference.
+- Deprecated `VisionArManager` method `create(BaseVisionManager, VisionArEventsListener)`
+- Changed `Ar Lane` API, `VisionArView`: `setArManager(VisionArManager)`
+- Removed from `VisionArView` following methods: `onArCameraUpdated`, `onArLaneUpdated`, `onNewFrame`, `onNewCameraParameters`
+- Changed `VisionArView` doesn't implement `VideoSourceListener` and `VisionArEventsListener`
+- Changed `Ar Lane` appearance
+- Moved `Ar` rendering to native
+
+## Safety
+- Added to `VisionSafetyManager` method `create(BaseVisionManager)`, property `visionSafetyListener`. `visionSafetyListener` is held as a weak reference.
+- Deprecated `VisionSafetyManager` method `create(BaseVisionManager, VisionSafetyListener)`
+
+## v0.8.1
+
+### Vision
+- Fixed crash on `VisionManager.create()` with custom `VideoSource`
+
+## v0.8.0
+
+### Vision
+- Start monitoring performance related device info
+
+## v0.7.1
+
+### Vision
+- Fixed ModelPerformanceMode.DYNAMIC not taking effect with ModelPerformanceConfig.Merged
+- Fixed detections of sign objects
+
+## v0.7.0
+
+### Vision
+- Improved lane detection
+- Fixed swapped top and bottom coordinates in `Detection.boundingBox`
+- `FrameStatistics` renaming `FPS` -> `Fps`
+- Improve performance of `VisionReplayManager` 
+
 ## v0.6.0
 
 ### Vision

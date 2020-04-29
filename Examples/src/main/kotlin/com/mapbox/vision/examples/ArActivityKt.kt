@@ -1,16 +1,16 @@
 package com.mapbox.vision.examples
 
 import android.location.Location
-import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.mapbox.android.core.location.LocationEngineCallback
 import com.mapbox.android.core.location.LocationEngineProvider
 import com.mapbox.android.core.location.LocationEngineRequest
 import com.mapbox.android.core.location.LocationEngineResult
 import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.api.directions.v5.models.DirectionsRoute
+import com.mapbox.core.constants.Constants
 import com.mapbox.geojson.Point
+import com.mapbox.geojson.utils.PolylineUtils
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigationOptions
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute
@@ -21,12 +21,13 @@ import com.mapbox.services.android.navigation.v5.routeprogress.ProgressChangeLis
 import com.mapbox.services.android.navigation.v5.routeprogress.RouteProgress
 import com.mapbox.vision.VisionManager
 import com.mapbox.vision.ar.VisionArManager
+import com.mapbox.vision.ar.core.models.ManeuverType
 import com.mapbox.vision.ar.core.models.Route
 import com.mapbox.vision.ar.core.models.RoutePoint
+import com.mapbox.vision.ar.view.gl.VisionArView
 import com.mapbox.vision.mobile.core.interfaces.VisionEventsListener
 import com.mapbox.vision.mobile.core.models.position.GeoCoordinate
 import com.mapbox.vision.performance.ModelPerformance
-import com.mapbox.vision.performance.ModelPerformanceConfig
 import com.mapbox.vision.performance.ModelPerformanceMode
 import com.mapbox.vision.performance.ModelPerformanceRate
 import com.mapbox.vision.utils.VisionLogger
@@ -39,7 +40,7 @@ import retrofit2.Response
  * Example shows how Vision and VisionAR SDKs are used to draw AR lane over the video stream from camera.
  * Also, Mapbox navigation services are used to build route and  navigation session.
  */
-class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
+open class ArActivityKt : BaseActivity(), RouteListener, ProgressChangeListener, OffRouteListener {
 
     companion object {
         private var TAG = ArActivityKt::class.java.simpleName
@@ -52,15 +53,18 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
     private lateinit var lastRouteProgress: RouteProgress
     private lateinit var directionsRoute: DirectionsRoute
 
+    private var visionManagerWasInit = false
+    private var navigationWasStarted = false
+
     private val arLocationEngine by lazy {
         LocationEngineProvider.getBestLocationEngine(this)
     }
 
     private val arLocationEngineRequest by lazy {
         LocationEngineRequest.Builder(0)
-                .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
-                .setFastestInterval(1000)
-                .build()
+            .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
+            .setFastestInterval(1000)
+            .build()
     }
 
     private val locationCallback by lazy {
@@ -76,52 +80,107 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
     private val ROUTE_ORIGIN = Point.fromLngLat(27.654285, 53.928057)
     private val ROUTE_DESTINATION = Point.fromLngLat(27.655637, 53.935712)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        this.setContentView(R.layout.activity_ar_navigation)
-
-        // Initialize navigation with your Mapbox access token.
-        mapboxNavigation = MapboxNavigation(
-                this,
-                getString(R.string.mapbox_access_token),
-                MapboxNavigationOptions.builder().build()
-        )
-
-        // Initialize route fetcher with your Mapbox access token.
-        routeFetcher = RouteFetcher(this, getString(R.string.mapbox_access_token))
-        routeFetcher.addRouteListener(this)
+    protected open fun setArRenderOptions(visionArView: VisionArView) {
+        // enable fence rendering
+        visionArView.setFenceVisible(true)
     }
 
-    override fun onResume() {
-        super.onResume()
-        try {
-            arLocationEngine.requestLocationUpdates(arLocationEngineRequest, locationCallback, mainLooper)
-        } catch (se: SecurityException) {
-            VisionLogger.e(TAG, se.toString())
-        }
+    override fun onPermissionsGranted() {
+        startVisionManager()
+        startNavigation()
+    }
 
-        initDirectionsRoute()
+    override fun initViews() {
+        setContentView(R.layout.activity_ar_navigation)
+    }
 
-        // Route need to be reestablished if off route happens.
-        mapboxNavigation.addOffRouteListener(this)
-        mapboxNavigation.addProgressChangeListener(this)
+    override fun onStart() {
+        super.onStart()
+        startVisionManager()
+        startNavigation()
+    }
 
-        // Create and start VisionManager.
-        VisionManager.create()
-        VisionManager.setModelPerformanceConfig(
-            ModelPerformanceConfig.Merged(
+    override fun onStop() {
+        super.onStop()
+        stopVisionManager()
+        stopNavigation()
+    }
+
+    private fun startVisionManager() {
+        if (allPermissionsGranted() && !visionManagerWasInit) {
+            // Create and start VisionManager.
+            VisionManager.create()
+            VisionManager.setModelPerformance(
                 ModelPerformance.On(
-                    ModelPerformanceMode.FIXED,
+                    ModelPerformanceMode.DYNAMIC,
                     ModelPerformanceRate.LOW
                 )
             )
-        )
-        VisionManager.start(visionEventsListener = object : VisionEventsListener {})
+            VisionManager.start()
+            VisionManager.visionEventsListener = object : VisionEventsListener {}
 
-        VisionManager.setVideoSourceListener(mapbox_ar_view)
+            // Create VisionArManager.
+            VisionArManager.create(VisionManager)
+            mapbox_ar_view.setArManager(VisionArManager)
+            setArRenderOptions(mapbox_ar_view)
 
-        // Create VisionArManager.
-        VisionArManager.create(VisionManager, mapbox_ar_view)
+            visionManagerWasInit = true
+        }
+    }
+
+    private fun stopVisionManager() {
+        if (visionManagerWasInit) {
+            VisionArManager.destroy()
+            VisionManager.stop()
+            VisionManager.destroy()
+
+            visionManagerWasInit = false
+        }
+    }
+
+    private fun startNavigation() {
+        if (allPermissionsGranted() && !navigationWasStarted) {
+            // Initialize navigation with your Mapbox access token.
+            mapboxNavigation = MapboxNavigation(
+                this,
+                getString(R.string.mapbox_access_token),
+                MapboxNavigationOptions.builder().build()
+            )
+
+            // Initialize route fetcher with your Mapbox access token.
+            routeFetcher = RouteFetcher(this, getString(R.string.mapbox_access_token))
+            routeFetcher.addRouteListener(this)
+
+            try {
+                arLocationEngine.requestLocationUpdates(
+                    arLocationEngineRequest,
+                    locationCallback,
+                    mainLooper
+                )
+            } catch (se: SecurityException) {
+                VisionLogger.e(TAG, se.toString())
+            }
+
+            initDirectionsRoute()
+
+            // Route need to be reestablished if off route happens.
+            mapboxNavigation.addOffRouteListener(this)
+            mapboxNavigation.addProgressChangeListener(this)
+
+            navigationWasStarted = true
+        }
+    }
+
+    private fun stopNavigation() {
+        if (navigationWasStarted) {
+            arLocationEngine.removeLocationUpdates(locationCallback)
+
+            mapboxNavigation.removeProgressChangeListener(this)
+            mapboxNavigation.removeOffRouteListener(this)
+            mapboxNavigation.stopNavigation()
+
+            navigationWasStarted = false
+        }
     }
 
     private fun initDirectionsRoute() {
@@ -131,7 +190,10 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
             .destination(ROUTE_DESTINATION)
             .build()
             .getRoute(object : Callback<DirectionsResponse> {
-                override fun onResponse(call: Call<DirectionsResponse>, response: Response<DirectionsResponse>) {
+                override fun onResponse(
+                    call: Call<DirectionsResponse>,
+                    response: Response<DirectionsResponse>
+                ) {
                     if (response.body() == null || response.body()!!.routes().isEmpty()) {
                         return
                     }
@@ -154,19 +216,6 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
                     t.printStackTrace()
                 }
             })
-    }
-
-    override fun onPause() {
-        super.onPause()
-        VisionArManager.destroy()
-        VisionManager.stop()
-        VisionManager.destroy()
-
-        arLocationEngine.removeLocationUpdates(locationCallback)
-
-        mapboxNavigation.removeProgressChangeListener(this)
-        mapboxNavigation.removeOffRouteListener(this)
-        mapboxNavigation.stopNavigation()
     }
 
     override fun onErrorReceived(throwable: Throwable?) {
@@ -207,22 +256,24 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
 
     private fun DirectionsRoute.getRoutePoints(): Array<RoutePoint> {
         val routePoints = arrayListOf<RoutePoint>()
-        legs()?.forEach { it ->
-            it.steps()?.forEach { step ->
+        legs()?.forEach { leg ->
+            leg.steps()?.forEach { step ->
                 val maneuverPoint = RoutePoint(
                     GeoCoordinate(
                         latitude = step.maneuver().location().latitude(),
                         longitude = step.maneuver().location().longitude()
-                    )
+                    ),
+                    step.maneuver().type().mapToManeuverType()
                 )
                 routePoints.add(maneuverPoint)
 
-                step.intersections()
-                    ?.map {
+                step.geometry()
+                    ?.buildStepPointsFromGeometry()
+                    ?.map { geometryStep ->
                         RoutePoint(
                             GeoCoordinate(
-                                latitude = step.maneuver().location().latitude(),
-                                longitude = step.maneuver().location().longitude()
+                                latitude = geometryStep.latitude(),
+                                longitude = geometryStep.longitude()
                             )
                         )
                     }
@@ -233,5 +284,29 @@ class ArActivityKt : AppCompatActivity(), RouteListener, ProgressChangeListener,
         }
 
         return routePoints.toTypedArray()
+    }
+
+    private fun String.buildStepPointsFromGeometry(): List<Point> {
+        return PolylineUtils.decode(this, Constants.PRECISION_6)
+    }
+
+    private fun String?.mapToManeuverType(): ManeuverType = when (this) {
+        "turn" -> ManeuverType.Turn
+        "depart" -> ManeuverType.Depart
+        "arrive" -> ManeuverType.Arrive
+        "merge" -> ManeuverType.Merge
+        "on ramp" -> ManeuverType.OnRamp
+        "off ramp" -> ManeuverType.OffRamp
+        "fork" -> ManeuverType.Fork
+        "roundabout" -> ManeuverType.Roundabout
+        "exit roundabout" -> ManeuverType.RoundaboutExit
+        "end of road" -> ManeuverType.EndOfRoad
+        "new name" -> ManeuverType.NewName
+        "continue" -> ManeuverType.Continue
+        "rotary" -> ManeuverType.Rotary
+        "roundabout turn" -> ManeuverType.RoundaboutTurn
+        "notification" -> ManeuverType.Notification
+        "exit rotary" -> ManeuverType.RoundaboutExit
+        else -> ManeuverType.None
     }
 }

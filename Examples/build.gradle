@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
-apply from: 'generate-token.gradle'
+apply from: '../gradle/generate-token.gradle'
 
 apply from: "../gradle/utils.gradle"
 apply from: "../gradle/versions.gradle"
@@ -42,10 +42,14 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
+    implementation("com.serenegiant:common:$uvccamera_common") {
+        exclude module: 'support-v4'
+    }
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "androidx.appcompat:appcompat:$android_x_appcompat"
-    implementation "androidx.constraintlayout:constraintlayout:$android_x_constraint_layout"
 
     implementation "com.mapbox.mapboxsdk:mapbox-android-sdk:$mapbox_sdk"
     implementation "com.mapbox.mapboxsdk:mapbox-android-navigation:$mapbox_navigation"
@@ -54,18 +58,7 @@ dependencies {
 
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
-    if (booleanProjectOrLocalProperty('BUILD_CORE_FROM_SOURCE')) {
-        implementation project(path: ':Vision')
-        implementation project(path: ':VisionAr')
-        implementation project(path: ':VisionSafety')
-        implementation project(path: ':CoreAr')
-        implementation project(path: ':CoreSdk')
-        implementation project(path: ':CoreSafety')
-    } else {
-        implementation "com.mapbox.vision:mapbox-android-vision:$vision"
-        implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision_ar"
-        implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision_safety"
-    }
-
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "com.mapbox.vision:mapbox-android-vision:$vision"
+    implementation "com.mapbox.vision:mapbox-android-vision-ar:$vision"
+    implementation "com.mapbox.vision:mapbox-android-vision-safety:$vision"
 }
