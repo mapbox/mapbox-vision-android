@@ -9,7 +9,7 @@ apply from: "../gradle/versions.gradle"
 apply from: "../gradle/ktlint.gradle"
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion compile_sdk_version
 
     compileOptions {
         sourceCompatibility 1.8
@@ -18,8 +18,8 @@ android {
 
     defaultConfig {
         applicationId "com.mapbox.vision.examples"
-        minSdkVersion 23
-        targetSdkVersion 28
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
         versionCode 1
         versionName "1.0"
 
