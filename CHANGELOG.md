@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.13.0
+
+### Vision
+- Added video recording for custom `VideoSource` implementation
+- Updated Vision, Vision AR and Vision Safety to Android SDK 10
+- Added all required permissions to Vision SDK manifest.
+- Added selection of default 960x540 camera resolution or closest to 16x9 in Camera2VideoSourceImpl
+- Added param to Camera2VideoSourceImpl constructor to enable\disable autofocus
+- Added support of reverse landscape orientation
+- Updated SNPE to 1.39.0
+- Removed deprecated code for 0.12.0
+
+### AR
+- Replaced `VisionView` rendering with common rendering engine for all platforms.
+- Replaced `VisionArView` rendering with common rendering engine for all platforms.
+
 ## v0.12.0
 
 ### Device support
