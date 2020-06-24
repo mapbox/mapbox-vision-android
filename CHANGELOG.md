@@ -7,7 +7,7 @@
 - Updated Vision, Vision AR and Vision Safety to Android SDK 10
 - Added all required permissions to Vision SDK manifest
 - Changed default resolution of Camera2VideoSourceImpl to 960*540
-- Added param to Camera2VideoSourceImpl constructor to enable\disable autofocus
+- Added optional parameter to Camera2VideoSourceImpl constructor to enable\disable autofocus
 - Added support of reverse landscape orientation
 - Removed deprecated code for 0.12.0:
   - `VisionManager.setModelPerformanceConfig`
@@ -16,8 +16,7 @@
   - `SystemInfoUtils.getSystemProperty`
   - `enum class SupportedSnapdragonBoards`
   - `class ModelPerformanceConfig`
-- Replaced `VisionView` rendering with common rendering engine for all platforms
-- Replaced `VisionArView` rendering with common rendering engine for all platforms
+- Integrated new rendering engine for VisionView and VisionArView with better performance
 - Integrated LaneDetection mode for VisionView
 - Deprecated `VisionArEventsListener.onArCameraUpdated` method
 - Extended `Camera` class returned by `VisionEventsListener.onCameraUpdated`
