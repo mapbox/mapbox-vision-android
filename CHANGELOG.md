@@ -20,7 +20,7 @@
 - Integrated LaneDetection mode for VisionView
 - Deprecated `VisionArEventsListener.onArCameraUpdated` method
 - Extended `Camera` class returned by `VisionEventsListener.onCameraUpdated`
-- Added Okinawa to Japan sign classifier
+- Added Okinawa to Japan country detector
 - Improved segmentation rendering
 - Improved adjacent lanes detection
 - Added `VisionManager.setCameraHeight`
