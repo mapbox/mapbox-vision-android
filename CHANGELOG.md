@@ -17,7 +17,7 @@
 - Stop sending some inaccurate events until the camera is calibrated
 - Introduce automatic camera recalibration
 - Expand Japan region to include Okinawa
-- Fix bug with speed estimation when a vehicle is stopped
+- Fix bug with speed estimation when a vehicle has stopped
 - Fix bug that prevented new China users authorization
 - Remove deprecated code for 0.12.0:
 	- `VisionManager.setModelPerformanceConfig`
