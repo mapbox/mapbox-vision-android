@@ -13,7 +13,7 @@
 - Add `VisionManager.setCameraHeight`
 - Deprecate `ARCamera` class
 - Add `aspectRatio`, `roll`, `pitch`, `yaw`, `height` properties to `Camera`
-- Improve lane detection #2671 #2567
+- Improve lane detection
 - Stop sending some inaccurate events until the camera is calibrated
 - Introduce automatic camera recalibration
 - Expand Japan region to include Okinawa
@@ -26,7 +26,6 @@
 	- `SystemInfoUtils.getSystemProperty`
 	- `enum class SupportedSnapdragonBoards`
 	- `class ModelPerformanceConfig`
-
 
 ## v0.12.0
 
