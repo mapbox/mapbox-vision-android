@@ -9,7 +9,7 @@ ext {
 
     android_x_appcompat = '1.1.0'
 
-    vision = '0.12.0'
+    vision = '0.13.0'
 
     mapbox_core = '1.4.1'
     mapbox_navigation = '0.42.5'
