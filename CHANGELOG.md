@@ -3,26 +3,30 @@
 ## v0.13.0
 
 ### Vision
-- Added video recording for custom `VideoSource` implementation
-- Updated Vision, Vision AR and Vision Safety to Android SDK 10
-- Added all required permissions to Vision SDK manifest
-- Changed default resolution of Camera2VideoSourceImpl to 960*540
-- Added optional parameter to Camera2VideoSourceImpl constructor to enable\disable autofocus
-- Added support of reverse landscape orientation
-- Removed deprecated code for 0.12.0:
-  - `VisionManager.setModelPerformanceConfig`
-  - `VisionReplayManager.setModelPerformanceConfig`
-  - `SystemInfoUtils.getSnpeSupportedBoard`
-  - `SystemInfoUtils.getSystemProperty`
-  - `enum class SupportedSnapdragonBoards`
-  - `class ModelPerformanceConfig`
+- Add video recording for custom `VideoSource` implementation
+- Update Vision, Vision AR and Vision Safety to Android SDK 10
+- Add all required permissions to Vision SDK manifest
+- Change default resolution of Camera2VideoSourceImpl to 960*540
+- Add optional parameter to Camera2VideoSourceImpl constructor to enable\disable autofocus
+- Add support of reverse landscape orientation
 - Integrated new rendering engine for VisionView and VisionArView with better performance
-- Integrated LaneDetection mode for VisionView
-- Deprecated `VisionArEventsListener.onArCameraUpdated` method
-- Extended `Camera` class returned by `VisionEventsListener.onCameraUpdated`
-- Added Okinawa to Japan country detector
-- Improved adjacent lanes detection
-- Added `VisionManager.setCameraHeight`
+- Add `VisionManager.setCameraHeight`
+- Deprecate `ARCamera` class
+- Add `aspectRatio`, `roll`, `pitch`, `yaw`, `height` properties to `Camera`
+- Improve lane detection #2671 #2567
+- Stop sending some inaccurate events until the camera is calibrated
+- Introduce automatic camera recalibration
+- Expand Japan region to include Okinawa
+- Fix bug with speed estimation when a vehicle is stopped
+- Fix bug that prevented new China users authorization
+- Remove deprecated code for 0.12.0:
+	- `VisionManager.setModelPerformanceConfig`
+	- `VisionReplayManager.setModelPerformanceConfig`
+	- `SystemInfoUtils.getSnpeSupportedBoard`
+	- `SystemInfoUtils.getSystemProperty`
+	- `enum class SupportedSnapdragonBoards`
+	- `class ModelPerformanceConfig`
+
 
 ## v0.12.0
 
