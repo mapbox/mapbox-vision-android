@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.13.0
+
+### Vision
+- Add video recording for custom `VideoSource` implementation
+- Update Vision, Vision AR and Vision Safety to Android SDK 10
+- Add all required permissions to Vision SDK manifest
+- Change default resolution of Camera2VideoSourceImpl to 960*540
+- Add optional parameter to Camera2VideoSourceImpl constructor to enable\disable autofocus
+- Add support of reverse landscape orientation
+- Integrated new rendering engine for VisionView and VisionArView with better performance
+- Add `VisionManager.setCameraHeight`
+- Deprecate `ARCamera` class
+- Add `aspectRatio`, `roll`, `pitch`, `yaw`, `height` properties to `Camera`
+- Improve lane detection
+- Stop sending some inaccurate events until the camera is calibrated
+- Introduce automatic camera recalibration
+- Expand Japan region to include Okinawa
+- Fix bug with speed estimation when a vehicle is stopped
+- Fix bug that prevented new China users authorization
+- Remove deprecated code for 0.12.0:
+	- `VisionManager.setModelPerformanceConfig`
+	- `VisionReplayManager.setModelPerformanceConfig`
+	- `SystemInfoUtils.getSnpeSupportedBoard`
+	- `SystemInfoUtils.getSystemProperty`
+	- `enum class SupportedSnapdragonBoards`
+	- `class ModelPerformanceConfig`
+
 ## v0.12.0
 
 ### Device support
