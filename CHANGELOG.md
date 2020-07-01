@@ -11,7 +11,6 @@
 - Add support of reverse landscape orientation
 - Integrated new rendering engine for VisionView and VisionArView with better performance
 - Add `VisionManager.setCameraHeight`
-- Deprecate `ARCamera` class
 - Add `aspectRatio`, `roll`, `pitch`, `yaw`, `height` properties to `Camera`
 - Improve lane detection
 - Stop sending some inaccurate events until the camera is calibrated
@@ -26,6 +25,10 @@
 	- `SystemInfoUtils.getSystemProperty`
 	- `enum class SupportedSnapdragonBoards`
 	- `class ModelPerformanceConfig`
+
+### AR
+
+- Deprecate `ARCamera` class in favor of utilization of `Camera` class
 
 ## v0.12.0
 
