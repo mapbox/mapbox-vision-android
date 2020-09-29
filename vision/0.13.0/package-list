@@ -1,0 +1,15 @@
+com.mapbox.vision
+com.mapbox.vision.gl
+com.mapbox.vision.manager
+com.mapbox.vision.mobile.core.interfaces
+com.mapbox.vision.mobile.core.models
+com.mapbox.vision.mobile.core.models.classification
+com.mapbox.vision.mobile.core.models.detection
+com.mapbox.vision.mobile.core.models.frame
+com.mapbox.vision.mobile.core.models.position
+com.mapbox.vision.mobile.core.models.road
+com.mapbox.vision.mobile.core.models.world
+com.mapbox.vision.performance
+com.mapbox.vision.video.videosource
+com.mapbox.vision.video.videosource.camera
+com.mapbox.vision.view
