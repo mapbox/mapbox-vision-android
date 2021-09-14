@@ -1,2 +1,2 @@
 before_install:
-- echo $MAPBOX_ACCESS_TOKEN | cut -f 2 -d . | base64 --decode
+- echo $MAPBOX_DOWNLOADS_TOKEN | cut -f 2 -d . | base64 --decode
