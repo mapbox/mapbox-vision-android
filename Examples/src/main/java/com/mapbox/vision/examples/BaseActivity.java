@@ -4,16 +4,14 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.Html;
-import android.text.Spanned;
-import android.widget.Toast;
-
+import android.text.method.LinkMovementMethod;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-
+import androidx.core.text.HtmlCompat;
 import com.mapbox.vision.mobile.core.utils.SystemInfoUtils;
-import com.mapbox.vision.mobile.core.utils.snapdragon.SupportedSnapdragonBoards;
 import com.mapbox.vision.utils.VisionLogger;
 
 public abstract class BaseActivity extends AppCompatActivity {
@@ -29,17 +27,28 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String board = SystemInfoUtils.INSTANCE.getSnpeSupportedBoard();
-        if (!SupportedSnapdragonBoards.isBoardSupported(board)) {
-            Spanned text =
-                    Html.fromHtml("The device is not supported, you need <b>Snapdragon-powered</b> device with <b>OpenCL</b> support, more details at <b>https://www.mapbox.com/android-docs/vision/overview/</b>");
-            Toast.makeText(this, text, Toast.LENGTH_LONG).show();
-            VisionLogger.Companion.e(
-                    "NotSupportedBoard",
-                    "Current board is " + board + ", Supported Boards: [ " + getSupportedBoardNames() + " ]; System Info: [ " + SystemInfoUtils.INSTANCE.obtainSystemInfo() + " ]"
+        if (!SystemInfoUtils.INSTANCE.isVisionSupported()) {
+            final TextView textView = new TextView(this);
+            final int padding = (int) dpToPx(20f);
+            textView.setPadding(padding, padding, padding, padding);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
+            textView.setClickable(true);
+            textView.setText(
+                    HtmlCompat.fromHtml(
+                            getString(R.string.vision_not_supported_message),
+                            HtmlCompat.FROM_HTML_MODE_LEGACY
+                    )
             );
-            finish();
-            return;
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.vision_not_supported_title)
+                    .setView(textView)
+                    .setCancelable(false)
+                    .show();
+
+            VisionLogger.Companion.e(
+                    "BoardNotSupported",
+                    "System Info: [" + SystemInfoUtils.INSTANCE.obtainSystemInfo() + "]"
+            );
         }
 
         initViews();
@@ -51,15 +60,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         } else {
             onPermissionsGranted();
         }
-    }
-
-    private String getSupportedBoardNames() {
-        StringBuilder sb = new StringBuilder();
-        for (SupportedSnapdragonBoards board : SupportedSnapdragonBoards.values()) {
-            sb.append(board.name());
-        }
-
-        return sb.toString();
     }
 
     protected boolean allPermissionsGranted() {
@@ -92,6 +92,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
 
         return permissions;
+    }
+
+    private float dpToPx(final float dp) {
+        return dp * getApplicationContext().getResources().getDisplayMetrics().density;
     }
 
     @Override

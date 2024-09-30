@@ -8,4 +8,6 @@
     <string name="poi_example">POI Example</string>
     <string name="camera_calibration_progress">Camera calibration: %1$d %%</string>
     <string name="usb_video_source_example">Usb Camera Example</string>
+    <string name="vision_not_supported_title">Device is not supported</string>
+    <string name="vision_not_supported_message">Vision SDK does not support this device yet, check more details at &lt;a href=\"https://docs.mapbox.com/android/vision/overview/#requirements\">docs.mapbox.com&lt;/a></string>
 </resources>

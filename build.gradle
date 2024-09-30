@@ -18,18 +18,18 @@ allprojects {
         google()
         jcenter()
 
-        maven { url "https://mapbox.bintray.com/mapbox" }
-
         maven {
-            credentials {
-                username mapboxMavenUser
-                password mapboxMavenToken
-            }
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
             authentication {
                 basic(BasicAuthentication)
             }
-
-            url 'https://api.mapbox.com/downloads/v1/vision/android/maven'
+            credentials {
+                // Do not change the username below.
+                // This should always be `mapbox` (not your username).
+                username = 'mapbox'
+                // Use the secret token you stored in gradle.properties as the password
+                password = project.properties['MAPBOX_DOWNLOADS_TOKEN'] ?: System.getenv("MAPBOX_DOWNLOADS_TOKEN") ?: ""
+            }
         }
 
         maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
